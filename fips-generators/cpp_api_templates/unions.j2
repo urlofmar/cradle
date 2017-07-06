@@ -1,0 +1,263 @@
+{% import 'enums.j2' as enums %}
+
+{# Get the cpp code for the tag value associated with a particular union member. #}
+{% macro cpp_enum_value_of_union_member(union_type, member_name) -%}
+    {{union_type.name}}_tag::{{member_name | upper}}
+{%- endmacro %}
+
+{# Emit the .hpp code for forward declaring a union type. #}
+{% macro forward_declaration_code(type_info) %}
+{{enums.forward_declaration_code(tag_schema_for_union(type_info))}}
+{% endmacro %}
+
+{# Emit the .hpp file code for a union type definition. #}
+{% macro hpp_definition_code(type_info) %}
+    {% with union_info = type_info.schema.union_type %}
+{{enums.hpp_definition_code(tag_schema_for_union(type_info))}}
+
+struct {{type_info.name}}
+{
+    {{type_info.name}}_tag tag_;
+    boost::any contents_;
+};
+
+template<>
+struct type_info_query<{{type_info.name}}>
+{
+    void static
+    get(api_type_info* info);
+};
+
+// constructors
+{% for case_name, case_info in object_items(union_info.members) %}
+{{type_info.name}}
+make_{{type_info.name}}_with_{{case_name}}(
+    {{case_info.schema | cpp_type_for_schema}} const& x);
+{{type_info.name}}
+make_{{type_info.name}}_with_{{case_name}}(
+    {{case_info.schema | cpp_type_for_schema}}&& x);
+{% endfor %}
+
+// tag access
+{{type_info.name}}_tag static inline
+get_tag({{type_info.name}} const& x)
+{
+    return x.tag_;
+}
+
+// case testing
+{% for case_name, case_info in object_items(union_info.members) %}
+bool static inline
+is_{{case_name}}({{type_info.name}} const& x)
+{
+    return get_tag(x) == {{cpp_enum_value_of_union_member(type_info, case_name)}};
+}
+{% endfor %}
+
+// const content access
+{% for case_name, case_info in object_items(union_info.members) %}
+{{case_info.schema | cpp_type_for_schema}} const&
+as_{{case_name}}({{type_info.name}} const& x);
+{% endfor %}
+
+// non-const content access
+{% for case_name, case_info in object_items(union_info.members) %}
+{{case_info.schema | cpp_type_for_schema}}&
+as_{{case_name}}({{type_info.name}}& x);
+{% endfor %}
+
+bool
+operator==({{type_info.name}} const& a, {{type_info.name}} const& b);
+
+bool static inline
+operator!=({{type_info.name}} const& a, {{type_info.name}} const& b)
+{ return !(a == b); }
+
+bool
+operator<({{type_info.name}} const& a, {{type_info.name}} const& b);
+
+bool static inline
+operator<=({{type_info.name}} const& a, {{type_info.name}} const& b)
+{ return !(b < a); }
+
+bool static inline
+operator>({{type_info.name}} const& a, {{type_info.name}} const& b)
+{ return b < a; }
+
+bool static inline
+operator>=({{type_info.name}} const& a, {{type_info.name}} const& b)
+{ return !(a < b); }
+
+size_t
+deep_sizeof({{type_info.name}} const& x);
+
+size_t
+hash_value({{type_info.name}} const& x);
+
+void
+to_value(cradle::value* v, {{type_info.name}} const& x);
+
+void
+from_value({{type_info.name}}* x, cradle::value const& v);
+
+    {% endwith %}
+{% endmacro %}
+
+{# Emit the .cpp file code for a union type definition. #}
+{% macro cpp_definition_code(type_info) %}
+    {% with union_info = type_info.schema.union_type %}
+
+{{enums.cpp_definition_code(tag_schema_for_union(type_info))}}
+
+void
+type_info_query<{{type_info.name}}>::get(api_type_info* info)
+{
+    api_named_type_reference ref;
+    ref.app = "cradle";
+    ref.name = "{{type_info.name}}";
+    *info = make_api_type_info_with_named_type(ref);
+}
+
+{% for case_name, case_info in object_items(union_info.members) %}
+{{type_info.name}}
+make_{{type_info.name}}_with_{{case_name}}(
+    {{case_info.schema | cpp_type_for_schema}} const& x)
+{
+    {{type_info.name}} u;
+    u.tag_ = {{cpp_enum_value_of_union_member(type_info, case_name)}};
+    u.contents_ = x;
+    return u;
+}
+{{type_info.name}}
+make_{{type_info.name}}_with_{{case_name}}(
+    {{case_info.schema | cpp_type_for_schema}}&& x)
+{
+    {{type_info.name}} u;
+    u.tag_ = {{cpp_enum_value_of_union_member(type_info, case_name)}};
+    u.contents_ = std::move(x);
+    return u;
+}
+{% endfor %}
+
+{% for case_name, case_info in object_items(union_info.members) %}
+{{case_info.schema | cpp_type_for_schema}} const&
+as_{{case_name}}({{type_info.name}} const& x)
+{
+    assert(is_{{case_name}}(x));
+    return boost::any_cast<{{case_info.schema | cpp_type_for_schema}} const&>(x.contents_);
+}
+{{case_info.schema | cpp_type_for_schema}}&
+as_{{case_name}}({{type_info.name}}& x)
+{
+    assert(is_{{case_name}}(x));
+    return boost::any_cast<{{case_info.schema | cpp_type_for_schema}}&>(x.contents_);
+}
+{% endfor %}
+
+bool
+operator==({{type_info.name}} const& a, {{type_info.name}} const& b)
+{
+    if (get_tag(a) != get_tag(b))
+        return false;
+    switch (get_tag(a))
+    {
+    {% for case_name, case_info in object_items(union_info.members) %}
+     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
+        return as_{{case_name}}(a) == as_{{case_name}}(b);
+    {% endfor %}
+    }
+    return true;
+}
+
+bool
+operator<({{type_info.name}} const& a, {{type_info.name}} const& b)
+{
+    if (get_tag(a) < get_tag(b))
+        return true;
+    if (get_tag(b) < get_tag(a))
+        return false;
+    switch (get_tag(a))
+    {
+    {% for case_name, case_info in object_items(union_info.members) %}
+     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
+        return as_{{case_name}}(a) < as_{{case_name}}(b);
+    {% endfor %}
+    }
+    return false;
+}
+
+size_t
+deep_sizeof({{type_info.name}} const& x)
+{
+    using cradle::deep_sizeof;
+    size_t size = sizeof({{type_info.name}});
+    switch (get_tag(x))
+    {
+    {% for case_name, case_info in object_items(union_info.members) %}
+     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
+        size += deep_sizeof(as_{{case_name}}(x));
+        break;
+    {% endfor %}
+    }
+    return size;
+}
+
+size_t
+hash_value({{type_info.name}} const& x)
+{
+    size_t hash = cradle::invoke_hash(get_tag(x));
+    switch (get_tag(x))
+    {
+    {% for case_name, case_info in object_items(union_info.members) %}
+     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
+        boost::hash_combine(hash, cradle::invoke_hash(as_{{case_name}}(x)));
+        break;
+    {% endfor %}
+    }
+    return hash;
+}
+
+void
+to_value(cradle::value* v, {{type_info.name}} const& x)
+{
+    cradle::value_map fields;
+    switch (get_tag(x))
+    {
+    {% for case_name, case_info in object_items(union_info.members) %}
+     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
+        to_value(&fields["{{case_name}}"], as_{{case_name}}(x));
+        break;
+    {% endfor %}
+    }
+    *v = std::move(fields);
+}
+
+void
+from_value({{type_info.name}}* x, cradle::value const& v)
+{
+    cradle::value_map const& fields = cradle::cast<cradle::value_map>(v);
+    from_value(&x->tag_, get_union_value_type(fields));
+    switch (x->tag_)
+    {
+    {% for case_name, case_info in object_items(union_info.members) %}
+     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
+      {
+        try
+        {
+            {{case_info.schema | cpp_type_for_schema}} case_value;
+            from_value(&case_value, get_field(fields, "{{case_name}}"));
+            x->contents_ = case_value;
+        }
+        catch (boost::exception& e)
+        {
+            cradle::add_dynamic_path_element(e, "{{case_name}}");
+            throw;
+        }
+        break;
+      }
+    {% endfor %}
+    }
+}
+
+    {% endwith %}
+{% endmacro %}

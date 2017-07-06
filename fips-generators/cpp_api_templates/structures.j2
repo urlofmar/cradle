@@ -1,0 +1,195 @@
+{# Emit the .hpp code for forward declaring a structure type. #}
+{% macro forward_declaration_code(type_info) %}
+    struct {{type_info.name}};
+{% endmacro %}
+
+{# Emit the .hpp file code for a structure type definition. #}
+{% macro hpp_definition_code(type_info) %}
+    {% with struct_info = type_info.schema.structure_type %}
+struct {{type_info.name}}
+{
+        {% for name, info in object_items(struct_info.fields) %}
+            {% if info.description %}
+    {{info.description | format_comment(width=75) | indent(4)}}
+            {% endif %}
+    {{info.schema | cpp_type_for_schema(omissible=info["omissible"])}} {{name}};
+        {% endfor %}
+};
+
+// TODO: constructor
+
+template<>
+struct type_info_query<{{type_info.name}}>
+{
+    void static
+    get(api_type_info* info);
+};
+
+bool
+operator==({{type_info.name}} const& a, {{type_info.name}} const& b);
+
+bool static inline
+operator!=({{type_info.name}} const& a, {{type_info.name}} const& b)
+{ return !(a == b); }
+
+bool
+operator<({{type_info.name}} const& a, {{type_info.name}} const& b);
+
+bool static inline
+operator<=({{type_info.name}} const& a, {{type_info.name}} const& b)
+{ return !(b < a); }
+
+bool static inline
+operator>({{type_info.name}} const& a, {{type_info.name}} const& b)
+{ return b < a; }
+
+bool static inline
+operator>=({{type_info.name}} const& a, {{type_info.name}} const& b)
+{ return !(a < b); }
+
+size_t
+deep_sizeof({{type_info.name}} const& x);
+
+size_t
+hash_value({{type_info.name}} const& x);
+
+void
+to_value(cradle::value* v, {{type_info.name}} const& x);
+
+void
+from_value({{type_info.name}}* x, cradle::value const& v);
+
+    {% endwith %}
+{% endmacro %}
+
+{# Emit the .cpp file code for a structure type definition. #}
+{% macro cpp_definition_code(type_info) %}
+    {% with struct_info = type_info.schema.structure_type %}
+void
+type_info_query<{{type_info.name}}>::get(api_type_info* info)
+{
+    api_named_type_reference ref;
+    ref.app = "cradle";
+    ref.name = "{{type_info.name}}";
+    *info = make_api_type_info_with_named_type(ref);
+}
+
+bool
+operator==({{type_info.name}} const& a, {{type_info.name}} const& b)
+{
+    {% if object_empty(struct_info.fields) %}
+    return true;
+    {% else %}
+    return
+        {{object_keys(struct_info.fields) | map_format("a.{0} == b.{0}") | join(" &&\n") | indent(8)}};
+    {% endif %}
+}
+
+bool
+operator<({{type_info.name}} const& a, {{type_info.name}} const& b)
+{
+    {% for field in object_keys(struct_info.fields) %}
+    if (a.{{field}} < b.{{field}})
+        return true;
+    if (b.{{field}} < a.{{field}})
+        return false;
+    {% endfor %}
+    return false;
+}
+
+void
+swap({{type_info.name}}& a, {{type_info.name}}& b)
+{
+    using std::swap;
+    {% for field in object_keys(struct_info.fields) %}
+    swap(a.{{field}}, b.{{field}});
+    {% endfor %}
+}
+
+size_t
+deep_sizeof({{type_info.name}} const& x)
+{
+    using cradle::deep_sizeof;
+    {% if object_empty(struct_info.fields) %}
+    return 0;
+    {% else %}
+    return
+        {{object_keys(struct_info.fields) | map_format("deep_sizeof(x.{0})") | join(" +\n") | indent(8)}};
+    {% endif %}
+}
+
+size_t
+hash_value({{type_info.name}} const& x)
+{
+    {# Start the hash off using a hash of the type name. #}
+    size_t hash = {{ type_info.name | string_hash }};
+    {% for field in object_keys(struct_info.fields) %}
+    boost::hash_combine(hash, cradle::invoke_hash(x.{{field}}));
+    {% endfor %}
+    return hash;
+}
+
+void
+to_value(cradle::value* v, {{type_info.name}} const& x)
+{
+    cradle::value_map fields;
+    {% for field, info in object_items(struct_info.fields) %}
+        {% if info["omissible"] %}
+    if (x.{{field}})
+    {
+        to_value(&fields["{{field}}"], *x.{{field}});
+    }
+        {% else %}
+    to_value(&fields["{{field}}"], x.{{field}});
+        {% endif %}
+    {% endfor %}
+    *v = std::move(fields);
+}
+
+void
+from_value({{type_info.name}}* x, cradle::value const& v)
+{
+    {% if not object_empty(struct_info.fields) %}
+    auto const& fields = cradle::cast<cradle::value_map>(v);
+        {% for field, info in object_items(struct_info.fields) %}
+            {% if info["omissible"] %}
+    {
+        cradle::value dynamic_field_value;
+        if (get_field(&dynamic_field_value, fields, "{{field}}"))
+        {
+            try
+            {
+                {{info.schema | cpp_type_for_schema()}} field_value;
+                from_value(&field_value, dynamic_field_value);
+                x->{{field}} = cradle::some(field_value);
+            }
+            catch (boost::exception& e)
+            {
+                cradle::add_dynamic_path_element(e, "{{field}}");
+                throw;
+            }
+        }
+        else
+        {
+            x->{{field}} = cradle::none;
+        }
+    }
+            {% else %}
+    {
+        auto dynamic_field_value = get_field(fields, "{{field}}");
+        try
+        {
+            from_value(&x->{{field}}, dynamic_field_value);
+        }
+        catch (boost::exception& e)
+        {
+            cradle::add_dynamic_path_element(e, "{{field}}");
+            throw;
+        }
+    }
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+}
+    {% endwith %}
+{% endmacro %}

@@ -1,0 +1,113 @@
+{# Emit the .hpp code for forward declaring an enum type. #}
+{% macro forward_declaration_code(type_info) %}
+    enum class {{type_info.name}};
+{% endmacro %}
+
+{# Emit the .hpp file code for an enum type definition. #}
+{% macro hpp_definition_code(type_info) %}
+    {% with enum_info = type_info.schema.enum_type %}
+// Ensure that no enum constants have been #defined by external libraries.
+    {% for name, info in object_items(enum_info.values) %}
+#ifdef {{name | upper}}
+    #undef {{name | upper}}
+#endif
+    {% endfor %}
+
+enum class {{type_info.name}}
+{
+    {% for name, info in object_items(enum_info.values) %}
+        {% if info.description %}
+    {{info.description | format_comment(width=75) | indent(4)}}
+        {% endif %}
+    {{name | upper}}
+        {%- if not loop.last %},{% endif %}
+
+    {% endfor %}
+};
+
+template<>
+struct type_info_query<{{type_info.name}}>
+{
+    void static
+    get(api_type_info* info);
+};
+
+size_t static inline
+deep_sizeof({{type_info.name}} const& x)
+{
+    return sizeof(int);
+}
+
+size_t static inline
+hash_value({{type_info.name}} const& x)
+{
+    return size_t(x);
+}
+
+// Get the string representation of the given {{type_info.name}} value.
+// Note that this returns the value as defined in the API, which may not be appropriate to show in
+// a normal UI.
+std::string
+get_value_id({{type_info.name}} value);
+
+void
+to_value(cradle::value* v, {{type_info.name}} x);
+
+void
+from_value({{type_info.name}}* x, cradle::value const& v);
+    {% endwith %}
+{% endmacro %}
+
+{# Emit the .cpp file code for an enum type definition. #}
+{% macro cpp_definition_code(type_info) %}
+    {% with enum_info = type_info.schema.enum_type %}
+
+void
+type_info_query<{{type_info.name}}>::get(api_type_info* info)
+{
+    api_named_type_reference ref;
+    ref.app = "cradle";
+    ref.name = "{{type_info.name}}";
+    *info = make_api_type_info_with_named_type(ref);
+}
+
+std::string
+get_value_id({{type_info.name}} x)
+{
+    switch (x)
+    {
+    {% for name, info in object_items(enum_info.values) %}
+     case {{type_info.name}}::{{name | upper}}:
+        return "{{name | lower}}";
+    {% endfor %}
+    }
+    CRADLE_THROW(
+        cradle::invalid_enum_value() <<
+            cradle::enum_id_info("{{type_info.name}}") <<
+            cradle::enum_value_info(int(x)));
+}
+
+void
+to_value(cradle::value* v, {{type_info.name}} x)
+{
+    *v = get_value_id(x);
+}
+
+void
+from_value({{type_info.name}}* x, cradle::value const& v)
+{
+    auto s = boost::to_lower_copy(cradle::cast<std::string>(v));
+    {% for name, info in object_items(enum_info.values) %}
+    if (s == "{{name | lower}}")
+    {
+        *x = {{type_info.name}}::{{name | upper}};
+        return;
+    }
+    {% endfor %}
+    CRADLE_THROW(
+        cradle::invalid_enum_string() <<
+            cradle::enum_id_info("{{type_info.name}}") <<
+            cradle::enum_string_info(cradle::cast<std::string>(v)));
+}
+    {% endwith %}
+{% endmacro %}

@@ -1,0 +1,13 @@
+codecov:
+  token: 48505c28-acd6-4592-9770-b0795d3f42e8
+
+ignore:
+  - "tests"
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: no
+      macro: no
+      method: no

@@ -1,0 +1,858 @@
+{
+   "dependencies": [],
+   "functions": [],
+   "provider": {
+      "private": {
+         "image": {
+            "tag": "2.0.0-ast1947b"
+         }
+      }
+   },
+   "records": [],
+   "types": [
+      {
+         "description": "",
+         "name": "api_type_info",
+         "schema": {
+            "union_type": {
+               "members": {
+                  "array_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_array_info"
+                        }
+                     }
+                  },
+                  "blob_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_blob_type"
+                        }
+                     }
+                  },
+                  "boolean_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_boolean_type"
+                        }
+                     }
+                  },
+                  "datetime_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_datetime_type"
+                        }
+                     }
+                  },
+                  "dynamic_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_dynamic_type"
+                        }
+                     }
+                  },
+                  "enum_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_enum_info"
+                        }
+                     }
+                  },
+                  "float_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_float_type"
+                        }
+                     }
+                  },
+                  "function_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_function_type_info"
+                        }
+                     }
+                  },
+                  "integer_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_integer_type"
+                        }
+                     }
+                  },
+                  "map_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_map_info"
+                        }
+                     }
+                  },
+                  "named_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_named_type_reference"
+                        }
+                     }
+                  },
+                  "nil_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_nil_type"
+                        }
+                     }
+                  },
+                  "optional_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  },
+                  "record_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_record_info"
+                        }
+                     }
+                  },
+                  "reference_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  },
+                  "string_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_string_type"
+                        }
+                     }
+                  },
+                  "structure_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_structure_info"
+                        }
+                     }
+                  },
+                  "union_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_union_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_nil_type",
+         "schema": {
+            "structure_type": {
+               "fields": {}
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_boolean_type",
+         "schema": {
+            "structure_type": {
+               "fields": {}
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_integer_type",
+         "schema": {
+            "structure_type": {
+               "fields": {}
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_float_type",
+         "schema": {
+            "structure_type": {
+               "fields": {}
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_string_type",
+         "schema": {
+            "structure_type": {
+               "fields": {}
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_datetime_type",
+         "schema": {
+            "structure_type": {
+               "fields": {}
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_blob_type",
+         "schema": {
+            "structure_type": {
+               "fields": {}
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_dynamic_type",
+         "schema": {
+            "structure_type": {
+               "fields": {}
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_structure_field_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "description": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "omissible": {
+                     "description": "",
+                     "omissible": true,
+                     "schema": {
+                        "boolean_type": {}
+                     }
+                  },
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_structure_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "fields": {
+                     "description": "",
+                     "schema": {
+                        "map_type": {
+                           "key_schema": {
+                              "string_type": {}
+                           },
+                           "value_schema": {
+                              "named_type": {
+                                 "app": "cradle",
+                                 "name": "api_structure_field_info"
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_union_member_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "description": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_union_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "members": {
+                     "description": "",
+                     "schema": {
+                        "map_type": {
+                           "key_schema": {
+                              "string_type": {}
+                           },
+                           "value_schema": {
+                              "named_type": {
+                                 "app": "cradle",
+                                 "name": "api_union_member_info"
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_enum_value_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "description": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_enum_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "values": {
+                     "description": "",
+                     "schema": {
+                        "map_type": {
+                           "key_schema": {
+                              "string_type": {}
+                           },
+                           "value_schema": {
+                              "named_type": {
+                                 "app": "cradle",
+                                 "name": "api_enum_value_info"
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_array_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "element_schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  },
+                  "size": {
+                     "description": "If size is absent, any size is acceptable.",
+                     "omissible": true,
+                     "schema": {
+                        "integer_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_map_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "key_schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  },
+                  "value_schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_named_type_reference",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "app": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "name": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_record_type_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_function_parameter_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "description": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "name": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_function_result_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "description": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_function_type_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "parameters": {
+                     "description": "",
+                     "schema": {
+                        "array_type": {
+                           "element_schema": {
+                              "named_type": {
+                                 "app": "cradle",
+                                 "name": "api_function_parameter_info"
+                              }
+                           }
+                        }
+                     }
+                  },
+                  "returns": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_function_result_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_function_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "description": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "execution_class": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "name": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_upgrade_function_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "function": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "type": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "version": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_named_type_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "description": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "name": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_record_named_type_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "account": {
+                     "description": "",
+                     "omissible": true,
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "app": {
+                     "description": "",
+                     "omissible": true,
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "name": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_record_named_type_schema",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "named_type": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_record_named_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "api_record_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_record_named_type_schema"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "supported HTTP request methods",
+         "name": "http_request_method",
+         "schema": {
+            "enum_type": {
+               "values": {
+                  "delete": {
+                     "description": ""
+                  },
+                  "get": {
+                     "description": ""
+                  },
+                  "post": {
+                     "description": ""
+                  },
+                  "put": {
+                     "description": ""
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "http_request",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "body": {
+                     "description": "",
+                     "schema": {
+                        "blob_type": {}
+                     }
+                  },
+                  "headers": {
+                     "description": "",
+                     "schema": {
+                        "map_type": {
+                           "key_schema": {
+                              "string_type": {}
+                           },
+                           "value_schema": {
+                              "string_type": {}
+                           }
+                        }
+                     }
+                  },
+                  "method": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "http_request_method"
+                        }
+                     }
+                  },
+                  "url": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "http_response",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "body": {
+                     "description": "",
+                     "schema": {
+                        "blob_type": {}
+                     }
+                  },
+                  "headers": {
+                     "description": "",
+                     "schema": {
+                        "map_type": {
+                           "key_schema": {
+                              "string_type": {}
+                           },
+                           "value_schema": {
+                              "string_type": {}
+                           }
+                        }
+                     }
+                  },
+                  "status_code": {
+                     "description": "",
+                     "schema": {
+                        "integer_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      }
+   ],
+   "upgrades": []
+}
