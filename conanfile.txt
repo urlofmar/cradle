@@ -7,9 +7,6 @@ cotire/1.7.6@smspillaz/cotire
 libcurl/7.47.1@lasote/stable
 OpenSSL/1.0.2k@lasote/stable
 
-[options]
-Boost:fPIC=True
-
 [generators]
 cmake
 

@@ -1,5 +1,5 @@
 codecov:
-  token: 48505c28-acd6-4592-9770-b0795d3f42e8
+  token: be3eb01a-6763-4694-8f30-6a729569b709
 
 ignore:
   - "tests"

@@ -13,18 +13,20 @@ fips_project(cradle)
 # Run Conan to install external C++ libraries.
 # Conan and fips disagree on which runtime we should use for MSVC, so
 # we need to manually sort that out for MSVC builds.
-set(conan_settings)
+set(conan_options)
 if (FIPS_MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(conan_settings
+        set(conan_options
             -s compiler=Visual\ Studio -s build_type=Debug -s compiler.runtime=MTd)
     else()
-        set(conan_settings
+        set(conan_options
             -s compiler=Visual\ Studio -s build_type=Release -s compiler.runtime=MT)
     endif()
+elseif(FIPS_GCC)
+    set(conan_options -o Boost:fPIC=True)
 endif()
 execute_process(
-    COMMAND conan install ${CMAKE_SOURCE_DIR} ${conan_settings} --build missing
+    COMMAND conan install ${CMAKE_SOURCE_DIR} ${conan_options} --build missing
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     RESULT_VARIABLE conan_result)
 if(NOT ${conan_result} EQUAL 0)

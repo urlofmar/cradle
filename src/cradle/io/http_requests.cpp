@@ -72,7 +72,11 @@ http_connection::http_connection()
 
     // Enable SSL verification.
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1);
-    curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
+    // This is only necessary on Windows.
+    // On other systems, this setting defaults to the system's certificate file.
+    #if _WIN32
+        curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
+    #endif
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2);
 
     impl->curl = curl;
