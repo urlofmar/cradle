@@ -1,5 +1,5 @@
 test:
-  image: purplekarrot/gcc-5
+  image: gcc:5
   before_script:
     - apt-get update -qy
     - apt-get install -y python3-minimal python3-pip
