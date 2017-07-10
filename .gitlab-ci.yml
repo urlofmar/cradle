@@ -9,13 +9,8 @@ test:
     - apt-get update -qy
     - apt-get install -y python3-minimal python3-pip
     - apt-get install -y g++-5 gcc-5 lcov cmake
-    - pip3 install virtualenvwrapper
-    - export WORKON_HOME=.virtualenvs
-    - export PROJECT_HOME=.virtualdev
-    - export VIRTUALENVWRAPPER_SCRIPT=/usr/local/bin/virtualenvwrapper.sh
-    - source /usr/local/bin/virtualenvwrapper_lazy.sh
-    - mkvirtualenv -p /usr/bin/python3 python3_env
-    - workon python3_env
+    - pip3 install virtualenv
+    - virtualenv --python=python3 my_python_env
     - python --version
     - pip install conan
     - pip install jinja2
