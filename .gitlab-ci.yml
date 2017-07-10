@@ -7,8 +7,7 @@ test:
     # Add repository with more up-to-date GCC versions.
     - add-apt-repository ppa:ubuntu-toolchain-r/test -y
     - apt-get update -qy
-    - apt-get install -y python3-minimal python3-pip
-    - apt-get install -y g++-5 gcc-5 lcov cmake
+    - apt-get install -y python3-minimal python3-pip g++-5 gcc-5 lcov cmake git
     - pip3 install virtualenv
     - virtualenv --python=python3 my_python_env
     - source my_python_env/bin/activate
