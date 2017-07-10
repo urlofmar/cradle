@@ -7,13 +7,14 @@ test:
     # Add repository with more up-to-date GCC versions.
     - add-apt-repository ppa:ubuntu-toolchain-r/test -y
     - apt-get update -qy
-    - apt-get install -y python3-minimal python3-pip virtualenvwrapper
+    - apt-get install -y python3-minimal python3-pip
     - apt-get install -y g++-5 gcc-5 lcov cmake
+    - pip3 install virtualenvwrapper
     - mkvirtualenv -p /usr/bin/python3 python3_env
-    - workon -p /usr/bin/python3 python3_env
+    - workon python3_env
     - python --version
-    - pip3 install conan
-    - pip3 install jinja2
+    - pip install conan
+    - pip install jinja2
     - ./fips set config linux-make-debug
     - ./fips gen
     - ./fips build
