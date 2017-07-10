@@ -8,7 +8,7 @@ include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
 set(FIPS_EXCEPTIONS ON)
 set(FIPS_RTTI ON)
 fips_setup()
-fips_project(cradle-private)
+fips_project(cradle)
 
 # Run Conan to install external C++ libraries.
 # Conan and fips disagree on which runtime we should use for MSVC, so
