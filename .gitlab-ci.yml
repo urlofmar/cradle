@@ -2,8 +2,8 @@ test:
   image: ubuntu:artful
   before_script:
     - apt-get update -qy
-    - apt-get install -y python3.6 python-pip g++-5 gcc-5 lcov cmake git
-    - pip install virtualenv
+    - apt-get install -y python3 python3-pip g++-5 gcc-5 lcov cmake git
+    - pip3 install virtualenv
     - virtualenv --python=python3 my_python_env
     - source my_python_env/bin/activate
     - python --version
