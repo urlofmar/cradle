@@ -1,9 +1,8 @@
 test:
-  image: python:3.6
+  image: gcc:5
   before_script:
-    - python --version
     - apt-get update -qy
-    - apt-get install -y python-pip cmake g++-5 gcc-5 lcov
+    - apt-get install -y python3 python-pip cmake g++-5 gcc-5 lcov
     - pip install conan
     - pip install jinja2
     - export CXX="g++-5" CC="gcc-5"
