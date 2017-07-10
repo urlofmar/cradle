@@ -1,16 +1,16 @@
 test:
-  image: ubuntu
+  image: ubuntu:trusty
   before_script:
+    # Install add-apt-repository command.
     - apt-get update -qy
-    # Depending on Ubuntu version, one of the following should succeed in
-    # installing the add-apt-repository command.
-    - apt-get install software-properties-common -y || true
-    - apt-get install python-software-properties -y || true
+    - apt-get install software-properties-common -y
+    # Add repository with more up-to-date GCC versions.
     - add-apt-repository ppa:ubuntu-toolchain-r/test -y
-    # Update again now that we have new respoitories.
     - apt-get update -qy
-    - apt-get install -y python3-minimal python3-pip
+    - apt-get install -y python3-minimal python3-pip virtualenvwrapper
     - apt-get install -y g++-5 gcc-5 lcov cmake
+    - mkvirtualenv -p /usr/bin/python3 python3_env
+    - workon -p /usr/bin/python3 python3_env
     - python --version
     - pip3 install conan
     - pip3 install jinja2
