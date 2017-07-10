@@ -2,8 +2,6 @@ test:
   image: jorj/cmake-gcc5-node-python3
   before_script:
     - python --version
-    - apt-get update -qy
-    - apt-get install -y python-pip cmake lcov
     - pip install conan
     - pip install jinja2
     - ./fips set config linux-make-debug
