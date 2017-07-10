@@ -1,6 +1,6 @@
 test:
-  image: sgoblin/python3.5
   before_script:
+    - python --version
     - apt-get update -qy
     # Depending on Ubuntu version, one of the following should succeed in
     # installing the add-apt-repository command.
