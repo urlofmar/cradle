@@ -11,6 +11,7 @@ test:
     - apt-get install -y g++-5 gcc-5 lcov cmake
     - pip3 install virtualenv
     - virtualenv --python=python3 my_python_env
+    - source my_project/bin/activate
     - python --version
     - pip install conan
     - pip install jinja2
