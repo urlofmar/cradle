@@ -7,7 +7,6 @@ test:
     - apt-get install software-properties-common -y || true
     - apt-get install python-software-properties -y || true
     - add-apt-repository ppa:ubuntu-toolchain-r/test -y
-    - add-apt-repository ppa:git-core/ppa -y
     # Update again now that we have new respoitories.
     - apt-get update -qy
     - apt-get install -y python-pip cmake g++-5 gcc-5 lcov
