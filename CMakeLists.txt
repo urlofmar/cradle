@@ -119,11 +119,8 @@ fips_end_app()
 target_link_libraries(test_runner ${CONAN_LIBS})
 
 # Add tests.
-# set(test_dir ${CMAKE_SOURCE_DIR}/tests)
-# file (GLOB_RECURSE test_files ${CMAKE_SOURCE_DIR}/tests/*.[chi]pp)
-# add_executable(test_runner ${source_files} ${test_files})
 target_link_libraries(test_runner ${CONAN_LIBS})
-# add_test(NAME test_runner COMMAND test_runner)
+add_test(NAME test_runner COMMAND test_runner)
 
 # Exclude from precompiled headers any local headers or overly specific libraries.
 set_property(
