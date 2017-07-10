@@ -2,7 +2,7 @@ test:
   image: gcc:5
   before_script:
     - apt-get update -qy
-    - apt-get install -y python3 python-pip cmake lcov
+    - apt-get install -y python3-minimal python3-pip cmake lcov
     - python --version
     - pip install conan
     - pip install jinja2
@@ -11,5 +11,3 @@ test:
     - ./fips build
   script:
     - ./fips run test_runner
-  after_script:
-    - bash <(curl -s https://codecov.io/bash)
