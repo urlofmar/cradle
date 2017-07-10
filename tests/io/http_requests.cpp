@@ -1,7 +1,6 @@
 #include <cradle/io/http_requests.hpp>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem/path.hpp>
 
 #include <cradle/core/monitoring.hpp>
 #include <cradle/core/testing.hpp>
@@ -74,9 +73,6 @@ TEST_CASE("GET request", "[io][http]")
 
 TEST_CASE("HTTPS request", "[io][http]")
 {
-    boost::filesystem::path full_path( boost::filesystem::current_path() );
-    std::cerr << "Current path is : " << full_path << std::endl;
-
     auto response =
         perform_simple_request(make_get_request("https://postman-echo.com/get?color=navy"));
     REQUIRE(response.status_code == 200);
