@@ -8,7 +8,7 @@ libcurl/7.47.1@lasote/stable
 OpenSSL/1.0.2k@lasote/stable
 
 [options]
-Boost:fPIC=true
+Boost:fPIC=True
 
 [generators]
 cmake
