@@ -2,10 +2,10 @@ test:
   image: gcc:5
   before_script:
     - apt-get update -qy
-    - apt-get install -y python3 python-pip cmake g++-5 gcc-5 lcov
+    - apt-get install -y python3 python-pip cmake lcov
+    - python --version
     - pip install conan
     - pip install jinja2
-    - export CXX="g++-5" CC="gcc-5"
     - ./fips set config linux-make-debug
     - ./fips gen
     - ./fips build
