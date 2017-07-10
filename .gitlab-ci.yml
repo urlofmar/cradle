@@ -14,6 +14,7 @@ test:
     - python --version
     - pip install conan
     - pip install jinja2
+    - export CXX="g++-5" CC="gcc-5"
     - ./fips set config linux-make-debug
     - ./fips gen
     - ./fips build
