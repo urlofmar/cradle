@@ -1,0 +1,17 @@
+test:
+  image: python:3.6
+  before_script:
+    - add-apt-repository ppa:ubuntu-toolchain-r/test -y
+    - add-apt-repository ppa:git-core/ppa -y
+    - apt-get update -qy
+    - apt-get install -y python-pip cmake g++-5 gcc-5 lcov
+    - pip install conan
+    - pip install jinja2
+    - export CXX="g++-5" CC="gcc-5"
+    - ./fips set config linux-make-debug
+    - ./fips gen
+    - ./fips build
+  script:
+    - ./fips run test_runner
+  after_script:
+    - bash <(curl -s https://codecov.io/bash)
