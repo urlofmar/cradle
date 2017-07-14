@@ -23,7 +23,7 @@ if (FIPS_MSVC)
             -s compiler=Visual\ Studio -s build_type=Release -s compiler.runtime=MT)
     endif()
 elseif(FIPS_GCC)
-    set(conan_options -o Boost:fPIC=True)
+    set(conan_options -s compiler=gcc -s compiler.libcxx=libstdc++11 -o Boost:fPIC=True)
 endif()
 execute_process(
     COMMAND conan install ${CMAKE_SOURCE_DIR} ${conan_options} --build missing
@@ -90,7 +90,7 @@ endif()
 # Exclude as much of the Windows API as possible to avoid #define pollution and speed up builds.
 # Note that this has to be done via command-line arguments due to precompilation.
 if(FIPS_MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32_LEAN_AND_MEAN /DVC_EXTRALEAN /DNORASTEROPS /DOEMRESOURCE /DNOATOM /DNOCLIPBOARD /DNOCOLOR /DNOCTRLMGR /DNODRAWTEXT /DNOGDI /DNOKERNEL /DNOUSER /DNONLS /DNOMINMAX /DNOSOUND /DNOKANJI /DNOHELP /DNOPROFILER /DNODEFERWINDOWPOS /DNOMCX")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32_LEAN_AND_MEAN /DVC_EXTRALEAN /DNORASTEROPS /DOEMRESOURCE /DNOATOM /DNOCLIPBOARD /DNOCOLOR /DNOCTRLMGR /DNODRAWTEXT /DNOGDI /DNOKERNEL /DNONLS /DNOMINMAX /DNOSOUND /DNOKANJI /DNOHELP /DNOPROFILER /DNODEFERWINDOWPOS /DNOMCX")
 endif()
 
 # Set compiler flags for instrumenting test coverage.
@@ -118,17 +118,12 @@ fips_end_app()
 
 target_link_libraries(test_runner ${CONAN_LIBS})
 
-# Add tests.
-target_link_libraries(test_runner ${CONAN_LIBS})
-add_test(NAME test_runner COMMAND test_runner)
-
 # Exclude from precompiled headers any local headers or overly specific libraries.
 set_property(
     DIRECTORY
     PROPERTY
         COTIRE_PREFIX_HEADER_IGNORE_PATH
             ${CMAKE_SOURCE_DIR}
-            #${CMAKE_BINARY_DIR}
             ${CONAN_MSGPACK-C_ROOT}
             ${CONAN_CATCH_ROOT}
             ${CONAN_JSON_ROOT})

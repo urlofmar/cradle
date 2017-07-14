@@ -852,6 +852,92 @@
                }
             }
          }
+      },
+      {
+         "description": "",
+         "name": "disk_cache_config",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "directory": {
+                     "description": "",
+                     "schema": {
+                        "optional_type":{
+                            "string_type": {}
+                        }
+                     }
+                  },
+                  "size_limit": {
+                     "description": "size limit (in bytes)",
+                     "schema": {
+                        "integer_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "disk_cache_info",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "directory": {
+                     "description": "the directory where the cache is stored",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "entry_count": {
+                     "description": "the number of entries currently stored in the cache",
+                     "schema": {
+                        "integer_type": {}
+                     }
+                  },
+                  "total_size": {
+                     "description": "the total size (in bytes)",
+                     "schema": {
+                        "integer_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "disk_cache_entry",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "key": {
+                     "description": "the key for the entry",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "id": {
+                     "description": "the internal numeric ID of the entry within the cache",
+                     "schema": {
+                        "integer_type": {}
+                     }
+                  },
+                  "size": {
+                     "description": "the size of the entry (in bytes)",
+                     "schema": {
+                        "integer_type": {}
+                     }
+                  },
+                  "crc32": {
+                     "description": "a 32-bit CRC of the contents of the entry",
+                     "schema": {
+                        "integer_type": {}
+                     }
+                  }
+               }
+            }
+         }
       }
    ],
    "upgrades": []

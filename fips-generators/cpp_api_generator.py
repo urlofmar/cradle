@@ -1,5 +1,5 @@
 # fips uses this to version the generator.
-Version = 1
+Version = 4
 # Import the fips generator utilities.
 import genutil
 

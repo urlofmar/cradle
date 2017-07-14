@@ -3,6 +3,10 @@
     struct {{type_info.name}};
 {% endmacro %}
 
+{# Emit the preprocessor cleanup code for a structure type. #}
+{% macro preprocessor_cleanup_code(type_info) %}
+{% endmacro %}
+
 {# Emit the .hpp file code for a structure type definition. #}
 {% macro hpp_definition_code(type_info) %}
     {% with struct_info = type_info.schema.structure_type %}
