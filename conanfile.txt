@@ -6,6 +6,7 @@ msgpack-c/1.4.2@paulobrizolara/stable
 cotire/1.7.6@smspillaz/cotire
 libcurl/7.47.1@lasote/stable
 OpenSSL/1.0.2k@lasote/stable
+sqlite3/3.14.1@paulobrizolara/stable
 
 [generators]
 cmake

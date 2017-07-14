@@ -5,11 +5,14 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include <curl/curl.h>
+
 #include <cradle/core/monitoring.hpp>
 #include <cradle/io/json_io.hpp>
 #include <cradle/io/msgpack_io.hpp>
 
-#include <curl/curl.h>
+// Include this again to clean up preprocessor definitions.
+#include <cradle/api_types.hpp>
 
 namespace cradle {
 

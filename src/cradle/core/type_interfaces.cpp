@@ -39,11 +39,6 @@ void from_value(string* x, value const& v)
 // INTEGERS
 
 #define CRADLE_DEFINE_INTEGER_INTERFACE(T) \
-    static char const* type_name(T) \
-    { \
-        static string name = lexical_cast<string>(sizeof(T) * 8) + "-bit integer";\
-        return name.c_str(); \
-    } \
     void to_value(value* v, T x) \
     { \
         *v = boost::numeric_cast<integer>(x); \
@@ -89,7 +84,7 @@ CRADLE_DEFINE_FLOAT_INTERFACE(float)
 
 // DATE
 
-static date
+date static
 parse_date(std::string const& s)
 {
     namespace bg = boost::gregorian;
@@ -113,7 +108,8 @@ parse_date(std::string const& s)
     CRADLE_THROW(parsing_error() << expected_format_info("date") << parsed_text_info(s));
 }
 
-string to_string(date const& d)
+string
+to_string(date const& d)
 {
     namespace bg = boost::gregorian;
     std::ostringstream os;

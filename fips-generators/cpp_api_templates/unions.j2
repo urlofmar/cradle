@@ -10,6 +10,11 @@
 {{enums.forward_declaration_code(tag_schema_for_union(type_info))}}
 {% endmacro %}
 
+{# Emit the preprocessor cleanup code for a union type. #}
+{% macro preprocessor_cleanup_code(type_info) %}
+{{enums.preprocessor_cleanup_code(tag_schema_for_union(type_info))}}
+{% endmacro %}
+
 {# Emit the .hpp file code for a union type definition. #}
 {% macro hpp_definition_code(type_info) %}
     {% with union_info = type_info.schema.union_type %}

@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include <boost/any.hpp>
@@ -25,10 +26,10 @@ typedef int64_t integer;
 
 // some(x) creates a boost::optional of the proper type with the value of :x.
 template<class T>
-optional<T>
+auto
 some(T&& x)
 {
-    return optional<T>(std::forward<T>(x));
+    return optional<std::remove_reference_t<T>>(std::forward<T>(x));
 }
 
 using boost::any;

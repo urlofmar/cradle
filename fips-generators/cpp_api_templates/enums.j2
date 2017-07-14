@@ -3,15 +3,23 @@
     enum class {{type_info.name}};
 {% endmacro %}
 
-{# Emit the .hpp file code for an enum type definition. #}
-{% macro hpp_definition_code(type_info) %}
+{# Emit the preprocessor cleanup code for an enum type. #}
+{% macro preprocessor_cleanup_code(type_info) %}
     {% with enum_info = type_info.schema.enum_type %}
+
 // Ensure that no enum constants have been #defined by external libraries.
     {% for name, info in object_items(enum_info.values) %}
 #ifdef {{name | upper}}
     #undef {{name | upper}}
 #endif
     {% endfor %}
+
+    {% endwith %}
+{% endmacro %}
+
+{# Emit the .hpp file code for an enum type definition. #}
+{% macro hpp_definition_code(type_info) %}
+    {% with enum_info = type_info.schema.enum_type %}
 
 enum class {{type_info.name}}
 {
