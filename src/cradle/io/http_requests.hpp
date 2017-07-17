@@ -108,26 +108,35 @@ struct http_request_system : boost::noncopyable
 // http_connection provides a network connection over which HTTP requests can
 // be made.
 
-struct http_connection_impl;
-
-struct http_connection : boost::noncopyable
+struct http_connection_interface
 {
-    http_connection();
-    ~http_connection();
-
-    http_connection_impl* impl;
+    // Perform an HTTP request and return the response.
+    // Since this may take a long time to complete, monitoring is provided.
+    // Accurate progress reporting relies on the web server providing the size
+    // of the response.
+    virtual http_response
+    perform_request(
+        check_in_interface& check_in,
+        progress_reporter_interface& reporter,
+        http_request const& request) = 0;
 };
 
-// Perform an HTTP request and return the response.
-// Since this may take a long time to complete, monitoring is provided.
-// Accurate progress reporting relies on the web server providing the size
-// of the response.
-// 'session' is a list of cookies that will be provided to the server.
-http_response
-perform_http_request(
-    check_in_interface& check_in, progress_reporter_interface& reporter,
-    http_connection& connection, //http_session_data const& session,
-    http_request const& request);
+struct http_connection_impl;
+
+struct http_connection : http_connection_interface, boost::noncopyable
+{
+    http_connection(http_request_system& system);
+    ~http_connection();
+
+    http_response
+    perform_request(
+        check_in_interface& check_in,
+        progress_reporter_interface& reporter,
+        http_request const& request);
+
+ private:
+    http_connection_impl* impl_;
+};
 
 }
 

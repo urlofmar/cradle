@@ -56,9 +56,9 @@ struct http_connection_impl
     CURL* curl;
 };
 
-http_connection::http_connection()
+http_connection::http_connection(http_request_system& system)
 {
-    impl = new http_connection_impl;
+    impl_ = new http_connection_impl;
 
     CURL* curl = curl_easy_init();
     if (!curl)
@@ -82,13 +82,13 @@ http_connection::http_connection()
     #endif
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2);
 
-    impl->curl = curl;
+    impl_->curl = curl;
 }
 http_connection::~http_connection()
 {
-    curl_easy_cleanup(impl->curl);
+    curl_easy_cleanup(impl_->curl);
 
-    delete impl;
+    delete impl_;
 }
 
 struct send_transmission_state
@@ -229,13 +229,12 @@ make_blob(receive_transmission_state&& transmission)
 }
 
 http_response
-perform_http_request(
+http_connection::perform_request(
     check_in_interface& check_in,
     progress_reporter_interface& reporter,
-    http_connection& connection,
     http_request const& request)
 {
-    CURL* curl = connection.impl->curl;
+    CURL* curl = impl_->curl;
     assert(curl);
 
     // Set the headers for the request.
