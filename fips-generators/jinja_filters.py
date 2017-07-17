@@ -38,7 +38,7 @@ def cpp_type_for_schema(schema, omissible=False):
             cpp_type_for_schema(map_info.value_schema) + ">"
 
     cases = {
-        "nil_t": lambda _: "cradle::nil_t",
+        "nil_type": lambda _: "cradle::nil_t",
         "boolean_type": lambda _: "bool",
         "datetime_type": lambda _: "boost::posix_time::ptime",
         "integer_type": lambda _: "cradle::integer",

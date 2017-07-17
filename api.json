@@ -938,6 +938,174 @@
                }
             }
          }
+      },
+      {
+         "description": "",
+         "name": "calculation_queue_type",
+         "schema": {
+            "enum_type": {
+               "values": {
+                  "pending": {
+                     "description": ""
+                  },
+                  "ready": {
+                     "description": ""
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "calculation_calculating_status",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "progress": {
+                     "description": "",
+                     "schema": {
+                        "float_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "calculation_uploading_status",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "progress": {
+                     "description": "",
+                     "schema": {
+                        "float_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "calculation_failure_status",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "code": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "error": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "message": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "calculation_status",
+         "schema": {
+            "union_type": {
+               "members": {
+                  "calculating": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_calculating_status"
+                        }
+                     }
+                  },
+                  "canceled": {
+                     "description": "",
+                     "schema": {
+                        "nil_type": {}
+                     }
+                  },
+                  "completed": {
+                     "description": "",
+                     "schema": {
+                        "nil_type": {}
+                     }
+                  },
+                  "failed": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_failure_status"
+                        }
+                     }
+                  },
+                  "generating": {
+                     "description": "",
+                     "schema": {
+                        "nil_type": {}
+                     }
+                  },
+                  "queued": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_queue_type"
+                        }
+                     }
+                  },
+                  "uploading": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_uploading_status"
+                        }
+                     }
+                  },
+                  "waiting": {
+                     "description": "",
+                     "schema": {
+                        "nil_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "thinknode_session",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "api_url": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "access_token": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
       }
    ],
    "upgrades": []

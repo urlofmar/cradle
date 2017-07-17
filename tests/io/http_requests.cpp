@@ -13,10 +13,10 @@ static http_request_system the_http_request_system;
 http_response
 perform_simple_request(http_request const& request)
 {
-    http_connection connection;
+    http_connection connection(the_http_request_system);
     null_check_in check_in;
     null_progress_reporter reporter;
-    return perform_http_request(check_in, reporter, connection, request);
+    return connection.perform_request(check_in, reporter, request);
 }
 
 TEST_CASE("request headers", "[io][http]")
@@ -193,10 +193,10 @@ TEST_CASE("interrupted request", "[io][http]")
     auto request = make_get_request("http://postman-echo.com/delay/10");
     try
     {
-        http_connection connection;
+        http_connection connection(the_http_request_system);
         canceling_check_in check_in;
         null_progress_reporter reporter;
-        perform_http_request(check_in, reporter, connection, request);
+        connection.perform_request(check_in, reporter, request);
         FAIL("no exception thrown");
     }
     catch (canceled& )

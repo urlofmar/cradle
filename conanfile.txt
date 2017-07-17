@@ -7,6 +7,10 @@ cotire/1.7.6@smspillaz/cotire
 libcurl/7.47.1@lasote/stable
 OpenSSL/1.0.2k@lasote/stable
 sqlite3/3.14.1@paulobrizolara/stable
+FakeIt/master@gasuketsu/stable
+
+[options]
+FakeIt:integration=catch
 
 [generators]
 cmake

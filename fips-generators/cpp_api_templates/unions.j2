@@ -93,6 +93,9 @@ bool static inline
 operator>=({{type_info.name}} const& a, {{type_info.name}} const& b)
 { return !(a < b); }
 
+std::ostream&
+operator<<(std::ostream& stream, {{type_info.name}} const& x);
+
 size_t
 deep_sizeof({{type_info.name}} const& x);
 
@@ -189,6 +192,12 @@ operator<({{type_info.name}} const& a, {{type_info.name}} const& b)
     {% endfor %}
     }
     return false;
+}
+
+std::ostream&
+operator<<(std::ostream& stream, {{type_info.name}} const& x)
+{
+    return stream << to_value(x);
 }
 
 size_t
