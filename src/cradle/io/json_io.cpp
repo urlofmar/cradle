@@ -53,21 +53,6 @@ parse_time(std::string const& s)
             parsed_text_info(s));
 }
 
-string static
-to_value_string(ptime const& t)
-{
-    namespace bt = boost::posix_time;
-    std::ostringstream os;
-    os.imbue(
-        std::locale(std::cout.getloc(),
-            new bt::time_facet("%Y-%m-%dT%H:%M")));
-    os << t;
-    // Add the seconds and timezone manually to match Thinknode.
-    os << (boost::format(":%02d.%03dZ") % t.time_of_day().seconds()
-        % (t.time_of_day().total_milliseconds() % 1000));
-    return os.str();
-}
-
 // Read a JSON value into a CRADLE value.
 value static
 read_json_value(nlohmann::json const& json)

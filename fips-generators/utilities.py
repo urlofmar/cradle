@@ -17,7 +17,6 @@ def type_schemas_definition_order(type_dict):
         """Recursively add the given type and any types included within it to :type_order."""
         if union_tag(type_info.schema) == "structure_type":
             for _, field_info in type_info.schema.structure_type.fields.__dict__.items():
-                # TODO: Check app name
                 if union_tag(field_info.schema) == "named_type":
                     add_type_tree(type_dict[field_info.schema.named_type.name])
         type_order[type_info.name] = True

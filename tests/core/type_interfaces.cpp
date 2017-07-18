@@ -175,16 +175,8 @@ TEST_CASE("map type interface", "[core]")
 
 TEST_CASE("generated type interfaces", "[core]")
 {
-    // TODO: Do this more thoroughly.
     {
         INFO("Test a generated structure type.");
         test_regular_value(api_structure_info());
     }
-    // TODO: This isn't going to work until unions can be default initialized.
-    // {
-    //     INFO("Test a generated union type.");
-    //     test_regular_value(make_api_type_info_with_nil_type(api_nil_type()));
-    //     INFO("Test a generated union tag type.");
-    //     test_regular_value(api_type_info_tag());
-    // }
 }

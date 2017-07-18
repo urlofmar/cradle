@@ -10,40 +10,47 @@ namespace cradle {
 
 // BOOL
 
-void to_value(value* v, bool x)
+void
+to_value(value* v, bool x)
 {
     *v = x;
 }
-void from_value(bool* x, value const& v)
+
+void
+from_value(bool* x, value const& v)
 {
     *x = cast<bool>(v);
 }
 
 // STRING
 
-void to_value(value* v, string const& x)
+void
+to_value(value* v, string const& x)
 {
     *v = x;
 }
-void from_value(string* x, value const& v)
+
+void
+from_value(string* x, value const& v)
 {
-    // TODO: Fix this logic elsewhere.
     // Strings are also used to encode datetimes in JSON, so it's possible we
     // might misinterpret a string as a datetime.
-    //if (v.type() == value_type::DATETIME)
-    //    *x = to_value_string(cast<time>(v));
-    //else
+    if (v.type() == value_type::DATETIME)
+        *x = to_value_string(cast<ptime>(v));
+    else
         *x = cast<string>(v);
 }
 
 // INTEGERS
 
 #define CRADLE_DEFINE_INTEGER_INTERFACE(T) \
-    void to_value(value* v, T x) \
+    void \
+    to_value(value* v, T x) \
     { \
         *v = boost::numeric_cast<integer>(x); \
     } \
-    void from_value(T* x, value const& v) \
+    void \
+    from_value(T* x, value const& v) \
     { \
         /* Floats can also be acceptable as integers if they convert properly. */ \
         if (v.type() == value_type::FLOAT) \
@@ -66,11 +73,13 @@ CRADLE_DEFINE_INTEGER_INTERFACE(unsigned long long)
 // FLOATS
 
 #define CRADLE_DEFINE_FLOAT_INTERFACE(T) \
-    void to_value(value* v, T x) \
+    void \
+    to_value(value* v, T x) \
     { \
         *v = double(x); \
     } \
-    void from_value(T* x, value const& v) \
+    void \
+    from_value(T* x, value const& v) \
     { \
         /* Integers can also acceptable as floats if they convert properly. */ \
         if (v.type() == value_type::INTEGER) \
@@ -120,18 +129,22 @@ to_string(date const& d)
     return os.str();
 }
 
-void to_value(value* v, date const& x)
+void
+to_value(value* v, date const& x)
 {
     *v = to_string(x);
 }
-void from_value(date* x, value const& v)
+
+void
+from_value(date* x, value const& v)
 {
     *x = parse_date(cast<string>(v));
 }
 
 // PTIME
 
-string to_string(ptime const& t)
+string
+to_string(ptime const& t)
 {
     namespace bt = boost::posix_time;
     std::ostringstream os;
@@ -142,11 +155,29 @@ string to_string(ptime const& t)
     return os.str();
 }
 
-void to_value(value* v, ptime const& x)
+string
+to_value_string(ptime const& t)
+{
+    namespace bt = boost::posix_time;
+    std::ostringstream os;
+    os.imbue(
+        std::locale(std::cout.getloc(),
+            new bt::time_facet("%Y-%m-%dT%H:%M")));
+    os << t;
+    // Add the seconds and timezone manually to match Thinknode.
+    os << (boost::format(":%02d.%03dZ") % t.time_of_day().seconds()
+        % (t.time_of_day().total_milliseconds() % 1000));
+    return os.str();
+}
+
+void
+to_value(value* v, ptime const& x)
 {
     *v = x;
 }
-void from_value(ptime* x, value const& v)
+
+void
+from_value(ptime* x, value const& v)
 {
     *x = cast<ptime>(v);
 }

@@ -16,13 +16,16 @@ namespace cradle {
 
 // NIL
 
-static inline bool operator==(nil_t a, nil_t b)
+bool static inline
+operator==(nil_t a, nil_t b)
 { return true; }
 
-static inline bool operator!=(nil_t a, nil_t b)
+bool static inline
+operator!=(nil_t a, nil_t b)
 { return false; }
 
-static inline bool operator<(nil_t a, nil_t b)
+bool static inline
+operator<(nil_t a, nil_t b)
 { return false; }
 
 template<>
@@ -35,18 +38,26 @@ struct type_info_query<nil_t>
     }
 };
 
-static inline size_t deep_sizeof(nil_t)
-{ return 0; }
+size_t static inline
+deep_sizeof(nil_t)
+{
+    return 0;
+}
 
 struct value;
 
 // Note that we don't have to do anything here because callers of to_value are required to
 // provide an uninitialized value, which defaults to :nil.
-static inline void to_value(value* v, nil_t n) {}
+void static inline
+to_value(value* v, nil_t n)
+{}
 
-static inline void from_value(nil_t* n, value const& v) {}
+void static inline
+from_value(nil_t* n, value const& v)
+{}
 
-static inline size_t hash_value(nil_t x)
+size_t static inline
+hash_value(nil_t x)
 {
     return 0;
 }
@@ -63,18 +74,29 @@ struct type_info_query<bool>
     }
 };
 
-static inline size_t deep_sizeof(bool)
-{ return sizeof(bool); }
+size_t static inline
+deep_sizeof(bool)
+{
+    return sizeof(bool);
+}
 
-void to_value(value* v, bool x);
-void from_value(bool* x, value const& v);
+void
+to_value(value* v, bool x);
+
+void
+from_value(bool* x, value const& v);
 
 // INTEGERS AND FLOATS
 
 #define CRADLE_DECLARE_NUMBER_INTERFACE(T) \
-    void to_value(value* v, T x); \
-    void from_value(T* x, value const& v); \
-    static inline size_t deep_sizeof(T) { return sizeof(T); }
+    void \
+    to_value(value* v, T x); \
+    \
+    void \
+    from_value(T* x, value const& v); \
+    \
+    size_t static inline \
+    deep_sizeof(T) { return sizeof(T); }
 
 #define CRADLE_DECLARE_INTEGER_INTERFACE(T) \
     template<> \
@@ -86,8 +108,13 @@ void from_value(bool* x, value const& v);
             *info = make_api_type_info_with_integer_type(api_integer_type()); \
         } \
     }; \
-    integer to_integer(T x); \
-    void from_integer(T* x, integer n); \
+    \
+    integer \
+    to_integer(T x); \
+    \
+    void \
+    from_integer(T* x, integer n); \
+    \
     CRADLE_DECLARE_NUMBER_INTERFACE(T)
 
 CRADLE_DECLARE_INTEGER_INTERFACE(signed char)
@@ -128,11 +155,17 @@ struct type_info_query<string>
     }
 };
 
-static inline size_t deep_sizeof(string const& x)
-{ return sizeof(string) + sizeof(char) * x.length(); }
+size_t static inline
+deep_sizeof(string const& x)
+{
+    return sizeof(string) + sizeof(char) * x.length();
+}
 
-void to_value(value* v, string const& x);
-void from_value(string* x, value const& v);
+void
+to_value(value* v, string const& x);
+
+void
+from_value(string* x, value const& v);
 
 // DATE
 
@@ -141,8 +174,11 @@ using boost::gregorian::date;
 // Get the preferred CRADLE string representation of a date (YYYY-MM-DD).
 string to_string(date const& d);
 
-void to_value(value* v, date const& x);
-void from_value(date* x, value const& v);
+void
+to_value(value* v, date const& x);
+
+void
+from_value(date* x, value const& v);
 
 template<>
 struct type_info_query<date>
@@ -154,7 +190,7 @@ struct type_info_query<date>
     }
 };
 
-static inline size_t
+size_t static inline
 deep_sizeof(date)
 {
     return sizeof(date);
@@ -164,7 +200,7 @@ deep_sizeof(date)
 
 namespace boost { namespace gregorian {
 
-static inline size_t
+size_t static inline
 hash_value(date const& x)
 {
     return cradle::invoke_hash(cradle::to_string(x));
@@ -178,11 +214,19 @@ namespace cradle {
 
 using boost::posix_time::ptime;
 
-// Get the preferred CRADLE string representation of a ptime.
+// Get the preferred user-readable string representation of a ptime.
 string to_string(ptime const& t);
 
-void to_value(value* v, ptime const& x);
-void from_value(ptime* x, value const& v);
+// Get the preferred representation for encoding a ptime as a string.
+// (This preserves milliseconds.)
+string
+to_value_string(ptime const& t);
+
+void
+to_value(value* v, ptime const& x);
+
+void
+from_value(ptime* x, value const& v);
 
 template<>
 struct type_info_query<ptime>
@@ -194,7 +238,7 @@ struct type_info_query<ptime>
     }
 };
 
-static inline size_t
+size_t static inline
 deep_sizeof(ptime)
 {
     return sizeof(ptime);
@@ -204,7 +248,7 @@ deep_sizeof(ptime)
 
 namespace boost { namespace posix_time {
 
-static inline size_t
+size_t static inline
 hash_value(ptime const& x)
 {
     return cradle::invoke_hash(cradle::to_string(x));
@@ -219,7 +263,7 @@ namespace cradle {
 bool
 operator==(blob const& a, blob const& b);
 
-static inline bool
+bool static inline
 operator!=(blob const& a, blob const& b)
 { return !(a == b); }
 
@@ -236,7 +280,7 @@ struct type_info_query<blob>
     }
 };
 
-static inline size_t
+size_t static inline
 deep_sizeof(blob const& b)
 {
     // This ignores the size of the ownership holder, but that's not a big deal.
@@ -263,7 +307,8 @@ make_string_blob(string&& s);
 // STD::VECTOR
 
 template<class T>
-void to_value(value* v, std::vector<T> const& x)
+void
+to_value(value* v, std::vector<T> const& x)
 {
     value_list l;
     size_t n_elements = x.size();
@@ -274,8 +319,10 @@ void to_value(value* v, std::vector<T> const& x)
     }
     *v = std::move(l);
 }
+
 template<class T>
-void from_value(std::vector<T>* x, value const& v)
+void
+from_value(std::vector<T>* x, value const& v)
 {
     value_list const& l = cast<value_list>(v);
     size_t n_elements = l.size();
@@ -308,7 +355,8 @@ struct type_info_query<std::vector<T>>
 };
 
 template<class T>
-size_t deep_sizeof(std::vector<T> const& x)
+size_t
+deep_sizeof(std::vector<T> const& x)
 {
     size_t size = sizeof(std::vector<T>);
     for (auto const& i : x)
@@ -319,7 +367,8 @@ size_t deep_sizeof(std::vector<T> const& x)
 // STD::ARRAY
 
 template<class T, size_t N>
-void to_value(value* v, std::array<T,N> const& x)
+void
+to_value(value* v, std::array<T,N> const& x)
 {
     value_list l;
     l.resize(N);
@@ -329,8 +378,10 @@ void to_value(value* v, std::array<T,N> const& x)
     }
     *v = std::move(l);
 }
+
 template<class T, size_t N>
-void from_value(std::array<T,N>* x, value const& v)
+void
+from_value(std::array<T,N>* x, value const& v)
 {
     value_list const& l = cast<value_list>(v);
     check_array_size(N, l.size());
@@ -362,7 +413,8 @@ struct type_info_query<std::array<T,N>>
 };
 
 template<class T, size_t N>
-size_t deep_sizeof(std::array<T,N> const& x)
+size_t
+deep_sizeof(std::array<T,N> const& x)
 {
     size_t size = 0;
     for (auto const& i : x)
@@ -373,15 +425,18 @@ size_t deep_sizeof(std::array<T,N> const& x)
 // STD::MAP
 
 template<class Key, class Value>
-void to_value(value* v, std::map<Key,Value> const& x)
+void
+to_value(value* v, std::map<Key,Value> const& x)
 {
     value_map record;
     for (auto const& i : x)
         to_value(&record[to_value(i.first)], i.second);
     *v = std::move(record);
 }
+
 template<class Key, class Value>
-void from_value(std::map<Key,Value>* x, value const& v)
+void
+from_value(std::map<Key,Value>* x, value const& v)
 {
     x->clear();
     value_map const& record = cast<value_map>(v);
@@ -413,7 +468,8 @@ struct type_info_query<std::map<Key,Value>>
 };
 
 template<class Key, class Value>
-size_t deep_sizeof(std::map<Key,Value> const& x)
+size_t
+deep_sizeof(std::map<Key,Value> const& x)
 {
     size_t size = sizeof(std::map<Key,Value>);
     for (auto const& i : x)
@@ -434,14 +490,16 @@ struct type_info_query<optional<T>>
 };
 
 template<class T>
-size_t deep_sizeof(optional<T> const& x)
+size_t
+deep_sizeof(optional<T> const& x)
 {
     using cradle::deep_sizeof;
     return sizeof(optional<T>) + (x ? deep_sizeof(*x) : 0);
 }
 
 template<class T>
-void to_value(cradle::value* v, optional<T> const& x)
+void
+to_value(cradle::value* v, optional<T> const& x)
 {
     cradle::value_map record;
     if (x)
@@ -459,7 +517,8 @@ CRADLE_DEFINE_EXCEPTION(invalid_optional_type)
 CRADLE_DEFINE_ERROR_INFO(string, optional_type_tag)
 
 template<class T>
-void from_value(optional<T>* x, cradle::value const& v)
+void
+from_value(optional<T>* x, cradle::value const& v)
 {
     cradle::value_map const& record = cradle::cast<cradle::value_map>(v);
     string type;
@@ -485,7 +544,8 @@ void from_value(optional<T>* x, cradle::value const& v)
 namespace boost {
 
 template<class T>
-size_t hash_value(optional<T> const& x)
+size_t
+hash_value(optional<T> const& x)
 {
     return x ? cradle::invoke_hash(x.get()) : 0;
 }

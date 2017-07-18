@@ -48,7 +48,7 @@ def cpp_type_for_schema(schema, omissible=False):
         "optional_type": lambda t: "boost::optional<" + cpp_type_for_schema(t) + ">",
         "array_type": cpp_type_for_array,
         "map_type": cpp_type_for_map,
-        "reference_type": lambda _: "std::string", # TODO
+        "reference_type": lambda _: "std::string",
         "named_type": lambda t: t.app + "::" + t.name,
         "dynamic_type": lambda t: "cradle::value"
     }
