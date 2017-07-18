@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-enable_testing()
-
 # Set up fips.
 get_filename_component(FIPS_ROOT_DIR "../fips" ABSOLUTE)
 include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
@@ -13,30 +11,30 @@ fips_project(cradle)
 # Run Conan to install external C++ libraries.
 # Conan and fips disagree on which runtime we should use for MSVC, so
 # we need to manually sort that out for MSVC builds.
-set(conan_options)
+set(CONAN_OPTIONS)
 if (FIPS_MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(conan_options
+        set(CONAN_OPTIONS
             -s compiler=Visual\ Studio -s build_type=Debug -s compiler.runtime=MTd)
     else()
-        set(conan_options
+        set(CONAN_OPTIONS
             -s compiler=Visual\ Studio -s build_type=Release -s compiler.runtime=MT)
     endif()
 elseif(FIPS_GCC)
-    set(conan_options -s compiler=gcc -s compiler.libcxx=libstdc++11 -o Boost:fPIC=True)
+    set(CONAN_OPTIONS -s compiler=gcc -s compiler.libcxx=libstdc++11 -o Boost:fPIC=True)
 endif()
 execute_process(
-    COMMAND conan install ${CMAKE_SOURCE_DIR} ${conan_options} --build missing
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    RESULT_VARIABLE conan_result)
-if(NOT ${conan_result} EQUAL 0)
+    COMMAND conan install ${PROJECT_SOURCE_DIR} ${CONAN_OPTIONS} --build missing
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    RESULT_VARIABLE CONAN_RESULT)
+if(NOT ${CONAN_RESULT} EQUAL 0)
     message(FATAL_ERROR "Conan failed.")
 endif()
 
 # And now set up CMake to use those libraries.
 # Note that Conan seems to insert flags that don't make sense and cause warnings.
 set(original_cxx_flags "${CMAKE_CXX_FLAGS}")
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+include(${PROJECT_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 set(CMAKE_CXX_FLAGS "${original_cxx_flags}")
 
@@ -49,7 +47,7 @@ fips_include_directories(${CONAN_INCLUDE_DIRS}
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CONAN_COTIRE_ROOT}/cmake/cotire")
 include(cotire)
 
-fips_include_directories(${CMAKE_SOURCE_DIR}/src)
+fips_include_directories(${PROJECT_SOURCE_DIR}/src)
 
 # Enable advanced C++ features.
 if(FIPS_GCC)
@@ -87,25 +85,46 @@ if(FIPS_MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG:FASTLINK")
 endif()
 
-# Exclude as much of the Windows API as possible to avoid #define pollution and speed up builds.
-# Note that this has to be done via command-line arguments due to precompilation.
+# Exclude as much of the Windows API as possible to avoid #define pollution
+# and speed up builds. Note that this has to be done via command-line arguments
+# due to the use of precompiled hearders.
 if(FIPS_MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32_LEAN_AND_MEAN /DVC_EXTRALEAN /DNORASTEROPS /DOEMRESOURCE /DNOATOM /DNOCLIPBOARD /DNOCOLOR /DNOCTRLMGR /DNODRAWTEXT /DNOGDI /DNOKERNEL /DNONLS /DNOMINMAX /DNOSOUND /DNOKANJI /DNOHELP /DNOPROFILER /DNODEFERWINDOWPOS /DNOMCX")
 endif()
 
 # Set compiler flags for instrumenting test coverage.
-if(FIPS_GCC)
+if(FIPS_GCC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Enabling gcov support")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fprofile-arcs -ftest-coverage")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
 endif()
 
-fips_include_directories(${CMAKE_BINARY_DIR}/generated)
+set_property (SOURCE "api.json" PROPERTY COTIRE_DEPENDENCY "TRUE")
 
+fips_include_directories(${PROJECT_BINARY_DIR}/generated)
+
+# Exclude from precompiled headers any local headers or overly specific libraries.
+set_property(
+    DIRECTORY
+    PROPERTY
+        COTIRE_PREFIX_HEADER_IGNORE_PATH
+            ${PROJECT_SOURCE_DIR}
+            ${CONAN_MSGPACK-C_ROOT}
+            ${CONAN_CATCH_ROOT}
+            ${CONAN_JSON_ROOT}
+            ${CONAN_SQLITE3_ROOT})
+
+# Add the test runner.
 fips_begin_app(test_runner cmdline)
     fips_src(src)
     fips_src(tests)
+    # Exclude the test runner source file from Cotire because it acts as the
+    # "main" file for Catch and needs to include Catch specially.
+    set_source_files_properties(
+        ${PROJECT_SOURCE_DIR}/tests/runner.cpp
+        PROPERTIES
+            COTIRE_EXCLUDED ON)
     fips_dir(.)
     fips_generate(
         FROM api.json
@@ -115,29 +134,19 @@ fips_begin_app(test_runner cmdline)
         HEADER "generated/cradle/api_types.hpp"
         ARGS "{ app_name: cradle }")
 fips_end_app()
-
 target_link_libraries(test_runner ${CONAN_LIBS})
-
-# Exclude from precompiled headers any local headers or overly specific libraries.
-set_property(
-    DIRECTORY
-    PROPERTY
-        COTIRE_PREFIX_HEADER_IGNORE_PATH
-            ${CMAKE_SOURCE_DIR}
-            ${CONAN_MSGPACK-C_ROOT}
-            ${CONAN_CATCH_ROOT}
-            ${CONAN_JSON_ROOT})
-
-# Exclude the test runner source file from Cotire because it acts as the "main" file for Catch
-# and needs to include Catch specially.
-set_source_files_properties(
-    ${CMAKE_SOURCE_DIR}/tests/runner.cpp
-    PROPERTIES
-        COTIRE_EXCLUDED ON)
-
-set_property (SOURCE "api.json" PROPERTY COTIRE_DEPENDENCY "TRUE")
-
-# Invoke cotire.
 cotire(test_runner)
+
+# Add the coverage target.
+if(FIPS_GCC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_custom_target(test_coverage
+        COMMAND lcov --directory . --zerocounters
+        COMMAND test_runner
+        COMMAND lcov --directory . --capture --output-file ${PROJECT_SOURCE_DIR}/.lcov.info
+        COMMAND gcovr . --root=${PROJECT_SOURCE_DIR} --exclude=tests/ --output=${PROJECT_SOURCE_DIR}/.gcovr.txt
+        COMMAND cat ${PROJECT_SOURCE_DIR}/.gcovr.txt
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+        DEPENDS test_runner)
+endif()
 
 fips_finish()

@@ -209,15 +209,6 @@ struct scoped_curl_slist
     curl_slist* list;
 };
 
-std::vector<std::string> static
-extract_curl_slist_strings(curl_slist* list)
-{
-    std::vector<std::string> strings;
-    for (curl_slist* i = list; i != 0; i = i->next)
-        strings.push_back(i->data);
-    return strings;
-}
-
 blob static
 make_blob(receive_transmission_state&& transmission)
 {
