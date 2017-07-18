@@ -12,9 +12,8 @@ test:
     - export CXX="g++-5" CC="gcc-5"
     - ./fips set config linux-make-debug
     - ./fips gen
-    - ./fips build
   script:
-    - ./fips run test_runner
+    - ./fips make test_coverage
 
 codeclimate:
   image: docker:latest
