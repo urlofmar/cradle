@@ -1,4 +1,4 @@
-test:
+coverage:
   image: ubuntu:artful
   before_script:
     - apt-get update -qy
