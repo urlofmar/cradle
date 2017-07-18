@@ -9,6 +9,7 @@ test:
     - python --version
     - pip install conan
     - pip install jinja2
+    - pip install gcovr
     - export CXX="g++-5" CC="gcc-5"
     - ./fips set config linux-make-debug
     - ./fips gen
