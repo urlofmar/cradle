@@ -143,7 +143,7 @@ if(FIPS_GCC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
         COMMAND lcov --directory . --zerocounters
         COMMAND test_runner
         COMMAND lcov --directory . --capture --output-file ${PROJECT_SOURCE_DIR}/.lcov.info
-        COMMAND gcovr . --root=${PROJECT_SOURCE_DIR} --exclude=tests/ --output=${PROJECT_SOURCE_DIR}/.gcovr.txt
+        COMMAND gcovr . --root=${PROJECT_SOURCE_DIR}/src --output=${PROJECT_SOURCE_DIR}/.gcovr.txt
         COMMAND cat ${PROJECT_SOURCE_DIR}/.gcovr.txt
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         DEPENDS test_runner)
