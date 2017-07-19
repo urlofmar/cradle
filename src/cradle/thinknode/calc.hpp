@@ -2,6 +2,7 @@
 #define CRADLE_THINKNODE_CALC_HPP
 
 #include <cradle/common.hpp>
+#include <boost/function.hpp>
 
 namespace cradle {
 
