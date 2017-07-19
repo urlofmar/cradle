@@ -9,8 +9,8 @@ fips_setup()
 fips_project(cradle)
 
 # Run Conan to install external C++ libraries.
-# Conan and fips disagree on which runtime we should use for MSVC, so
-# we need to manually sort that out for MSVC builds.
+# Conan and fips disagree on various build options, so we need to override
+# some of Conan's defaults.
 set(CONAN_OPTIONS)
 if (FIPS_MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
