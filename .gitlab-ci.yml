@@ -2,11 +2,13 @@ coverage:
   image: ubuntu:artful
   cache:
     paths:
+    - apt-cache
     - conan-cache
-    - python-env
   before_script:
+    - export APT_CACHE_DIR=`pwd`/apt-cache
+    - mkdir -pv $APT_CACHE_DIR
     - apt-get update -qy
-    - apt-get install -y python3 python3-pip g++-5 gcc-5 lcov cmake git curl
+    - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y python3 python3-pip g++-5 gcc-5 lcov cmake git curl
     - pip3 install virtualenv
     - virtualenv --python=python3 python-env
     - source python-env/bin/activate
