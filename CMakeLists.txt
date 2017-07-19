@@ -109,7 +109,7 @@ set_property(
     DIRECTORY
     PROPERTY
         COTIRE_PREFIX_HEADER_IGNORE_PATH
-            ${PROJECT_SOURCE_DIR}
+            ${PROJECT_SOURCE_DIR}/src
             ${CONAN_MSGPACK-C_ROOT}
             ${CONAN_CATCH_ROOT}
             ${CONAN_JSON_ROOT}
