@@ -8,6 +8,7 @@ libcurl/7.47.1@lasote/stable
 OpenSSL/1.0.2k@lasote/stable
 sqlite3/3.14.1@paulobrizolara/stable
 FakeIt/master@gasuketsu/stable
+websocketpp/0.7.0@TyRoXx/stable
 
 [options]
 FakeIt:integration=catch

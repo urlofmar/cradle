@@ -35,7 +35,7 @@ query_calculation_status(
 void
 long_poll_calculation_status(
     check_in_interface& check_in,
-    boost::function<void (calculation_status const&)> const& process_status,
+    std::function<void (calculation_status const&)> const& process_status,
     http_connection_interface& connection,
     thinknode_session const& session,
     string const& context_id,
