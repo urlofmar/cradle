@@ -524,6 +524,16 @@ record_usage_to_db(disk_cache_impl const& cache, int64_t id)
 }
 
 void static
+write_usage_records(disk_cache_impl& cache)
+{
+    db_transaction t(cache);
+    for (auto const& record : cache.usage_record_buffer)
+        record_usage_to_db(cache, record);
+    t.commit();
+    cache.usage_record_buffer.clear();
+}
+
+void static
 initialize(disk_cache_impl& cache, disk_cache_config const& config)
 {
     cache.db = 0;
@@ -774,13 +784,7 @@ disk_cache::write_usage_records()
     boost::lock_guard<boost::mutex> lock(cache.mutex);
     check_initialization(cache);
 
-    {
-        db_transaction t(cache);
-        for (auto const& record : cache.usage_record_buffer)
-            record_usage_to_db(cache, record);
-        t.commit();
-        cache.usage_record_buffer.clear();
-    }
+    cradle::write_usage_records(cache);
 }
 
 void
@@ -790,10 +794,11 @@ disk_cache::do_idle_processing()
     boost::lock_guard<boost::mutex> lock(cache.mutex);
     check_initialization(cache);
 
-    if ((boost::posix_time::microsec_clock::local_time() -
+    if (!cache.usage_record_buffer.empty() &&
+        (boost::posix_time::microsec_clock::local_time() -
             cache.latest_activity).total_milliseconds() > 1000)
     {
-        this->write_usage_records();
+        cradle::write_usage_records(cache);
     }
 }
 

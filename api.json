@@ -1106,6 +1106,107 @@
                }
             }
          }
+      },
+      {
+         "description": "",
+         "name": "websocket_registration_message",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "name": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "websocket_test_query",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "message": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "websocket_test_response",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "name": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "message": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "websocket_client_message",
+         "schema": {
+            "union_type": {
+               "members": {
+                  "registration": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                            "app": "cradle",
+                            "name": "websocket_registration_message"
+                        }
+                     }
+                  },
+                  "test": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                            "app": "cradle",
+                            "name": "websocket_test_query"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "websocket_server_message",
+         "schema": {
+            "union_type": {
+               "members": {
+                  "test": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                            "app": "cradle",
+                            "name": "websocket_test_response"
+                        }
+                     }
+                  }
+               }
+            }
+         }
       }
    ],
    "upgrades": []
