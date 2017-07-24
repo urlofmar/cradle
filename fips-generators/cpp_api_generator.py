@@ -2,7 +2,7 @@
 import genutil
 
 # fips uses this to version the generator.
-Version = 7
+Version = 8
 
 # Note that other imports are deferred to the points where they're needed as
 # this seems to speed up build times in cases where the generated files are

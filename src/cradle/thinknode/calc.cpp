@@ -2,8 +2,8 @@
 
 #include <boost/format.hpp>
 
-#include <cradle/io/http_requests.hpp>
 #include <cradle/core/monitoring.hpp>
+#include <cradle/io/http_requests.hpp>
 
 namespace cradle {
 
