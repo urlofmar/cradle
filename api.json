@@ -1207,6 +1207,312 @@
                }
             }
          }
+      },
+      {
+         "description": "",
+         "name": "calculation_request",
+         "schema": {
+            "union_type": {
+               "members": {
+                  "array": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_array_request"
+                        }
+                     }
+                  },
+                  "function": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "function_application"
+                        }
+                     }
+                  },
+                  "let": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "let_calculation_request"
+                        }
+                     }
+                  },
+                  "meta": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "meta_calculation_request"
+                        }
+                     }
+                  },
+                  "object": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_object_request"
+                        }
+                     }
+                  },
+                  "property": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_property_request"
+                        }
+                     }
+                  },
+                  "reference": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "value": {
+                     "description": "",
+                     "schema": {
+                        "dynamic_type": {}
+                     }
+                  },
+                  "variable": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "function_application",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "account": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "app": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
+                  "args": {
+                     "description": "",
+                     "schema": {
+                        "array_type": {
+                           "element_schema": {
+                              "named_type": {
+                                 "app": "cradle",
+                                 "name": "calculation_request"
+                              }
+                           }
+                        }
+                     }
+                  },
+                  "name": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "calculation_array_request",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "item_schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  },
+                  "items": {
+                     "description": "",
+                     "schema": {
+                        "array_type": {
+                           "element_schema": {
+                              "named_type": {
+                                 "app": "cradle",
+                                 "name": "calculation_request"
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "calculation_object_request",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "properties": {
+                     "description": "",
+                     "schema": {
+                        "map_type": {
+                           "key_schema": {
+                              "string_type": {}
+                           },
+                           "value_schema": {
+                              "named_type": {
+                                 "app": "cradle",
+                                 "name": "calculation_request"
+                              }
+                           }
+                        }
+                     }
+                  },
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "calculation_property_request",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "field": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_request"
+                        }
+                     }
+                  },
+                  "object": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_request"
+                        }
+                     }
+                  },
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "meta_calculation_request",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "generator": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_request"
+                        }
+                     }
+                  },
+                  "schema": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "api_type_info"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "let_calculation_request",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "in": {
+                     "description": "",
+                     "schema": {
+                        "named_type": {
+                           "app": "cradle",
+                           "name": "calculation_request"
+                        }
+                     }
+                  },
+                  "variables": {
+                     "description": "",
+                     "schema": {
+                        "map_type": {
+                           "key_schema": {
+                              "string_type": {}
+                           },
+                           "value_schema": {
+                              "named_type": {
+                                 "app": "cradle",
+                                 "name": "calculation_request"
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      {
+         "description": "",
+         "name": "id_response",
+         "schema": {
+            "structure_type": {
+               "fields": {
+                  "id": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  }
+               }
+            }
+         }
       }
    ],
    "upgrades": []

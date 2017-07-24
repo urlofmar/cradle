@@ -26,11 +26,10 @@ value parse_json_response(http_response const& response)
 
 value parse_msgpack_response(http_response const& response)
 {
-    value v;
-    parse_msgpack_value(&v,
-        reinterpret_cast<uint8_t const*>(response.body.data),
-        response.body.size);
-    return v;
+    return
+        parse_msgpack_value(
+            reinterpret_cast<uint8_t const*>(response.body.data),
+            response.body.size);
 }
 
 string static
