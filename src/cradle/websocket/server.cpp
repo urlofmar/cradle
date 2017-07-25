@@ -50,6 +50,12 @@ struct websocket_server
         from_value(&message, parse_json_value(raw_message->get_payload()));
         switch (get_tag(message))
         {
+         case websocket_client_message_tag::KILL:
+          {
+            server_.close(hdl, websocketpp::close::status::going_away, "killed");
+            server_.stop();
+            break;
+          }
          case websocket_client_message_tag::REGISTRATION:
           {
             client.name = as_registration(message).name;

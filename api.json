@@ -1167,6 +1167,12 @@
          "schema": {
             "union_type": {
                "members": {
+                  "kill": {
+                     "description": "",
+                     "schema": {
+                        "nil_type": {}
+                     }
+                  },
                   "registration": {
                      "description": "",
                      "schema": {
