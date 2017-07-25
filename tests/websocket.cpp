@@ -11,7 +11,6 @@ using namespace cradle;
 TEST_CASE("websocket client/server", "[disk_cache]")
 {
     std::thread server_thread(run_websocket_server);
-    server_thread.detach();
     // Give the server time to start.
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
@@ -23,6 +22,8 @@ TEST_CASE("websocket client/server", "[disk_cache]")
             [&](websocket_server_message const& message)
             {
                 response = as_test(message);
+                client.send(
+                    make_websocket_client_message_with_kill(nil));
                 client.close();
             });
         client.set_open_handler(
@@ -30,16 +31,18 @@ TEST_CASE("websocket client/server", "[disk_cache]")
             {
                 client.send(
                     make_websocket_client_message_with_registration(
-                        websocket_registration_message{"kasey"}));
+                        websocket_registration_message{"Kasey"}));
                 client.send(
                     make_websocket_client_message_with_test(
-                        websocket_test_query{"hello"}));
+                        websocket_test_query{"Hello, Patches!"}));
             });
         client.connect("ws://localhost:41072");
         client.run();
     }
 
+    server_thread.join();
+
     REQUIRE(response);
-    REQUIRE(response->name == "kasey");
-    REQUIRE(response->message == "hello");
+    REQUIRE(response->name == "Kasey");
+    REQUIRE(response->message == "Hello, Patches!");
 }
