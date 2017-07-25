@@ -79,15 +79,6 @@
                         }
                      }
                   },
-                  "function_type": {
-                     "description": "",
-                     "schema": {
-                        "named_type": {
-                           "app": "cradle",
-                           "name": "api_function_type_info"
-                        }
-                     }
-                  },
                   "integer_type": {
                      "description": "",
                      "schema": {
@@ -130,15 +121,6 @@
                         "named_type": {
                            "app": "cradle",
                            "name": "api_type_info"
-                        }
-                     }
-                  },
-                  "record_type": {
-                     "description": "",
-                     "schema": {
-                        "named_type": {
-                           "app": "cradle",
-                           "name": "api_record_info"
                         }
                      }
                   },
@@ -465,6 +447,12 @@
          "schema": {
             "structure_type": {
                "fields": {
+                  "account": {
+                     "description": "",
+                     "schema": {
+                        "string_type": {}
+                     }
+                  },
                   "app": {
                      "description": "",
                      "schema": {
@@ -475,25 +463,6 @@
                      "description": "",
                      "schema": {
                         "string_type": {}
-                     }
-                  }
-               }
-            }
-         }
-      },
-      {
-         "description": "",
-         "name": "api_record_type_info",
-         "schema": {
-            "structure_type": {
-               "fields": {
-                  "schema": {
-                     "description": "",
-                     "schema": {
-                        "named_type": {
-                           "app": "cradle",
-                           "name": "api_type_info"
-                        }
                      }
                   }
                }
@@ -617,7 +586,7 @@
                      "schema": {
                         "named_type": {
                            "app": "cradle",
-                           "name": "api_type_info"
+                           "name": "api_function_type_info"
                         }
                      }
                   }
@@ -677,74 +646,6 @@
                         "named_type": {
                            "app": "cradle",
                            "name": "api_type_info"
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      },
-      {
-         "description": "",
-         "name": "api_record_named_type_info",
-         "schema": {
-            "structure_type": {
-               "fields": {
-                  "account": {
-                     "description": "",
-                     "omissible": true,
-                     "schema": {
-                        "string_type": {}
-                     }
-                  },
-                  "app": {
-                     "description": "",
-                     "omissible": true,
-                     "schema": {
-                        "string_type": {}
-                     }
-                  },
-                  "name": {
-                     "description": "",
-                     "schema": {
-                        "string_type": {}
-                     }
-                  }
-               }
-            }
-         }
-      },
-      {
-         "description": "",
-         "name": "api_record_named_type_schema",
-         "schema": {
-            "structure_type": {
-               "fields": {
-                  "named_type": {
-                     "description": "",
-                     "schema": {
-                        "named_type": {
-                           "app": "cradle",
-                           "name": "api_record_named_type_info"
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      },
-      {
-         "description": "",
-         "name": "api_record_info",
-         "schema": {
-            "structure_type": {
-               "fields": {
-                  "schema": {
-                     "description": "",
-                     "schema": {
-                        "named_type": {
-                           "app": "cradle",
-                           "name": "api_record_named_type_schema"
                         }
                      }
                   }
