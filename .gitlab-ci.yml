@@ -2,10 +2,12 @@ coverage:
   image: ubuntu:artful
   cache:
     paths:
+    - cache
     - conan-cache
   before_script:
     - apt-get update -qy
     - apt-get install -y python3 python3-pip g++-5 gcc-5 lcov cmake git curl
+    - export XDG_CACHE_HOME=$CI_PROJECT_DIR/cache
     - pip3 install virtualenv
     - virtualenv --python=python3 python-env
     - source python-env/bin/activate
