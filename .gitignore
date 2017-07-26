@@ -1,3 +1,4 @@
+.cache
 .fips-*
 .vscode
 .gcovr.txt

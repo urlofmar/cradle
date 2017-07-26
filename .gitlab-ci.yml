@@ -1,4 +1,4 @@
-coverage:
+test:
   image: ubuntu:artful
   cache:
     paths:
@@ -12,15 +12,14 @@ coverage:
     - virtualenv --python=python3 python-env
     - source python-env/bin/activate
     - python --version
-    - pip install conan
-    - pip install jinja2
-    - pip install gcovr
+    - pip install conan jinja2 gcovr pytest websocket-client
     - export CXX="g++-5" CC="gcc-5"
     - export CONAN_USER_HOME=`pwd`/conan-cache
     - ./fips set config linux-make-debug
     - ./fips gen
   script:
-    - ./fips make test_coverage
+    - ./fips make unit_test_coverage
+    - ./fips make integration_tests
 
 codeclimate:
   image: docker:latest

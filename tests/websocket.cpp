@@ -10,9 +10,9 @@ using namespace cradle;
 
 TEST_CASE("websocket client/server", "[disk_cache]")
 {
-    std::thread server_thread(run_websocket_server);
+    std::thread server_thread([](){ run_websocket_server(41072); });
     // Give the server time to start.
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     optional<websocket_test_response> response;
 

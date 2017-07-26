@@ -87,10 +87,10 @@ struct websocket_server
     }
 
     void
-    run()
+    run(uint16_t port)
     {
         server_.listen(
-            boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string("::1"), 41072));
+            boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string("::1"), port));
         server_.start_accept();
         server_.run();
     }
@@ -102,10 +102,10 @@ struct websocket_server
 };
 
 void
-run_websocket_server()
+run_websocket_server(uint16_t port)
 {
     websocket_server server;
-    server.run();
+    server.run(port);
 }
 
 }
