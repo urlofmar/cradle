@@ -36,10 +36,10 @@ struct type_info_query<{{type_info.name}}>
 // constructors
 {% for case_name, case_info in object_items(union_info.members) %}
 {{type_info.name}}
-make_{{type_info.name}}_with_{{case_name}}(
+construct_{{type_info.name}}_with_{{case_name}}(
     {{case_info.schema | cpp_type_for_schema}} const& x);
 {{type_info.name}}
-make_{{type_info.name}}_with_{{case_name}}(
+construct_{{type_info.name}}_with_{{case_name}}(
     {{case_info.schema | cpp_type_for_schema}}&& x);
 {% endfor %}
 
@@ -123,12 +123,12 @@ type_info_query<{{type_info.name}}>::get(api_type_info* info)
     api_named_type_reference ref;
     ref.app = "cradle";
     ref.name = "{{type_info.name}}";
-    *info = make_api_type_info_with_named_type(ref);
+    *info = construct_api_type_info_with_named_type(ref);
 }
 
 {% for case_name, case_info in object_items(union_info.members) %}
 {{type_info.name}}
-make_{{type_info.name}}_with_{{case_name}}(
+construct_{{type_info.name}}_with_{{case_name}}(
     {{case_info.schema | cpp_type_for_schema}} const& x)
 {
     {{type_info.name}} u;
@@ -137,7 +137,7 @@ make_{{type_info.name}}_with_{{case_name}}(
     return u;
 }
 {{type_info.name}}
-make_{{type_info.name}}_with_{{case_name}}(
+construct_{{type_info.name}}_with_{{case_name}}(
     {{case_info.schema | cpp_type_for_schema}}&& x)
 {
     {{type_info.name}} u;

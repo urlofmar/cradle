@@ -66,7 +66,7 @@ struct websocket_server
             websocket_test_response response;
             response.name = client.name;
             response.message = as_test(message).message;
-            this->send(hdl, make_websocket_server_message_with_test(response));
+            this->send(hdl, construct_websocket_server_message_with_test(response));
             break;
           }
         }

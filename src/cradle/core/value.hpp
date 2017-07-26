@@ -169,7 +169,7 @@ struct type_info_query<value>
     void static
     get(api_type_info* info)
     {
-        *info = make_api_type_info_with_dynamic_type(api_dynamic_type());
+        *info = construct_api_type_info_with_dynamic_type(api_dynamic_type());
     }
 };
 

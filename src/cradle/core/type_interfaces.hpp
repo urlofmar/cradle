@@ -34,7 +34,7 @@ struct type_info_query<nil_t>
     void static
     get(api_type_info* info)
     {
-        *info = make_api_type_info_with_nil_type(api_nil_type());
+        *info = construct_api_type_info_with_nil_type(api_nil_type());
     }
 };
 
@@ -70,7 +70,7 @@ struct type_info_query<bool>
     void static
     get(api_type_info* info)
     {
-        *info = make_api_type_info_with_boolean_type(api_boolean_type());
+        *info = construct_api_type_info_with_boolean_type(api_boolean_type());
     }
 };
 
@@ -105,7 +105,7 @@ from_value(bool* x, value const& v);
         void static \
         get(api_type_info* info) \
         { \
-            *info = make_api_type_info_with_integer_type(api_integer_type()); \
+            *info = construct_api_type_info_with_integer_type(api_integer_type()); \
         } \
     }; \
     \
@@ -135,7 +135,7 @@ CRADLE_DECLARE_INTEGER_INTERFACE(unsigned long long)
         void static \
         get(api_type_info* info) \
         { \
-            *info = make_api_type_info_with_float_type(api_float_type()); \
+            *info = construct_api_type_info_with_float_type(api_float_type()); \
         } \
     }; \
     CRADLE_DECLARE_NUMBER_INTERFACE(T)
@@ -151,7 +151,7 @@ struct type_info_query<string>
     void static
     get(api_type_info* info)
     {
-        *info = make_api_type_info_with_string_type(api_string_type());
+        *info = construct_api_type_info_with_string_type(api_string_type());
     }
 };
 
@@ -186,7 +186,7 @@ struct type_info_query<date>
     void static
     get(api_type_info* info)
     {
-        *info = make_api_type_info_with_string_type(api_string_type());
+        *info = construct_api_type_info_with_string_type(api_string_type());
     }
 };
 
@@ -234,7 +234,7 @@ struct type_info_query<ptime>
     void static
     get(api_type_info* info)
     {
-        *info = make_api_type_info_with_datetime_type(api_datetime_type());
+        *info = construct_api_type_info_with_datetime_type(api_datetime_type());
     }
 };
 
@@ -276,7 +276,7 @@ struct type_info_query<blob>
     void static
     get(api_type_info* info)
     {
-        *info = make_api_type_info_with_blob_type(api_blob_type());
+        *info = construct_api_type_info_with_blob_type(api_blob_type());
     }
 };
 
@@ -350,7 +350,7 @@ struct type_info_query<std::vector<T>>
         api_array_info array_info;
         array_info.element_schema = get_type_info<T>();
         array_info.size = none;
-        *info = make_api_type_info_with_array_type(array_info);
+        *info = construct_api_type_info_with_array_type(array_info);
     }
 };
 
@@ -408,7 +408,7 @@ struct type_info_query<std::array<T,N>>
         api_array_info array_info;
         array_info.element_schema = get_type_info<T>();
         array_info.size = some(N);
-        *info = make_api_type_info_with_array_type(array_info);
+        *info = construct_api_type_info_with_array_type(array_info);
     }
 };
 
@@ -463,7 +463,7 @@ struct type_info_query<std::map<Key,Value>>
         api_map_info map_info;
         map_info.key_schema = get_type_info<Key>();
         map_info.value_schema = get_type_info<Value>();
-        *info = make_api_type_info_with_map_type(map_info);
+        *info = construct_api_type_info_with_map_type(map_info);
     }
 };
 
@@ -485,7 +485,7 @@ struct type_info_query<optional<T>>
     void static
     get(api_type_info* info)
     {
-        *info = make_api_type_info_with_optional_type(get_type_info<T>());
+        *info = construct_api_type_info_with_optional_type(get_type_info<T>());
     }
 };
 
