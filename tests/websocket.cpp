@@ -23,17 +23,17 @@ TEST_CASE("websocket client/server", "[disk_cache]")
             {
                 response = as_test(message);
                 client.send(
-                    make_websocket_client_message_with_kill(nil));
+                    construct_websocket_client_message_with_kill(nil));
                 client.close();
             });
         client.set_open_handler(
             [&]()
             {
                 client.send(
-                    make_websocket_client_message_with_registration(
+                    construct_websocket_client_message_with_registration(
                         websocket_registration_message{"Kasey"}));
                 client.send(
-                    make_websocket_client_message_with_test(
+                    construct_websocket_client_message_with_test(
                         websocket_test_query{"Hello, Patches!"}));
             });
         client.connect("ws://localhost:41072");

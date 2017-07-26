@@ -43,7 +43,7 @@ TEST_CASE("calc status utilities", "[thinknode]")
     }
     expected_query_order.push_back("status=completed");
     // Go through the entire progression, starting with the waiting status.
-    auto status = some(make_calculation_status_with_waiting(nil));
+    auto status = some(construct_calculation_status_with_waiting(nil));
     for (auto query_string : expected_query_order)
     {
         REQUIRE(status);
@@ -56,20 +56,20 @@ TEST_CASE("calc status utilities", "[thinknode]")
     // Test the other cases that aren't covered above.
     {
         auto failed =
-            make_calculation_status_with_failed(calculation_failure_status());
+            construct_calculation_status_with_failed(calculation_failure_status());
         REQUIRE(get_next_calculation_status(failed) == none);
         REQUIRE(calc_status_as_query_string(failed) == "status=failed");
     }
     {
-        auto canceled = make_calculation_status_with_canceled(nil);
+        auto canceled = construct_calculation_status_with_canceled(nil);
         REQUIRE(get_next_calculation_status(canceled) == none);
         REQUIRE(calc_status_as_query_string(canceled) == "status=canceled");
     }
     {
-        auto generating = make_calculation_status_with_generating(nil);
+        auto generating = construct_calculation_status_with_generating(nil);
         REQUIRE(
             get_next_calculation_status(generating) ==
-            some(make_calculation_status_with_queued(calculation_queue_type::READY)));
+            some(construct_calculation_status_with_queued(calculation_queue_type::READY)));
         REQUIRE(calc_status_as_query_string(generating) == "status=generating");
     }
 }
@@ -109,7 +109,7 @@ TEST_CASE("calc status query", "[thinknode]")
     session.access_token = "xyz";
 
     auto status = query_calculation_status(mock_connection.get(), session, "123", "abc");
-    REQUIRE(status == make_calculation_status_with_completed(nil));
+    REQUIRE(status == construct_calculation_status_with_completed(nil));
 }
 
 TEST_CASE("calc status long polling", "[thinknode]")
@@ -142,9 +142,9 @@ TEST_CASE("calc status long polling", "[thinknode]")
 
     std::vector<calculation_status> mock_responses =
         {
-            make_calculation_status_with_calculating(calculation_calculating_status{0.115}),
-            make_calculation_status_with_uploading(calculation_uploading_status{0.995}),
-            make_calculation_status_with_completed(nil)
+            construct_calculation_status_with_calculating(calculation_calculating_status{0.115}),
+            construct_calculation_status_with_uploading(calculation_uploading_status{0.995}),
+            construct_calculation_status_with_completed(nil)
         };
 
     unsigned request_counter = 0;
