@@ -163,7 +163,7 @@ fips_begin_app(server cmdline)
 fips_end_app()
 
 # Add the test runner.
-fips_begin_app(test_runner cmdline)
+fips_begin_app(unit_test_runner cmdline)
     fips_deps(cradle)
     fips_src(tests)
     # Exclude the test runner source file from Cotire because it acts as the
@@ -173,24 +173,36 @@ fips_begin_app(test_runner cmdline)
         PROPERTIES
             COTIRE_EXCLUDED ON)
 fips_end_app()
-cotire(test_runner)
+cotire(unit_test_runner)
 
-# Add the coverage target.
+# Figure out where fips is deploying this to.
+set(DEPLOY_DIR ${FIPS_DEPLOY_DIR}/cradle/${FIPS_CONFIG})
+
+# Add the unit testing target.
+add_custom_target(
+    unit_tests
+    COMMAND unit_test_runner
+    WORKING_DIRECTORY ${DEPLOY_DIR}
+    DEPENDS unit_test_runner)
+
+# Add the unit test coverage target.
 if(FIPS_GCC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_custom_target(test_coverage
+    add_custom_target(
+        unit_test_coverage
         COMMAND lcov --directory . --zerocounters
-        COMMAND test_runner
+        COMMAND unit_test_runner
         COMMAND lcov --directory . --capture --output-file raw.info
         COMMAND lcov --extract raw.info '${PROJECT_SOURCE_DIR}/src/*' --output-file filtered.info
         COMMAND cp filtered.info ${PROJECT_SOURCE_DIR}/.lcov.info
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-        DEPENDS test_runner)
+        DEPENDS unit_test_runner)
 endif()
 
-# Add the integration test target.
-add_custom_target(integration_tests
-    COMMAND python ${PROJECT_SOURCE_DIR}/python/websocket_client.py
-    WORKING_DIRECTORY ${FIPS_DEPLOY_DIR}/cradle/${FIPS_CONFIG}
+# Add the integration testing target.
+add_custom_target(
+    integration_tests
+    COMMAND ${CMAKE_COMMAND} -E env CRADLE_DEPLOY_DIR=${DEPLOY_DIR} pytest
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/python
     DEPENDS server)
 
 fips_finish()

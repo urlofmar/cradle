@@ -9,7 +9,7 @@ CRADLE_DEFINE_EXCEPTION(websocket_server_error)
 // This exception provides internal_error_message_info.
 
 void
-run_websocket_server();
+run_websocket_server(uint16_t port);
 
 }
 
