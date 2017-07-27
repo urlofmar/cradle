@@ -38,19 +38,19 @@ def cpp_type_for_schema(schema, omissible=False):
             cpp_type_for_schema(map_info.value_schema) + ">"
 
     cases = {
-        "nil_type": lambda _: "cradle::nil_t",
-        "boolean_type": lambda _: "bool",
-        "datetime_type": lambda _: "boost::posix_time::ptime",
-        "integer_type": lambda _: "cradle::integer",
-        "float_type": lambda _: "double",
-        "string_type": lambda _: "std::string",
-        "blob_type": lambda _: "cradle::blob",
-        "optional_type": lambda t: "boost::optional<" + cpp_type_for_schema(t) + ">",
-        "array_type": cpp_type_for_array,
-        "map_type": cpp_type_for_map,
-        "reference_type": lambda _: "std::string",
-        "named_type": lambda t: t.app + "::" + t.name,
-        "dynamic_type": lambda t: "cradle::value"
+        "nil": lambda _: "cradle::nil_t",
+        "boolean": lambda _: "bool",
+        "datetime": lambda _: "boost::posix_time::ptime",
+        "integer": lambda _: "cradle::integer",
+        "float": lambda _: "double",
+        "string": lambda _: "std::string",
+        "blob": lambda _: "cradle::blob",
+        "optional": lambda t: "boost::optional<" + cpp_type_for_schema(t) + ">",
+        "array": cpp_type_for_array,
+        "map": cpp_type_for_map,
+        "reference": lambda _: "std::string",
+        "named": lambda t: t.app + "::" + t.name,
+        "dynamic": lambda t: "cradle::value"
     }
 
     # Check the tag of the schema and invoke the appropriate case.

@@ -5,10 +5,10 @@
 
 {# Emit the preprocessor cleanup code for an enum type. #}
 {% macro preprocessor_cleanup_code(type_info) %}
-    {% with enum_info = type_info.schema.enum_type %}
+    {% with enum_info = type_info.schema.enum %}
 
 // Ensure that no enum constants have been #defined by external libraries.
-    {% for name, info in object_items(enum_info.values) %}
+    {% for name, info in ordered_object_items(enum_info) %}
 #ifdef {{name | upper}}
     #undef {{name | upper}}
 #endif
@@ -19,13 +19,13 @@
 
 {# Emit the .hpp file code for an enum type definition. #}
 {% macro hpp_definition_code(type_info) %}
-    {% with enum_info = type_info.schema.enum_type %}
+    {% with enum_info = type_info.schema.enum %}
 
 enum class {{type_info.name}}
 {
-    {% for name, info in object_items(enum_info.values) %}
-        {% if info.description %}
-    {{info.description | format_comment(width=75) | indent(4)}}
+    {% for name, info in ordered_object_items(enum_info) %}
+        {% if info.doc %}
+    {{info.doc | format_comment(width=75) | indent(4)}}
         {% endif %}
     {{name | upper}}
         {%- if not loop.last %},{% endif %}
@@ -68,7 +68,7 @@ from_value({{type_info.name}}* x, cradle::value const& v);
 
 {# Emit the .cpp file code for an enum type definition. #}
 {% macro cpp_definition_code(type_info) %}
-    {% with enum_info = type_info.schema.enum_type %}
+    {% with enum_info = type_info.schema.enum %}
 
 void
 type_info_query<{{type_info.name}}>::get(api_type_info* info)
@@ -76,7 +76,7 @@ type_info_query<{{type_info.name}}>::get(api_type_info* info)
     api_named_type_reference ref;
     ref.app = "cradle";
     ref.name = "{{type_info.name}}";
-    *info = construct_api_type_info_with_named_type(ref);
+    *info = construct_api_type_info_with_named(ref);
 }
 
 std::string
@@ -84,7 +84,7 @@ get_value_id({{type_info.name}} x)
 {
     switch (x)
     {
-    {% for name, info in object_items(enum_info.values) %}
+    {% for name, info in ordered_object_items(enum_info) %}
      case {{type_info.name}}::{{name | upper}}:
         return "{{name | lower}}";
     {% endfor %}
@@ -105,7 +105,7 @@ void
 from_value({{type_info.name}}* x, cradle::value const& v)
 {
     auto s = boost::to_lower_copy(cradle::cast<std::string>(v));
-    {% for name, info in object_items(enum_info.values) %}
+    {% for name, info in ordered_object_items(enum_info) %}
     if (s == "{{name | lower}}")
     {
         *x = {{type_info.name}}::{{name | upper}};

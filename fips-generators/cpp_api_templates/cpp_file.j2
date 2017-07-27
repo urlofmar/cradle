@@ -21,11 +21,11 @@ namespace {{app_name}} {
 
 // {{type_info.name}}
 
-    {% if union_tag(type_info.schema) == "structure_type" %}
+    {% if union_tag(type_info.schema) == "structure" %}
 {{structures.cpp_definition_code(type_info)}}
-    {% elif union_tag(type_info.schema) == "enum_type" %}
+    {% elif union_tag(type_info.schema) == "enum" %}
 {{enums.cpp_definition_code(type_info)}}
-    {% elif union_tag(type_info.schema) == "union_type" %}
+    {% elif union_tag(type_info.schema) == "union" %}
 {{unions.cpp_definition_code(type_info)}}
     {% endif %}
 

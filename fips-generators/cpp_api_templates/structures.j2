@@ -9,12 +9,12 @@
 
 {# Emit the .hpp file code for a structure type definition. #}
 {% macro hpp_definition_code(type_info) %}
-    {% with struct_info = type_info.schema.structure_type %}
+    {% with struct_info = type_info.schema.structure %}
 struct {{type_info.name}}
 {
-        {% for name, info in object_items(struct_info.fields) %}
-            {% if info.description %}
-    {{info.description | format_comment(width=75) | indent(4)}}
+        {% for name, info in ordered_object_items(struct_info) %}
+            {% if info.doc %}
+    {{info.doc | format_comment(width=75) | indent(4)}}
             {% endif %}
     {{info.schema | cpp_type_for_schema(omissible=info["omissible"])}} {{name}};
         {% endfor %}
@@ -69,31 +69,34 @@ from_value({{type_info.name}}* x, cradle::value const& v);
 
 {# Emit the .cpp file code for a structure type definition. #}
 {% macro cpp_definition_code(type_info) %}
-    {% with struct_info = type_info.schema.structure_type %}
+    {% with struct_info = type_info.schema.structure %}
 void
 type_info_query<{{type_info.name}}>::get(api_type_info* info)
 {
     api_named_type_reference ref;
     ref.app = "cradle";
     ref.name = "{{type_info.name}}";
-    *info = construct_api_type_info_with_named_type(ref);
+    *info = construct_api_type_info_with_named(ref);
 }
 
 bool
 operator==({{type_info.name}} const& a, {{type_info.name}} const& b)
 {
-    {% if object_empty(struct_info.fields) %}
+    {% if ordered_object_empty(struct_info) %}
     return true;
     {% else %}
     return
-        {{object_keys(struct_info.fields) | map_format("a.{0} == b.{0}") | join(" &&\n") | indent(8)}};
+        {{ordered_object_keys(struct_info) |
+          map_format("a.{0} == b.{0}") |
+          join(" &&\n") |
+          indent(8)}};
     {% endif %}
 }
 
 bool
 operator<({{type_info.name}} const& a, {{type_info.name}} const& b)
 {
-    {% for field in object_keys(struct_info.fields) %}
+    {% for field in ordered_object_keys(struct_info) %}
     if (a.{{field}} < b.{{field}})
         return true;
     if (b.{{field}} < a.{{field}})
@@ -112,7 +115,7 @@ void
 swap({{type_info.name}}& a, {{type_info.name}}& b)
 {
     using std::swap;
-    {% for field in object_keys(struct_info.fields) %}
+    {% for field in ordered_object_keys(struct_info) %}
     swap(a.{{field}}, b.{{field}});
     {% endfor %}
 }
@@ -121,11 +124,14 @@ size_t
 deep_sizeof({{type_info.name}} const& x)
 {
     using cradle::deep_sizeof;
-    {% if object_empty(struct_info.fields) %}
+    {% if ordered_object_empty(struct_info) %}
     return 0;
     {% else %}
     return
-        {{object_keys(struct_info.fields) | map_format("deep_sizeof(x.{0})") | join(" +\n") | indent(8)}};
+        {{ordered_object_keys(struct_info) |
+          map_format("deep_sizeof(x.{0})") |
+          join(" +\n") |
+          indent(8)}};
     {% endif %}
 }
 
@@ -134,7 +140,7 @@ hash_value({{type_info.name}} const& x)
 {
     {# Start the hash off using a hash of the type name. #}
     size_t hash = {{ type_info.name | string_hash }};
-    {% for field in object_keys(struct_info.fields) %}
+    {% for field in ordered_object_keys(struct_info) %}
     boost::hash_combine(hash, cradle::invoke_hash(x.{{field}}));
     {% endfor %}
     return hash;
@@ -144,7 +150,7 @@ void
 to_value(cradle::value* v, {{type_info.name}} const& x)
 {
     cradle::value_map fields;
-    {% for field, info in object_items(struct_info.fields) %}
+    {% for field, info in ordered_object_items(struct_info) %}
         {% if info["omissible"] %}
     if (x.{{field}})
     {
@@ -160,9 +166,9 @@ to_value(cradle::value* v, {{type_info.name}} const& x)
 void
 from_value({{type_info.name}}* x, cradle::value const& v)
 {
-    {% if not object_empty(struct_info.fields) %}
+    {% if not ordered_object_empty(struct_info) %}
     auto const& fields = cradle::cast<cradle::value_map>(v);
-        {% for field, info in object_items(struct_info.fields) %}
+        {% for field, info in ordered_object_items(struct_info) %}
             {% if info["omissible"] %}
     {
         cradle::value dynamic_field_value;

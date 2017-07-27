@@ -51,68 +51,68 @@ get_url_type_string(api_type_info const& schema)
 {
     switch (get_tag(schema))
     {
-     case api_type_info_tag::ARRAY_TYPE:
-        return "array/" + get_url_type_string(as_array_type(schema).element_schema);
-     case api_type_info_tag::BLOB_TYPE:
+     case api_type_info_tag::ARRAY:
+        return "array/" + get_url_type_string(as_array(schema).element_schema);
+     case api_type_info_tag::BLOB:
         return "blob";
-     case api_type_info_tag::BOOLEAN_TYPE:
+     case api_type_info_tag::BOOLEAN:
         return "boolean";
-     case api_type_info_tag::DATETIME_TYPE:
+     case api_type_info_tag::DATETIME:
         return "datetime";
-     case api_type_info_tag::DYNAMIC_TYPE:
+     case api_type_info_tag::DYNAMIC:
         return "dynamic";
-     case api_type_info_tag::ENUM_TYPE:
+     case api_type_info_tag::ENUM:
       {
         std::stringstream ss;
-        auto const& e = as_enum_type(schema);
-        ss << "enum/" << e.values.size();
-        for (auto const& v : e.values)
+        auto const& e = as_enum(schema);
+        ss << "enum/" << e.size();
+        for (auto const& v : e)
         {
             ss << "/" << v.first;
         }
         return ss.str();
       }
-     case api_type_info_tag::FLOAT_TYPE:
+     case api_type_info_tag::FLOAT:
         return "float";
-     case api_type_info_tag::INTEGER_TYPE:
+     case api_type_info_tag::INTEGER:
         return "integer";
-     case api_type_info_tag::MAP_TYPE:
+     case api_type_info_tag::MAP:
       {
-        auto const& m = as_map_type(schema);
+        auto const& m = as_map(schema);
         return "map/" + get_url_type_string(m.key_schema) + "/" +
             get_url_type_string(m.value_schema);
       }
-     case api_type_info_tag::NAMED_TYPE:
+     case api_type_info_tag::NAMED:
       {
-        auto const& n = as_named_type(schema);
+        auto const& n = as_named(schema);
         return "named/" + n.account + "/" + n.app + "/" + n.name;
       }
-     case api_type_info_tag::NIL_TYPE:
+     case api_type_info_tag::NIL:
      default:
         return "nil";
-     case api_type_info_tag::OPTIONAL_TYPE:
-        return "optional/" + get_url_type_string(as_optional_type(schema));
-     case api_type_info_tag::REFERENCE_TYPE:
-        return "reference/" + get_url_type_string(as_reference_type(schema));
-     case api_type_info_tag::STRING_TYPE:
+     case api_type_info_tag::OPTIONAL:
+        return "optional/" + get_url_type_string(as_optional(schema));
+     case api_type_info_tag::REFERENCE:
+        return "reference/" + get_url_type_string(as_reference(schema));
+     case api_type_info_tag::STRING:
         return "string";
-     case api_type_info_tag::STRUCTURE_TYPE:
+     case api_type_info_tag::STRUCTURE:
       {
         std::stringstream ss;
-        auto const& s = as_structure_type(schema);
-        ss << "structure/" << s.fields.size();
-        for (auto const& f : s.fields)
+        auto const& s = as_structure(schema);
+        ss << "structure/" << s.size();
+        for (auto const& f : s)
         {
             ss << "/" << f.first << "/" << get_url_type_string(f.second.schema);
         }
         return ss.str();
       }
-     case api_type_info_tag::UNION_TYPE:
+     case api_type_info_tag::UNION:
       {
         std::stringstream ss;
-        auto const& u = as_union_type(schema);
-        ss << "union/" << u.members.size();
-        for (auto const& m : u.members)
+        auto const& u = as_union(schema);
+        ss << "union/" << u.size();
+        for (auto const& m : u)
         {
             ss << "/" << m.first << "/" << get_url_type_string(m.second.schema);
         }

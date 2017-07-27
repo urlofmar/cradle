@@ -8,23 +8,21 @@ Anything that shouldn't be imported should have a name that starts with an under
 import types as _types
 
 from utilities import union_tag
+from utilities import object_empty
+from utilities import object_items
+from utilities import object_keys
+from utilities import ordered_object_empty
+from utilities import ordered_object_items
+from utilities import ordered_object_keys
+from utilities import type_schemas_definition_order
 
 def tag_schema_for_union(union):
     """Generate the enum type to represent the tag for a union type."""
-    values = {}
-    for name, info in union.schema.union_type.members.__dict__.items():
-        values[name] = _types.SimpleNamespace(
-            description=info.description)
-    return _types.SimpleNamespace(
-        description="tag type for " + union.name,
-        name=union.name + "_tag",
-        schema=_types.SimpleNamespace(
-            enum_type=_types.SimpleNamespace(
-                values=_types.SimpleNamespace(**values))))
-
-# Add some helper functions for working with our JSON objects.
-object_items = lambda obj: obj.__dict__.items()
-object_keys = lambda obj: obj.__dict__.keys()
-object_empty = lambda obj: not obj.__dict__
-
-from utilities import type_schemas_definition_order
+    return \
+        _types.SimpleNamespace(
+            doc="tag type for " + union.name,
+            name=union.name + "_tag",
+            schema=_types.SimpleNamespace(
+                enum=[
+                    _types.SimpleNamespace(**{name: _types.SimpleNamespace(doc=info.doc)})
+                    for name, info in ordered_object_items(union.schema.union)]))

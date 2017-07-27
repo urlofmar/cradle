@@ -146,7 +146,7 @@ fips_begin_module(cradle)
     endif()
     fips_dir(.)
     fips_generate(
-        FROM api.json
+        FROM api.yml
         TYPE cpp_api_generator
         OUT_OF_SOURCE
         SOURCE "generated/cradle/api_types.cpp"
