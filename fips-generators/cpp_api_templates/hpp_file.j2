@@ -12,11 +12,11 @@
 {% for type_id in type_schemas_definition_order(api.types).keys() %}
     {% with type_info = api.types[type_id] %}
 
-    {% if union_tag(type_info.schema) == "structure_type" %}
+    {% if union_tag(type_info.schema) == "structure" %}
 {{structures.preprocessor_cleanup_code(type_info)}}
-    {% elif union_tag(type_info.schema) == "enum_type" %}
+    {% elif union_tag(type_info.schema) == "enum" %}
 {{enums.preprocessor_cleanup_code(type_info)}}
-    {% elif union_tag(type_info.schema) == "union_type" %}
+    {% elif union_tag(type_info.schema) == "union" %}
 {{unions.preprocessor_cleanup_code(type_info)}}
     {% endif %}
 
@@ -30,14 +30,20 @@
 
 namespace {{app_name}} {
 
-{% for _, type_info in api.types.items() %}
-    {% if union_tag(type_info.schema) == "structure_type" %}
+{% for type_id in type_schemas_definition_order(api.types).keys() %}
+    {% with type_info = api.types[type_id] %}
+
+    {% if union_tag(type_info.schema) == "structure" %}
 {{structures.forward_declaration_code(type_info)}}
-    {% elif union_tag(type_info.schema) == "enum_type" %}
+    {% elif union_tag(type_info.schema) == "enum" %}
 {{enums.forward_declaration_code(type_info)}}
-    {% elif union_tag(type_info.schema) == "union_type" %}
+    {% elif union_tag(type_info.schema) == "union" %}
 {{unions.forward_declaration_code(type_info)}}
+    {% else %}
+typedef {{type_info.schema | cpp_type_for_schema()}} {{type_info.name}};
     {% endif %}
+
+    {% endwith %}
 {% endfor %}
 
 {% for type_id in type_schemas_definition_order(api.types).keys() %}
@@ -45,15 +51,15 @@ namespace {{app_name}} {
 
 // {{type_info.name}}
 
-    {% if type_info.description %}
-{{type_info.description | format_comment}}
+    {% if type_info.doc %}
+{{type_info.doc | format_comment}}
     {% endif %}
 
-    {% if union_tag(type_info.schema) == "structure_type" %}
+    {% if union_tag(type_info.schema) == "structure" %}
 {{structures.hpp_definition_code(type_info)}}
-    {% elif union_tag(type_info.schema) == "enum_type" %}
+    {% elif union_tag(type_info.schema) == "enum" %}
 {{enums.hpp_definition_code(type_info)}}
-    {% elif union_tag(type_info.schema) == "union_type" %}
+    {% elif union_tag(type_info.schema) == "union" %}
 {{unions.hpp_definition_code(type_info)}}
     {% endif %}
 

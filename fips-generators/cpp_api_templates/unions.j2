@@ -17,7 +17,7 @@
 
 {# Emit the .hpp file code for a union type definition. #}
 {% macro hpp_definition_code(type_info) %}
-    {% with union_info = type_info.schema.union_type %}
+    {% with union_info = type_info.schema.union %}
 {{enums.hpp_definition_code(tag_schema_for_union(type_info))}}
 
 struct {{type_info.name}}
@@ -34,7 +34,7 @@ struct type_info_query<{{type_info.name}}>
 };
 
 // constructors
-{% for case_name, case_info in object_items(union_info.members) %}
+{% for case_name, case_info in ordered_object_items(union_info) %}
 {{type_info.name}}
 construct_{{type_info.name}}_with_{{case_name}}(
     {{case_info.schema | cpp_type_for_schema}} const& x);
@@ -51,7 +51,7 @@ get_tag({{type_info.name}} const& x)
 }
 
 // case testing
-{% for case_name, case_info in object_items(union_info.members) %}
+{% for case_name, case_info in ordered_object_items(union_info) %}
 bool static inline
 is_{{case_name}}({{type_info.name}} const& x)
 {
@@ -60,13 +60,13 @@ is_{{case_name}}({{type_info.name}} const& x)
 {% endfor %}
 
 // const content access
-{% for case_name, case_info in object_items(union_info.members) %}
+{% for case_name, case_info in ordered_object_items(union_info) %}
 {{case_info.schema | cpp_type_for_schema}} const&
 as_{{case_name}}({{type_info.name}} const& x);
 {% endfor %}
 
 // non-const content access
-{% for case_name, case_info in object_items(union_info.members) %}
+{% for case_name, case_info in ordered_object_items(union_info) %}
 {{case_info.schema | cpp_type_for_schema}}&
 as_{{case_name}}({{type_info.name}}& x);
 {% endfor %}
@@ -113,7 +113,7 @@ from_value({{type_info.name}}* x, cradle::value const& v);
 
 {# Emit the .cpp file code for a union type definition. #}
 {% macro cpp_definition_code(type_info) %}
-    {% with union_info = type_info.schema.union_type %}
+    {% with union_info = type_info.schema.union %}
 
 {{enums.cpp_definition_code(tag_schema_for_union(type_info))}}
 
@@ -123,10 +123,10 @@ type_info_query<{{type_info.name}}>::get(api_type_info* info)
     api_named_type_reference ref;
     ref.app = "cradle";
     ref.name = "{{type_info.name}}";
-    *info = construct_api_type_info_with_named_type(ref);
+    *info = construct_api_type_info_with_named(ref);
 }
 
-{% for case_name, case_info in object_items(union_info.members) %}
+{% for case_name, case_info in ordered_object_items(union_info) %}
 {{type_info.name}}
 construct_{{type_info.name}}_with_{{case_name}}(
     {{case_info.schema | cpp_type_for_schema}} const& x)
@@ -147,7 +147,7 @@ construct_{{type_info.name}}_with_{{case_name}}(
 }
 {% endfor %}
 
-{% for case_name, case_info in object_items(union_info.members) %}
+{% for case_name, case_info in ordered_object_items(union_info) %}
 {{case_info.schema | cpp_type_for_schema}} const&
 as_{{case_name}}({{type_info.name}} const& x)
 {
@@ -169,7 +169,7 @@ operator==({{type_info.name}} const& a, {{type_info.name}} const& b)
         return false;
     switch (get_tag(a))
     {
-    {% for case_name, case_info in object_items(union_info.members) %}
+    {% for case_name, case_info in ordered_object_items(union_info) %}
      case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
         return as_{{case_name}}(a) == as_{{case_name}}(b);
     {% endfor %}
@@ -186,7 +186,7 @@ operator<({{type_info.name}} const& a, {{type_info.name}} const& b)
         return false;
     switch (get_tag(a))
     {
-    {% for case_name, case_info in object_items(union_info.members) %}
+    {% for case_name, case_info in ordered_object_items(union_info) %}
      case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
         return as_{{case_name}}(a) < as_{{case_name}}(b);
     {% endfor %}
@@ -207,7 +207,7 @@ deep_sizeof({{type_info.name}} const& x)
     size_t size = sizeof({{type_info.name}});
     switch (get_tag(x))
     {
-    {% for case_name, case_info in object_items(union_info.members) %}
+    {% for case_name, case_info in ordered_object_items(union_info) %}
      case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
         size += deep_sizeof(as_{{case_name}}(x));
         break;
@@ -222,7 +222,7 @@ hash_value({{type_info.name}} const& x)
     size_t hash = cradle::invoke_hash(get_tag(x));
     switch (get_tag(x))
     {
-    {% for case_name, case_info in object_items(union_info.members) %}
+    {% for case_name, case_info in ordered_object_items(union_info) %}
      case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
         boost::hash_combine(hash, cradle::invoke_hash(as_{{case_name}}(x)));
         break;
@@ -237,7 +237,7 @@ to_value(cradle::value* v, {{type_info.name}} const& x)
     cradle::value_map fields;
     switch (get_tag(x))
     {
-    {% for case_name, case_info in object_items(union_info.members) %}
+    {% for case_name, case_info in ordered_object_items(union_info) %}
      case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
         to_value(&fields["{{case_name}}"], as_{{case_name}}(x));
         break;
@@ -253,7 +253,7 @@ from_value({{type_info.name}}* x, cradle::value const& v)
     from_value(&x->tag_, get_union_value_type(fields));
     switch (x->tag_)
     {
-    {% for case_name, case_info in object_items(union_info.members) %}
+    {% for case_name, case_info in ordered_object_items(union_info) %}
      case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
       {
         try
