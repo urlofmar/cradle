@@ -15,6 +15,7 @@ from utilities import ordered_object_empty
 from utilities import ordered_object_items
 from utilities import ordered_object_keys
 from utilities import type_schemas_definition_order
+from utilities import unique_field_names
 
 def tag_schema_for_union(union):
     """Generate the enum type to represent the tag for a union type."""

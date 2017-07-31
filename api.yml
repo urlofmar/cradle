@@ -344,23 +344,6 @@ types:
             app: cradle
             name: api_function_type_info
 
-- name: api_upgrade_function_info
-  doc: ''
-  schema:
-    structure:
-    - function:
-        doc: ''
-        schema:
-          string: {}
-    - type:
-        doc: ''
-        schema:
-          string: {}
-    - version:
-        doc: ''
-        schema:
-          string: {}
-
 - name: api_named_type_info
   doc: ''
   schema:
@@ -397,18 +380,6 @@ types:
   doc: ''
   schema:
     structure:
-    - body:
-        doc: ''
-        schema:
-          blob: {}
-    - headers:
-        doc: ''
-        schema:
-          map:
-            key_schema:
-              string: {}
-            value_schema:
-              string: {}
     - method:
         doc: ''
         schema:
@@ -419,15 +390,6 @@ types:
         doc: ''
         schema:
           string: {}
-
-- name: http_response
-  doc: ''
-  schema:
-    structure:
-    - body:
-        doc: ''
-        schema:
-          blob: {}
     - headers:
         doc: ''
         schema:
@@ -436,10 +398,31 @@ types:
               string: {}
             value_schema:
               string: {}
+    - body:
+        doc: ''
+        schema:
+          blob: {}
+
+- name: http_response
+  doc: ''
+  schema:
+    structure:
     - status_code:
         doc: ''
         schema:
           integer: {}
+    - headers:
+        doc: ''
+        schema:
+          map:
+            key_schema:
+              string: {}
+            value_schema:
+              string: {}
+    - body:
+        doc: ''
+        schema:
+          blob: {}
 
 - name: disk_cache_config
   doc: ''
@@ -838,7 +821,7 @@ types:
                 name: calculation_request
 
 - name: id_response
-  doc: ''
+  doc: 'This describes an HTTP response with just an ID field.'
   schema:
     structure:
     - id:

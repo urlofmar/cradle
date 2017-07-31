@@ -14,22 +14,22 @@ get_next_calculation_status(calculation_status current)
     {
      case calculation_status_tag::WAITING:
         return
-            construct_calculation_status_with_queued(
+            make_calculation_status_with_queued(
                 calculation_queue_type::PENDING);
      case calculation_status_tag::GENERATING:
         return
-            construct_calculation_status_with_queued(
+            make_calculation_status_with_queued(
                 calculation_queue_type::READY);
      case calculation_status_tag::QUEUED:
         switch (as_queued(current))
         {
          case calculation_queue_type::PENDING:
             return
-                construct_calculation_status_with_queued(
+                make_calculation_status_with_queued(
                     calculation_queue_type::READY);
          case calculation_queue_type::READY:
             return
-                construct_calculation_status_with_calculating(
+                make_calculation_status_with_calculating(
                     calculation_calculating_status{0});
          default:
             CRADLE_THROW(
@@ -47,9 +47,9 @@ get_next_calculation_status(calculation_status current)
         // for the upload.
         return
             next_progress < 1
-          ? construct_calculation_status_with_calculating(
+          ? make_calculation_status_with_calculating(
                 calculation_calculating_status{next_progress})
-          : construct_calculation_status_with_uploading(
+          : make_calculation_status_with_uploading(
                 calculation_uploading_status());
       }
      case calculation_status_tag::UPLOADING:
@@ -62,9 +62,9 @@ get_next_calculation_status(calculation_status current)
         // for the completed status.
         return
             next_progress < 1
-          ? construct_calculation_status_with_uploading(
+          ? make_calculation_status_with_uploading(
                 calculation_uploading_status{next_progress})
-          : construct_calculation_status_with_completed(nil);
+          : make_calculation_status_with_completed(nil);
       }
      case calculation_status_tag::COMPLETED:
      case calculation_status_tag::FAILED:

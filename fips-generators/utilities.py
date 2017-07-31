@@ -67,3 +67,13 @@ def type_schemas_definition_order(type_dict):
         add_type_tree(type_info)
 
     return type_order
+
+def unique_field_names(types):
+    """Given a dictionary of types from an API, generate a list of unique
+       field names that occur within any structures in :types."""
+    field_names = set()
+    for _, t in types.items():
+        if union_tag(t.schema) == 'structure':
+            for name, _ in ordered_object_items(t.schema.structure):
+                field_names.add(name)
+    return sorted(field_names)
