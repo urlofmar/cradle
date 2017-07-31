@@ -1,8 +1,8 @@
+# fips uses this to version the generator.
+version = 26
+
 # Import the fips generator utilities.
 import genutil
-
-# fips uses this to version the generator.
-version = 20
 
 # Note that other imports are deferred to the points where they're needed as
 # this seems to speed up build times in cases where the generated files are

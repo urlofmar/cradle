@@ -1,5 +1,5 @@
 [requires]
-Boost/1.60.0@lasote/stable
+Boost/1.64.0@inexorgame/stable
 catch/1.5.0@TyRoXx/stable
 json/2.0.10@jjones646/stable
 msgpack-c/1.4.2@paulobrizolara/stable

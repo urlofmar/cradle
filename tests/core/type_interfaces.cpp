@@ -177,6 +177,28 @@ TEST_CASE("generated type interfaces", "[core]")
 {
     {
         INFO("Test a generated structure type.");
-        test_regular_value(api_structure_info());
+        test_regular_value_pair(
+            make_disk_cache_config(some(string("abc")), 12),
+            make_disk_cache_config(some(string("def")), 1));
     }
+
+    #if defined(__GNUC__) && __GNUC__ >= 6
+    {
+        INFO("Test tagged constructors.");
+        api_structure_field_info info;
+        info =
+            make_api_structure_field_info(
+                _doc("docs"),
+                _schema(make_api_type_info_with_nil(api_nil_type())));
+        REQUIRE(info.doc == "docs");
+        REQUIRE(info.omissible == none);
+        REQUIRE(info.schema == make_api_type_info_with_nil(api_nil_type()));
+        info =
+            make_api_structure_field_info(
+                _doc("docs"),
+                _omissible(true),
+                _schema(make_api_type_info_with_nil(api_nil_type())));
+        REQUIRE(info.omissible == some(true));
+    }
+    #endif
 }

@@ -130,6 +130,14 @@ set_property(
             ${CONAN_WEBSOCKETPP_ROOT}
             ${CONAN_SQLITE3_ROOT})
 
+# Only generate tagged constructors on supported compilers.
+if(FIPS_GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "6.0")
+    message(STATUS "Enabling tagged constructors")
+    set(GENERATE_TAGGED_CONSTRUCTORS True)
+else()
+    set(GENERATE_TAGGED_CONSTRUCTORS False)
+endif()
+
 # Add the main library.
 fips_begin_module(cradle)
     fips_src(src/cradle)
@@ -151,7 +159,7 @@ fips_begin_module(cradle)
         OUT_OF_SOURCE
         SOURCE "generated/cradle/api_types.cpp"
         HEADER "generated/cradle/api_types.hpp"
-        ARGS "{ app_name: cradle }")
+        ARGS "{ app_name: cradle, generate_tagged_constructors: ${GENERATE_TAGGED_CONSTRUCTORS} }")
 fips_end_module()
 target_link_libraries(cradle ${CONAN_LIBS})
 cotire(cradle)
@@ -175,14 +183,11 @@ fips_begin_app(unit_test_runner cmdline)
 fips_end_app()
 cotire(unit_test_runner)
 
-# Figure out where fips is deploying this to.
-set(DEPLOY_DIR ${FIPS_DEPLOY_DIR}/cradle/${FIPS_CONFIG})
-
 # Add the unit testing target.
 add_custom_target(
     unit_tests
     COMMAND unit_test_runner
-    WORKING_DIRECTORY ${DEPLOY_DIR}
+    WORKING_DIRECTORY ${FIPS_PROJECT_DEPLOY_DIR}
     DEPENDS unit_test_runner)
 
 # Add the unit test coverage target.
@@ -201,7 +206,7 @@ endif()
 # Add the integration testing target.
 add_custom_target(
     integration_tests
-    COMMAND ${CMAKE_COMMAND} -E env CRADLE_DEPLOY_DIR=${DEPLOY_DIR} pytest
+    COMMAND ${CMAKE_COMMAND} -E env CRADLE_DEPLOY_DIR=${FIPS_PROJECT_DEPLOY_DIR} pytest
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/python
     DEPENDS server)
 
