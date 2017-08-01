@@ -23,8 +23,9 @@ struct {{type_info.name}}
 {{type_info.name}}
 make_{{type_info.name}}(
     {% for name, info in ordered_object_items(struct_info) %}
-    {{info.schema | cpp_type_for_schema()}} const& {{name}} {{ "," if not loop.last }}
-    {% endfor %});
+    {{info.schema | cpp_type_for_schema(omissible=info["omissible"])}} const& {{name}}
+    {{- "," if not loop.last }}
+    {%- endfor %});
 
     {% if generate_tagged_constructors %}
 
@@ -47,7 +48,7 @@ make_{{type_info.name}}__tagged(ArgPack&& args)
             {% else %}
     static_assert(
         maybe_{{name}} != hana::nothing,
-        "{{name}} is required but missing from {{type_info.name}} construction");
+        ":{{name}} is required but missing from {{type_info.name}} construction");
     x.{{name}} =
         std::forward<
             typename std::remove_reference<decltype(hana::second(*maybe_{{name}}))>::type
@@ -120,8 +121,9 @@ from_value({{type_info.name}}* x, cradle::value const& v);
 {{type_info.name}}
 make_{{type_info.name}}(
     {% for name, info in ordered_object_items(struct_info) %}
-    {{info.schema | cpp_type_for_schema()}} const& {{name}} {{ "," if not loop.last }}
-    {% endfor %})
+    {{info.schema | cpp_type_for_schema(omissible=info["omissible"])}} const& {{name}}
+    {{- "," if not loop.last }}
+    {%- endfor %})
 {
     {{type_info.name}} x;
     {% for name, info in ordered_object_items(struct_info) %}
