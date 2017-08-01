@@ -147,7 +147,7 @@ TEST_CASE("calc status long polling", "[thinknode]")
             make_calculation_status_with_completed(nil)
         };
 
-    unsigned request_counter = 0;
+    size_t request_counter = 0;
     When(Method(mock_connection, perform_request)).AlwaysDo(
         [&](check_in_interface& check_in,
             progress_reporter_interface& reporter,
@@ -160,7 +160,7 @@ TEST_CASE("calc status long polling", "[thinknode]")
             return response;
         });
 
-    unsigned status_counter = 0;
+    size_t status_counter = 0;
     auto status_checker =
         [&](calculation_status const& status)
         {
@@ -180,4 +180,277 @@ TEST_CASE("calc status long polling", "[thinknode]")
         session,
         "123",
         "abc");
+    REQUIRE(request_counter == expected_requests.size());
+    REQUIRE(status_counter == mock_responses.size());
+}
+
+TEST_CASE("calc variable substitution", "[thinknode]")
+{
+    auto a_substitute = make_calculation_request_with_reference("abc");
+    auto b_substitute = make_calculation_request_with_value(value("def"));
+
+    std::map<string,calculation_request>
+        substitutions = { { "a", a_substitute }, { "b", b_substitute } };
+
+    auto variable_a = make_calculation_request_with_variable("a");
+    auto variable_b = make_calculation_request_with_variable("b");
+
+    auto item_schema = make_api_type_info_with_string(api_string_type());
+
+    // value
+    auto value_calc = make_calculation_request_with_value(value("xyz"));
+    REQUIRE(substitute_variables(substitutions, value_calc) == value_calc);
+
+    // reference
+    REQUIRE(
+        substitute_variables(
+            substitutions,
+            make_calculation_request_with_reference("a")) ==
+        make_calculation_request_with_reference("a"));
+
+    // function
+    REQUIRE(
+        substitute_variables(
+            substitutions,
+            make_calculation_request_with_function(
+                make_function_application(
+                    "my_account",
+                    "my_name",
+                    "my_function",
+                    { variable_b, value_calc, variable_a }))) ==
+        make_calculation_request_with_function(
+            make_function_application(
+                "my_account",
+                "my_name",
+                "my_function",
+                { b_substitute, value_calc, a_substitute })));
+
+    // array
+    auto original_array =
+        make_calculation_request_with_array(
+            make_calculation_array_request(
+                { variable_a, variable_b, value_calc },
+                item_schema));
+    auto substituted_array =
+        make_calculation_request_with_array(
+            make_calculation_array_request(
+                { a_substitute, b_substitute, value_calc },
+                item_schema));
+    REQUIRE(substitute_variables(substitutions, original_array) == substituted_array);
+    auto array_schema =
+        make_api_type_info_with_array(make_api_array_info(item_schema, none));
+
+    // item
+    auto original_item =
+        make_calculation_request_with_item(
+            make_calculation_item_request(
+                original_array,
+                make_calculation_request_with_value(value(integer(0))),
+                item_schema));
+    auto substituted_item =
+        make_calculation_request_with_item(
+            make_calculation_item_request(
+                substituted_array,
+                make_calculation_request_with_value(value(integer(0))),
+                item_schema));
+    REQUIRE(substitute_variables(substitutions, original_item) == substituted_item);
+
+    // object
+    auto object_schema =
+        make_api_type_info_with_structure(
+            {
+                { "i", make_api_structure_field_info("", none, item_schema) },
+                { "j", make_api_structure_field_info("", none, item_schema) },
+                { "k", make_api_structure_field_info("", none, item_schema) }
+            });
+    auto original_object =
+        make_calculation_request_with_object(
+            make_calculation_object_request(
+                {
+                    { "i", variable_b },
+                    { "j", variable_a },
+                    { "k", value_calc }
+                },
+                object_schema));
+    auto substituted_object =
+        make_calculation_request_with_object(
+            make_calculation_object_request(
+                {
+                    { "i", b_substitute },
+                    { "j", a_substitute },
+                    { "k", value_calc }
+                },
+                object_schema));
+    REQUIRE(substitute_variables(substitutions, original_object) == substituted_object);
+
+    // property
+    auto original_property =
+        make_calculation_request_with_property(
+            make_calculation_property_request(
+                original_object,
+                make_calculation_request_with_value(value("j")),
+                item_schema));
+    auto substituted_property =
+        make_calculation_request_with_property(
+            make_calculation_property_request(
+                substituted_object,
+                make_calculation_request_with_value(value("j")),
+                item_schema));
+    REQUIRE(substitute_variables(substitutions, original_property) == substituted_property);
+
+    // let
+    REQUIRE_THROWS(
+        substitute_variables(
+            substitutions,
+            make_calculation_request_with_let(
+                make_let_calculation_request(substitutions, value_calc))));
+
+    // variables
+    REQUIRE(substitute_variables(substitutions, variable_a) == a_substitute);
+    REQUIRE(substitute_variables(substitutions, variable_b) == b_substitute);
+    REQUIRE_THROWS(
+        substitute_variables(
+            substitutions,
+            make_calculation_request_with_variable("c")));
+
+    // meta
+    REQUIRE(
+        substitute_variables(
+            substitutions,
+            make_calculation_request_with_meta(
+                make_meta_calculation_request(
+                    original_array,
+                    array_schema))) ==
+        make_calculation_request_with_meta(
+            make_meta_calculation_request(
+                substituted_array,
+                array_schema)));
+}
+
+TEST_CASE("let calculation submission", "[thinknode]")
+{
+    thinknode_session mock_session;
+    mock_session.api_url = "https://mgh.thinknode.io/api/v1.0";
+    mock_session.access_token = "xyz";
+
+    string mock_context_id = "abc";
+
+    auto function_call =
+        make_calculation_request_with_function(
+            make_function_application(
+                "my_account",
+                "my_name",
+                "my_function",
+                {
+                    make_calculation_request_with_variable("b"),
+                    make_calculation_request_with_variable("a"),
+                }));
+
+    auto let_calculation =
+        make_calculation_request_with_let(
+            make_let_calculation_request(
+                {
+                    { "a", make_calculation_request_with_value(value("-a-")) },
+                    { "b", make_calculation_request_with_value(value("-b-")) }
+                },
+                make_calculation_request_with_let(
+                    make_let_calculation_request(
+                        {
+                            { "c", make_calculation_request_with_value(value("-c-")) },
+                            { "d", function_call }
+                        },
+                        make_calculation_request_with_array(
+                            make_calculation_array_request(
+                                {
+                                    make_calculation_request_with_variable("a"),
+                                    make_calculation_request_with_variable("b"),
+                                    make_calculation_request_with_variable("c"),
+                                    make_calculation_request_with_variable("d")
+                                },
+                                make_api_type_info_with_string(api_string_type())))))));
+
+    std::vector<calculation_request> expected_requests =
+        {
+            make_calculation_request_with_value(value("-a-")),
+            make_calculation_request_with_value(value("-b-")),
+            make_calculation_request_with_value(value("-c-")),
+            make_calculation_request_with_function(
+                make_function_application(
+                    "my_account",
+                    "my_name",
+                    "my_function",
+                    {
+                        make_calculation_request_with_reference("b-id"),
+                        make_calculation_request_with_reference("a-id")
+                    })),
+            make_calculation_request_with_array(
+                make_calculation_array_request(
+                    {
+                        make_calculation_request_with_reference("a-id"),
+                        make_calculation_request_with_reference("b-id"),
+                        make_calculation_request_with_reference("c-id"),
+                        make_calculation_request_with_reference("d-id")
+                    },
+                    make_api_type_info_with_string(api_string_type())))
+        };
+
+    std::vector<string> mock_responses =
+        {
+            "a-id",
+            "b-id",
+            "c-id",
+            "d-id",
+            "main-id"
+        };
+
+    Mock<calculation_submission_interface> mock_submitter;
+
+    size_t request_counter = 0;
+    When(Method(mock_submitter, submit)).AlwaysDo(
+        [&](thinknode_session const& session,
+            string const& context_id,
+            calculation_request const& request,
+            bool dry_run) -> optional<string>
+        {
+            REQUIRE(session == mock_session);
+            REQUIRE(context_id == mock_context_id);
+            REQUIRE(request == expected_requests.at(request_counter));
+            if (!dry_run)
+            {
+                auto response = mock_responses.at(request_counter);
+                ++request_counter;
+                return some(response);
+            }
+            else
+            {
+                ++request_counter;
+                return none;
+            }
+        });
+
+    auto submission_info =
+        submit_let_calculation_request(
+            mock_submitter.get(),
+            mock_session,
+            mock_context_id,
+            make_augmented_calculation_request(let_calculation, { "d" }),
+            false);
+    REQUIRE(request_counter == expected_requests.size());
+    REQUIRE(submission_info);
+    REQUIRE(submission_info->main_calc_id == "main-id");
+    REQUIRE(submission_info->reported_subcalcs ==
+        std::vector<reported_calculation_info>{
+            make_reported_calculation_info("d-id", "my_function")
+        });
+    REQUIRE(submission_info->other_subcalc_ids == (std::vector<string>{ "a-id", "b-id", "c-id" }));
+
+    request_counter = 0;
+    submission_info =
+        submit_let_calculation_request(
+            mock_submitter.get(),
+            mock_session,
+            mock_context_id,
+            make_augmented_calculation_request(let_calculation, { "d" }),
+            true);
+    REQUIRE(!submission_info);
 }

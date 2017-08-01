@@ -210,4 +210,10 @@ add_custom_target(
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/python
     DEPENDS server)
 
+# Add a target for running all tests.
+add_custom_target(
+    all_tests
+    DEPENDS unit_tests
+    DEPENDS integration_tests)
+
 fips_finish()

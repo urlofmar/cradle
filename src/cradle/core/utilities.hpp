@@ -137,6 +137,35 @@ CRADLE_DEFINE_ERROR_INFO(string, parsing_error)
 // error messages, this is used to convey that message.
 CRADLE_DEFINE_ERROR_INFO(string, internal_error_message)
 
+// This can be used to flag errors that represent failed checks on conditions
+// that should be guaranteed internally.
+CRADLE_DEFINE_EXCEPTION(internal_check_failed)
+
+// functional map over a vector
+template<class Item, class Fn>
+auto
+map(Fn const& fn, std::vector<Item> const& items)
+{
+    typedef decltype(fn(Item())) mapped_item_type;
+    size_t item_count = items.size();
+    std::vector<mapped_item_type> result(item_count);
+    for (size_t i = 0; i != item_count; ++i)
+        result[i] = fn(items[i]);
+    return result;
+}
+
+// functional map over a map
+template<class Key, class Value, class Fn>
+auto map(Fn const& fn, std::map<Key,Value> const& items) ->
+    std::map<Key,decltype(fn(Value()))>
+{
+    typedef decltype(fn(Value())) mapped_item_type;
+    std::map<Key,mapped_item_type> result;
+    for (auto const& item : items)
+        result[item.first] = fn(item.second);
+    return result;
+}
+
 }
 
 #endif

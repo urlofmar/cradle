@@ -645,30 +645,32 @@ types:
   doc: ''
   schema:
     union:
-    - array:
+    - reference:
         doc: ''
         schema:
-          named:
-            app: cradle
-            name: calculation_array_request
+          string: {}
+    - value:
+        doc: ''
+        schema:
+          dynamic: {}
     - function:
         doc: ''
         schema:
           named:
             app: cradle
             name: function_application
-    - let:
+    - array:
         doc: ''
         schema:
           named:
             app: cradle
-            name: let_calculation_request
-    - meta:
+            name: calculation_array_request
+    - item:
         doc: ''
         schema:
           named:
             app: cradle
-            name: meta_calculation_request
+            name: calculation_item_request
     - object:
         doc: ''
         schema:
@@ -681,18 +683,22 @@ types:
           named:
             app: cradle
             name: calculation_property_request
-    - reference:
+    - let:
         doc: ''
         schema:
-          string: {}
-    - value:
-        doc: ''
-        schema:
-          dynamic: {}
+          named:
+            app: cradle
+            name: let_calculation_request
     - variable:
         doc: ''
         schema:
           string: {}
+    - meta:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: meta_calculation_request
 
 - name: function_application
   doc: ''
@@ -706,6 +712,10 @@ types:
         doc: ''
         schema:
           string: {}
+    - name:
+        doc: ''
+        schema:
+          string: {}
     - args:
         doc: ''
         schema:
@@ -714,21 +724,11 @@ types:
               named:
                 app: cradle
                 name: calculation_request
-    - name:
-        doc: ''
-        schema:
-          string: {}
 
 - name: calculation_array_request
   doc: ''
   schema:
     structure:
-    - item_schema:
-        doc: ''
-        schema:
-          named:
-            app: cradle
-            name: api_type_info
     - items:
         doc: ''
         schema:
@@ -737,6 +737,12 @@ types:
               named:
                 app: cradle
                 name: calculation_request
+    - item_schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: api_type_info
 
 - name: calculation_object_request
   doc: ''
@@ -759,17 +765,40 @@ types:
             app: cradle
             name: api_type_info
 
-- name: calculation_property_request
+- name: calculation_item_request
   doc: ''
   schema:
     structure:
-    - field:
+    - array:
         doc: ''
         schema:
           named:
             app: cradle
             name: calculation_request
+    - index:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: api_type_info
+
+- name: calculation_property_request
+  doc: ''
+  schema:
+    structure:
     - object:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+    - field:
         doc: ''
         schema:
           named:
@@ -803,12 +832,6 @@ types:
   doc: ''
   schema:
     structure:
-    - in:
-        doc: ''
-        schema:
-          named:
-            app: cradle
-            name: calculation_request
     - variables:
         doc: ''
         schema:
@@ -819,6 +842,12 @@ types:
               named:
                 app: cradle
                 name: calculation_request
+    - in:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
 
 - name: id_response
   doc: 'This describes an HTTP response with just an ID field.'
@@ -828,3 +857,58 @@ types:
         doc: ''
         schema:
           string: {}
+
+- name: reported_calculation_info
+  doc: ''
+  schema:
+    structure:
+    - id:
+        doc: 'the Thinknode ID of the calculation'
+        schema:
+          string: {}
+    - label:
+        doc: 'a label for the calculation - Currently, this is just the function name.'
+        schema:
+          string: {}
+
+- name: let_calculation_submission_info
+  doc: ''
+  schema:
+    structure:
+    - main_calc_id:
+        doc: 'the ID of the top-level calculation'
+        schema:
+          string: {}
+    - reported_subcalcs:
+        doc: "info on any subcalculations whose progress we're interested in"
+        schema:
+          array:
+            element_schema:
+              named:
+                app: cradle
+                name: reported_calculation_info
+    - other_subcalc_ids:
+        doc: 'IDs of any other subcalculations'
+        schema:
+          array:
+            element_schema:
+              string: {}
+
+- name: augmented_calculation_request
+  doc: |
+    This augments a normal Thinknode calculation request with extra information
+    that's useful for status reporting.
+  schema:
+    structure:
+    - request:
+        doc: 'the underlying request'
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+    - reported_variables:
+        doc: 'any variables that should be reported on'
+        schema:
+          array:
+            element_schema:
+              string: {}

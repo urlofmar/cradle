@@ -186,4 +186,168 @@ long_poll_calculation_status(
     }
 }
 
+// Substitute the variables in a Thinknode request for new requests.
+calculation_request
+substitute_variables(
+    std::map<string,calculation_request> const& substitutions,
+    calculation_request const& request)
+{
+    auto recursive_call =
+        [&substitutions](calculation_request const& request)
+        {
+            return substitute_variables(substitutions, request);
+        };
+    switch (get_tag(request))
+    {
+     case calculation_request_tag::REFERENCE:
+     case calculation_request_tag::VALUE:
+        return request;
+     case calculation_request_tag::FUNCTION:
+        return
+            make_calculation_request_with_function(
+                make_function_application(
+                    as_function(request).account,
+                    as_function(request).app,
+                    as_function(request).name,
+                    map(recursive_call, as_function(request).args)));
+     case calculation_request_tag::ARRAY:
+        return
+            make_calculation_request_with_array(
+                make_calculation_array_request(
+                    map(recursive_call, as_array(request).items),
+                    as_array(request).item_schema));
+     case calculation_request_tag::ITEM:
+        return
+            make_calculation_request_with_item(
+                make_calculation_item_request(
+                    recursive_call(as_item(request).array),
+                    as_item(request).index,
+                    as_item(request).schema));
+     case calculation_request_tag::OBJECT:
+        return
+            make_calculation_request_with_object(
+                make_calculation_object_request(
+                    map(recursive_call, as_object(request).properties),
+                    as_object(request).schema));
+     case calculation_request_tag::PROPERTY:
+        return
+            make_calculation_request_with_property(
+                make_calculation_property_request(
+                    recursive_call(as_property(request).object),
+                    as_property(request).field,
+                    as_property(request).schema));
+     case calculation_request_tag::LET:
+        CRADLE_THROW(
+            internal_check_failed() <<
+            internal_error_message_info("encountered let request during variable substitution"));
+     case calculation_request_tag::VARIABLE:
+      {
+        auto substitution = substitutions.find(as_variable(request));
+        if (substitution == substitutions.end())
+        {
+            CRADLE_THROW(
+                internal_check_failed() <<
+                internal_error_message_info("missing variable substitution"));
+        }
+        return substitution->second;
+      }
+     case calculation_request_tag::META:
+        return
+            make_calculation_request_with_meta(
+                make_meta_calculation_request(
+                    recursive_call(as_meta(request).generator),
+                    as_meta(request).schema));
+     default:
+        CRADLE_THROW(
+            invalid_enum_value() <<
+                enum_id_info("calculation_request_tag") <<
+                enum_value_info(static_cast<int>(get_tag(request))));
+    }
+}
+
+optional<let_calculation_submission_info>
+submit_let_calculation_request(
+    calculation_submission_interface& submitter,
+    thinknode_session const& session,
+    string const& context_id,
+    augmented_calculation_request const& augmented_request,
+    bool dry_run)
+{
+    let_calculation_submission_info result;
+
+    // We expect this request to be a series of nested let requests, so we'll
+    // deconstruct that one-by-one, submitting the requests and recording the
+    // substitutions...
+
+    std::map<string,calculation_request> substitutions;
+
+    // :current_request stores a pointer into the full request that indicates
+    // how far we've unwrapped it.
+    calculation_request const* current_request = &augmented_request.request;
+
+    while (is_let(*current_request))
+    {
+        auto const& let = as_let(*current_request);
+
+        // Loop through all the variables in :let.
+        for (auto const& var : let.variables)
+        {
+            // Apply the existing substitutions and submit the request.
+            auto calculation_id =
+                submitter.submit(
+                    session,
+                    context_id,
+                    substitute_variables(substitutions, var.second),
+                    dry_run);
+
+            // If there's no calculation ID, then this must be a dry run that
+            // hasn't been done yet, so the whole result is none.
+            if (!calculation_id)
+                return none;
+
+            // We got a calculation ID, so record the new substitution.
+            substitutions[var.first] =
+                make_calculation_request_with_reference(get(calculation_id));
+
+            // If this is a reported variable, record it.
+            auto const& reported = augmented_request.reported_variables;
+            if (std::find(reported.begin(), reported.end(), var.first) !=
+                reported.end())
+            {
+                result.reported_subcalcs.push_back(
+                    make_reported_calculation_info(
+                        get(calculation_id),
+                        // We assume that all reported calculations are
+                        // function calls.
+                        is_function(var.second) ?
+                            as_function(var.second).name :
+                            "internal error: unrecognized reported calc"));
+            }
+            // Otherwise, just record its ID.
+            else
+            {
+                result.other_subcalc_ids.push_back(get(calculation_id));
+            }
+        }
+
+        // Proceed to the next level of nesting.
+        current_request = &let.in;
+    }
+
+    // Now we've made it to the actual request, so again apply the
+    // substitutions and submit it.
+    auto main_calc_id =
+        submitter.submit(
+            session,
+            context_id,
+            substitute_variables(substitutions, *current_request),
+            dry_run);
+    if (!main_calc_id)
+        return none;
+
+    result.main_calc_id = get(main_calc_id);
+
+    return result;
+}
+
 }
