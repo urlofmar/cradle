@@ -88,6 +88,8 @@ elseif(FIPS_MSVC)
     add_compile_options(/wd4456)
     # "unreferenced local function has been removed"
     add_compile_options(/wd4505)
+    # warnings about functions that are potentially insecure
+    add_definitions(/D_CRT_SECURE_NO_WARNINGS)
     # Also suppress linker warnings about missing .pdb files that seem to inevitably creep in.
     add_link_options(/ignore:4099)
 endif()

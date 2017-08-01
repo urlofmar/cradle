@@ -11,7 +11,8 @@ open(std::fstream& file, file_path const& path, std::ios::openmode mode)
         CRADLE_THROW(
             open_file_error() <<
                 file_path_info(path) <<
-                open_mode_info(mode));
+                open_mode_info(mode) <<
+                internal_error_message_info(strerror(errno)));
     }
     file.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
 }
@@ -24,7 +25,8 @@ open(std::ifstream& file, file_path const& path, std::ios::openmode mode)
         CRADLE_THROW(
             open_file_error() <<
                 file_path_info(path) <<
-                open_mode_info(mode));
+                open_mode_info(mode) <<
+                internal_error_message_info(strerror(errno)));
     }
     file.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
 }
@@ -37,7 +39,8 @@ open(std::ofstream& file, file_path const& path, std::ios::openmode mode)
         CRADLE_THROW(
             open_file_error() <<
                 file_path_info(path) <<
-                open_mode_info(mode));
+                open_mode_info(mode) <<
+                internal_error_message_info(strerror(errno)));
     }
     file.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
 }
