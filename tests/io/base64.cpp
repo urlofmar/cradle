@@ -43,7 +43,7 @@ test_base64_encoding(
     }
 }
 
-TEST_CASE("MIME base64 I/O", "[io]")
+TEST_CASE("MIME base64 I/O", "[io][base64]")
 {
     test_base64_encoding(
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
@@ -69,7 +69,7 @@ TEST_CASE("MIME base64 I/O", "[io]")
         get_mime_base64_character_set());
 }
 
-TEST_CASE("missing base64 padding", "[io]")
+TEST_CASE("missing base64 padding", "[io][base64]")
 {
     INFO("Testing that the base64 decoder is tolerant of missing padding characters.");
 
@@ -114,7 +114,7 @@ test_malformed_base64(
     }
 }
 
-TEST_CASE("malformed base64", "[io]")
+TEST_CASE("malformed base64", "[io][base64]")
 {
     // These have an impossible number of characters.
     test_malformed_base64("V", get_mime_base64_character_set());

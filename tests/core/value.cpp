@@ -5,7 +5,7 @@
 
 using namespace cradle;
 
-TEST_CASE("value_type streaming", "[core]")
+TEST_CASE("value_type streaming", "[core][value]")
 {
     REQUIRE(boost::lexical_cast<string>(value_type::NIL) == "nil");
     REQUIRE(boost::lexical_cast<string>(value_type::BOOLEAN) == "boolean");
@@ -21,7 +21,7 @@ TEST_CASE("value_type streaming", "[core]")
         invalid_enum_value const&);
 }
 
-TEST_CASE("value type checking", "[core]")
+TEST_CASE("value type checking", "[core][value]")
 {
     try
     {
@@ -37,7 +37,7 @@ TEST_CASE("value type checking", "[core]")
     REQUIRE_NOTHROW(check_type(value_type::NIL, value_type::NIL));
 }
 
-TEST_CASE("value initializer lists", "[core]")
+TEST_CASE("value initializer lists", "[core][value]")
 {
     // Test a simple initializer list.
     REQUIRE(
@@ -58,7 +58,7 @@ TEST_CASE("value initializer lists", "[core]")
                 value_list{ value(0.), value(1.) } }));
 }
 
-TEST_CASE("value type interface", "[core]")
+TEST_CASE("value type interface", "[core][value]")
 {
     test_regular_value_pair(
         value(false),
@@ -100,7 +100,7 @@ TEST_CASE("value type interface", "[core]")
         value(value_map({ { value(1.), value(2.) } })));
 }
 
-TEST_CASE("value deep_sizeof", "[core]")
+TEST_CASE("value deep_sizeof", "[core][value]")
 {
     REQUIRE(deep_sizeof(value(nil)) == sizeof(value) + deep_sizeof(nil));
     REQUIRE(deep_sizeof(value(false)) == sizeof(value) + deep_sizeof(false));
@@ -128,7 +128,7 @@ TEST_CASE("value deep_sizeof", "[core]")
     REQUIRE(deep_sizeof(value_map()) == sizeof(value_map));
 }
 
-TEST_CASE("empty list/map equivalence", "[core]")
+TEST_CASE("empty list/map equivalence", "[core][value]")
 {
     {
         INFO("Dynamic values containing empty maps can be treated as empty lists.")
@@ -144,7 +144,7 @@ TEST_CASE("empty list/map equivalence", "[core]")
     }
 }
 
-TEST_CASE("get_field", "[core]")
+TEST_CASE("get_field", "[core][value]")
 {
     auto map =
         value_map(
@@ -169,7 +169,7 @@ TEST_CASE("get_field", "[core]")
     }
 }
 
-TEST_CASE("get_union_value_type", "[core]")
+TEST_CASE("get_union_value_type", "[core][value]")
 {
     // Try getting the type from a proper union value.
     REQUIRE(
@@ -206,7 +206,7 @@ TEST_CASE("get_union_value_type", "[core]")
     }
 }
 
-TEST_CASE("value operators", "[core]")
+TEST_CASE("value operators", "[core][value]")
 {
     value a;
     value b(integer(0));

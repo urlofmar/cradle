@@ -34,7 +34,7 @@ test_msgpack_io(uint8_t const* msgpack, size_t size, value const& expected_value
     REQUIRE(std::memcmp(msgpack_blob.data, msgpack, size) == 0);
 }
 
-TEST_CASE("basic msgpack I/O", "[io]")
+TEST_CASE("basic msgpack I/O", "[io][msgpack]")
 {
     uint8_t const msgpack_data[] =
     {
@@ -91,7 +91,7 @@ TEST_CASE("basic msgpack I/O", "[io]")
         parse_json_value(json_equivalent));
 }
 
-TEST_CASE("custom MessagePack blob ownership", "[io]")
+TEST_CASE("custom MessagePack blob ownership", "[io][msgpack]")
 {
     auto blob =
         parse_json_value(
@@ -114,7 +114,7 @@ TEST_CASE("custom MessagePack blob ownership", "[io]")
     REQUIRE(boost::any_cast<string>(parsed_blob.ownership) == "custom");
 }
 
-TEST_CASE("unsupported MessagePack extension type", "[io]")
+TEST_CASE("unsupported MessagePack extension type", "[io][msgpack]")
 {
     uint8_t msgpack_data[] = { 0xd4, 0x02, 0x00 };
     try
@@ -130,7 +130,7 @@ TEST_CASE("unsupported MessagePack extension type", "[io]")
     }
 }
 
-TEST_CASE("malformed MessagePack", "[io]")
+TEST_CASE("malformed MessagePack", "[io][msgpack]")
 {
     {
         uint8_t msgpack_data[] = { 0xd4, 0x01, 0x00 };
@@ -142,7 +142,7 @@ TEST_CASE("malformed MessagePack", "[io]")
     }
 }
 
-TEST_CASE("blob too large for MessagePack", "[io]")
+TEST_CASE("blob too large for MessagePack", "[io][msgpack]")
 {
     try
     {

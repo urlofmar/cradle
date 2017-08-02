@@ -23,7 +23,7 @@ make_mock_response(string const& body)
     return mock_response;
 }
 
-TEST_CASE("ISS object resolution", "[thinknode]")
+TEST_CASE("ISS object resolution", "[thinknode][iss]")
 {
     Mock<http_connection_interface> mock_connection;
 
@@ -52,7 +52,7 @@ TEST_CASE("ISS object resolution", "[thinknode]")
     REQUIRE(id == "def");
 }
 
-TEST_CASE("ISS immutable retrieval", "[thinknode]")
+TEST_CASE("ISS immutable retrieval", "[thinknode][iss]")
 {
     Mock<http_connection_interface> mock_connection;
 
@@ -81,7 +81,7 @@ TEST_CASE("ISS immutable retrieval", "[thinknode]")
     REQUIRE(data == value("the-data"));
 }
 
-TEST_CASE("URL type string", "[thinknode]")
+TEST_CASE("URL type string", "[thinknode][iss]")
 {
     api_named_type_reference named_info;
     named_info.account = "my_account";
@@ -151,7 +151,7 @@ TEST_CASE("URL type string", "[thinknode]")
     REQUIRE(get_url_type_string(ref_type) == "reference/named/my_account/my_app/my_type");
 }
 
-TEST_CASE("ISS POST", "[thinknode]")
+TEST_CASE("ISS POST", "[thinknode][iss]")
 {
     Mock<http_connection_interface> mock_connection;
 

@@ -8,7 +8,7 @@
 
 using namespace cradle;
 
-TEST_CASE("websocket client/server", "[disk_cache]")
+TEST_CASE("websocket client/server", "[ws]")
 {
     std::thread server_thread([](){ run_websocket_server(41072); });
     // Give the server time to start.

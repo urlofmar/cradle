@@ -14,7 +14,7 @@
 using namespace cradle;
 using namespace fakeit;
 
-TEST_CASE("calc status utilities", "[thinknode]")
+TEST_CASE("calc status utilities", "[thinknode][tn_calc]")
 {
     // We can test most cases in the status ordering and query string
     // translation by simply constructing the expected order of query strings
@@ -83,7 +83,7 @@ make_mock_response(string const& body)
     return mock_response;
 }
 
-TEST_CASE("calc status query", "[thinknode]")
+TEST_CASE("calc status query", "[thinknode][tn_calc]")
 {
     Mock<http_connection_interface> mock_connection;
 
@@ -112,7 +112,7 @@ TEST_CASE("calc status query", "[thinknode]")
     REQUIRE(status == make_calculation_status_with_completed(nil));
 }
 
-TEST_CASE("calc status long polling", "[thinknode]")
+TEST_CASE("calc status long polling", "[thinknode][tn_calc]")
 {
     Mock<http_connection_interface> mock_connection;
 
@@ -184,7 +184,7 @@ TEST_CASE("calc status long polling", "[thinknode]")
     REQUIRE(status_counter == mock_responses.size());
 }
 
-TEST_CASE("calc variable substitution", "[thinknode]")
+TEST_CASE("calc variable substitution", "[thinknode][tn_calc]")
 {
     auto a_substitute = make_calculation_request_with_reference("abc");
     auto b_substitute = make_calculation_request_with_value(value("def"));
@@ -327,7 +327,7 @@ TEST_CASE("calc variable substitution", "[thinknode]")
                 array_schema)));
 }
 
-TEST_CASE("let calculation submission", "[thinknode]")
+TEST_CASE("let calculation submission", "[thinknode][tn_calc]")
 {
     thinknode_session mock_session;
     mock_session.api_url = "https://mgh.thinknode.io/api/v1.0";

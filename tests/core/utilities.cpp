@@ -4,7 +4,7 @@
 
 using namespace cradle;
 
-TEST_CASE("index bounds checking", "[core]")
+TEST_CASE("index bounds checking", "[core][utilities]")
 {
     try
     {
@@ -24,7 +24,7 @@ TEST_CASE("index bounds checking", "[core]")
         index_out_of_bounds);
 }
 
-TEST_CASE("array size checking", "[core]")
+TEST_CASE("array size checking", "[core][utilities]")
 {
     try
     {
@@ -40,7 +40,7 @@ TEST_CASE("array size checking", "[core]")
     REQUIRE_NOTHROW(check_array_size(12, 12));
 }
 
-TEST_CASE("error info", "[core]")
+TEST_CASE("error info", "[core][utilities]")
 {
     parsing_error error;
     error << parsed_text_info("asdf");
