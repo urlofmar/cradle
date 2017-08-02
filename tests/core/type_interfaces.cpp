@@ -6,17 +6,17 @@
 
 using namespace cradle;
 
-TEST_CASE("nil type interface", "[core]")
+TEST_CASE("nil type interface", "[core][types]")
 {
     test_regular_value(nil);
 }
 
-TEST_CASE("nil hashing", "[core]")
+TEST_CASE("nil hashing", "[core][types]")
 {
     REQUIRE(invoke_hash(nil) == 0);
 }
 
-TEST_CASE("bool type interface", "[core]")
+TEST_CASE("bool type interface", "[core][types]")
 {
     test_regular_value_pair(false, true);
 }
@@ -30,7 +30,7 @@ test_integer_interface()
     REQUIRE(deep_sizeof(Integer(0)) == sizeof(Integer));
 }
 
-TEST_CASE("integer type interfaces", "[core]")
+TEST_CASE("integer type interfaces", "[core][types]")
 {
     test_integer_interface<signed char>();
     test_integer_interface<unsigned char>();
@@ -53,13 +53,13 @@ test_float_interface()
     REQUIRE(deep_sizeof(Float(0)) == sizeof(Float));
 }
 
-TEST_CASE("floating point type interfaces", "[core]")
+TEST_CASE("floating point type interfaces", "[core][types]")
 {
     test_float_interface<float>();
     test_float_interface<double>();
 }
 
-TEST_CASE("string type interface", "[core]")
+TEST_CASE("string type interface", "[core][types]")
 {
     test_regular_value_pair(
         string("hello"),
@@ -70,7 +70,7 @@ TEST_CASE("string type interface", "[core]")
         deep_sizeof(string()) + 5);
 }
 
-TEST_CASE("date type interface", "[core]")
+TEST_CASE("date type interface", "[core][types]")
 {
     test_regular_value_pair(
         boost::gregorian::date(2017,boost::gregorian::Apr,26),
@@ -89,7 +89,7 @@ TEST_CASE("date type interface", "[core]")
     }
 }
 
-TEST_CASE("ptime type interface", "[core]")
+TEST_CASE("ptime type interface", "[core][types]")
 {
     test_regular_value_pair(
         ptime(
@@ -100,7 +100,7 @@ TEST_CASE("ptime type interface", "[core]")
             boost::posix_time::time_duration(1,2,4)));
 }
 
-TEST_CASE("blob type interface", "[core]")
+TEST_CASE("blob type interface", "[core][types]")
 {
     char blob_data[] = { 'a', 'b' };
 
@@ -115,7 +115,7 @@ TEST_CASE("blob type interface", "[core]")
         blob(ownership_holder(), blob_data + 1, 1));
 }
 
-TEST_CASE("optional type interface", "[core]")
+TEST_CASE("optional type interface", "[core][types]")
 {
     // Test an optional with a value.
     test_regular_value_pair(
@@ -144,7 +144,7 @@ TEST_CASE("optional type interface", "[core]")
     }
 }
 
-TEST_CASE("vector type interface", "[core]")
+TEST_CASE("vector type interface", "[core][types]")
 {
     test_regular_value_pair(
         std::vector<int>({ 0, 1 }),
@@ -155,7 +155,7 @@ TEST_CASE("vector type interface", "[core]")
         deep_sizeof(std::vector<int>()) + deep_sizeof(0) + deep_sizeof(1));
 }
 
-TEST_CASE("map type interface", "[core]")
+TEST_CASE("map type interface", "[core][types]")
 {
     test_regular_value(std::map<int,int>({}));
 
@@ -173,7 +173,7 @@ TEST_CASE("map type interface", "[core]")
         deep_sizeof(std::map<int,int>()) + deep_sizeof(0) + deep_sizeof(1));
 }
 
-TEST_CASE("generated type interfaces", "[core]")
+TEST_CASE("generated type interfaces", "[core][types]")
 {
     {
         INFO("Test a generated structure type.");

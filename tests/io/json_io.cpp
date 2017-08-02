@@ -35,7 +35,7 @@ test_json_io(string const& json, value const& expected_value)
         converted_json);
 }
 
-TEST_CASE("basic JSON I/O", "[io]")
+TEST_CASE("basic JSON I/O", "[io][json]")
 {
     // Try some basic types.
     test_json_io(
@@ -296,7 +296,7 @@ TEST_CASE("basic JSON I/O", "[io]")
         { { "type", integer(12) }, { "blob", "asdf" } });
 }
 
-TEST_CASE("malformed JSON blob", "[io]")
+TEST_CASE("malformed JSON blob", "[io][json]")
 {
     try
     {
@@ -372,7 +372,7 @@ test_malformed_json(string const& malformed_json)
     }
 }
 
-TEST_CASE("malformed JSON", "[io]")
+TEST_CASE("malformed JSON", "[io][json]")
 {
     test_malformed_json(
         R"(
