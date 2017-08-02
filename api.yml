@@ -367,14 +367,16 @@ types:
   doc: supported HTTP request methods
   schema:
     enum:
-    - delete:
-        doc: ''
     - get:
-        doc: ''
+        doc: 'GET'
     - post:
-        doc: ''
+        doc: 'POST'
     - put:
-        doc: ''
+        doc: 'PUT'
+    - patch:
+        doc: 'PATCH'
+    - delete:
+        doc: 'DELETE'
 
 - name: http_request
   doc: ''
