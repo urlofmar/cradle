@@ -65,7 +65,8 @@ TEST_CASE("response headers", "[io][http]")
 TEST_CASE("GET request", "[io][http]")
 {
     auto response =
-        perform_simple_request(make_get_request("http://postman-echo.com/get?color=navy"));
+        perform_simple_request(
+            make_get_request("http://postman-echo.com/get?color=navy", http_header_list()));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
     REQUIRE(get_field(cast<value_map>(body), "args") == value({ { "color", "navy" } }));
@@ -74,46 +75,53 @@ TEST_CASE("GET request", "[io][http]")
 TEST_CASE("HTTPS request", "[io][http]")
 {
     auto response =
-        perform_simple_request(make_get_request("https://postman-echo.com/get?color=navy"));
+        perform_simple_request(
+            make_get_request("https://postman-echo.com/get?color=navy", http_header_list()));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
     REQUIRE(get_field(cast<value_map>(body), "args") == value({ { "color", "navy" } }));
 }
 
-TEST_CASE("PUT request", "[io][http]")
+void
+test_method_with_content(http_request_method method)
 {
     auto content =
         value({ { "numbers", value({ integer(4), integer(3), integer(2), integer(1) }) } });
     auto response =
         perform_simple_request(
-            make_put_request(
-                "http://postman-echo.com/put",
-                make_string_blob(value_to_json(content)),
-                { 
+            make_http_request(
+                method,
+                "http://postman-echo.com/" + string(get_value_id(method)),
+                {
                     { "Accept", "application/json" },
                     { "Content-Type", "application/json" }
-                }));
+                },
+                make_string_blob(value_to_json(content))));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
     REQUIRE(get_field(cast<value_map>(body), "json") == content);
 }
 
+TEST_CASE("PUT request", "[io][http]")
+{
+    test_method_with_content(http_request_method::PUT);
+}
+
 TEST_CASE("POST request", "[io][http]")
 {
-    auto content =
-        value({ { "numbers", value({ integer(4), integer(3), integer(2), integer(1) }) } });
+    test_method_with_content(http_request_method::POST);
+}
+
+TEST_CASE("DELETE request", "[io][http]")
+{
     auto response =
         perform_simple_request(
-            make_post_request(
-                "http://postman-echo.com/post",
-                make_string_blob(value_to_json(content)),
-                { 
-                    { "Accept", "application/json" },
-                    { "Content-Type", "application/json" }
-                }));
+            make_http_request(
+                http_request_method::DELETE,
+                "http://postman-echo.com/delete",
+                http_header_list(),
+                http_body()));
     REQUIRE(response.status_code == 200);
-    auto body = parse_json_response(response);
-    REQUIRE(get_field(cast<value_map>(body), "json") == content);
 }
 
 TEST_CASE("large HTTP request", "[io][http]")
@@ -126,13 +134,14 @@ TEST_CASE("large HTTP request", "[io][http]")
     auto content = value({ { "numbers", to_value(numbers) } });
     auto response =
         perform_simple_request(
-            make_post_request(
+            make_http_request(
+                http_request_method::POST,
                 "http://postman-echo.com/post",
-                make_string_blob(value_to_json(content)),
-                { 
+                {
                     { "Accept", "application/json" },
                     { "Content-Type", "application/json" }
-                }));
+                },
+                make_string_blob(value_to_json(content))));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
     REQUIRE(get_field(cast<value_map>(body), "json") == content);
@@ -140,7 +149,7 @@ TEST_CASE("large HTTP request", "[io][http]")
 
 TEST_CASE("404 response code", "[io][http]")
 {
-    auto request = make_get_request("http://postman-echo.com/status/404");
+    auto request = make_get_request("http://postman-echo.com/status/404", http_header_list());
     try
     {
         perform_simple_request(request);
@@ -155,7 +164,7 @@ TEST_CASE("404 response code", "[io][http]")
 
 TEST_CASE("500 response code", "[io][http]")
 {
-    auto request = make_get_request("http://postman-echo.com/status/500");
+    auto request = make_get_request("http://postman-echo.com/status/500", http_header_list());
     try
     {
         perform_simple_request(request);
@@ -170,7 +179,10 @@ TEST_CASE("500 response code", "[io][http]")
 
 TEST_CASE("bad hostname", "[io][http]")
 {
-    auto request = make_get_request("http://f5c12743-1b9a-44ee-91a8-adaed32cc607.bad/status");
+    auto request =
+        make_get_request(
+            "http://f5c12743-1b9a-44ee-91a8-adaed32cc607.bad/status",
+            http_header_list());
     try
     {
         perform_simple_request(request);
@@ -190,7 +202,7 @@ TEST_CASE("interrupted request", "[io][http]")
     {
         void operator()() { throw canceled(); }
     };
-    auto request = make_get_request("http://postman-echo.com/delay/10");
+    auto request = make_get_request("http://postman-echo.com/delay/10", http_header_list());
     try
     {
         http_connection connection(the_http_request_system);

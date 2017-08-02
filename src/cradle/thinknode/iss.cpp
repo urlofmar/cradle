@@ -130,14 +130,15 @@ post_iss_object(
     value const& data)
 {
     auto query =
-        make_post_request(
+        make_http_request(
+            http_request_method::POST,
             session.api_url + "/iss/" + get_url_type_string(schema) + "?context=" + context_id,
-            value_to_msgpack_blob(data),
             {
                 { "Authorization", "Bearer '" + session.access_token + "'" },
                 { "Accept", "application/json" },
                 { "Content-Type", "application/octet-stream" }
-            });
+            },
+            value_to_msgpack_blob(data));
     null_check_in check_in;
     null_progress_reporter reporter;
     auto response = connection.perform_request(check_in, reporter, query);

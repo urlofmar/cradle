@@ -161,14 +161,15 @@ TEST_CASE("ISS POST", "[thinknode]")
             http_request const& request)
         {
             auto expected_request =
-                make_post_request(
+                make_http_request(
+                    http_request_method::POST,
                     "https://mgh.thinknode.io/api/v1.0/iss/string?context=123",
-                    value_to_msgpack_blob(value("payload")),
                     {
                         { "Authorization", "Bearer 'xyz'" },
                         { "Accept", "application/json" },
                         { "Content-Type", "application/octet-stream" }
-                    });
+                    },
+                    value_to_msgpack_blob(value("payload")));
             REQUIRE(request == expected_request);
 
             return make_mock_response("{ \"id\": \"def\" }");

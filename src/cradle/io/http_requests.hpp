@@ -12,57 +12,17 @@ namespace cradle {
 struct progress_reporter_interface;
 struct check_in_interface;
 
-// An http_header_list is a mapping from field names to values.
+// HTTP headers are specified as a mapping from field names to values.
 typedef std::map<string,string> http_header_list;
 
-static http_header_list const no_headers;
+// The body of an HTTP request is a blob.
+typedef blob http_body;
 
+// Construct a GET request (in a convenient way).
 http_request static inline
-make_get_request(string const& url, http_header_list const& headers = no_headers)
+make_get_request(string const& url, http_header_list const& headers)
 {
-    http_request request;
-    request.method = http_request_method::GET;
-    request.url = url;
-    request.headers = headers;
-    return request;
-}
-
-http_request static inline
-make_post_request(
-    string const& url,
-    blob const& data,
-    http_header_list const& headers = no_headers)
-{
-    http_request request;
-    request.method = http_request_method::POST;
-    request.url = url;
-    request.body = data;
-    request.headers = headers;
-    return request;
-}
-
-http_request static inline
-make_put_request(
-    string const& url,
-    blob const& data,
-    http_header_list const& headers = no_headers)
-{
-    http_request request;
-    request.method = http_request_method::PUT;
-    request.url = url;
-    request.body = data;
-    request.headers = headers;
-    return request;
-}
-
-http_request static inline
-make_delete_request(string const& url, http_header_list const& headers = no_headers)
-{
-    http_request request;
-    request.method = http_request_method::DELETE;
-    request.url = url;
-    request.headers = headers;
-    return request;
+    return make_http_request(http_request_method::GET, url, headers, http_body());
 }
 
 // Parse a http_response as a JSON value.
