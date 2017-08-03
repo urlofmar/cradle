@@ -43,6 +43,18 @@ types:
         doc: the internal numeric ID of the entry within the cache
         schema:
           integer: {}
+    - in_db:
+        doc: true if the entry is stored directly in the database
+        schema:
+          boolean: {}
+    - value:
+        doc: |
+          the value associated with the entry - This may be omitted, depending
+          on how the entry is stored in the cache and how this info was
+          queried.
+        schema:
+          string: {}
+        omissible: true
     - size:
         doc: the size of the entry (in bytes)
         schema:

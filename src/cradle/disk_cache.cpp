@@ -137,7 +137,7 @@ size_callback(void* data, int n_columns, char** columns, char** types)
 
     try
     {
-        r->size = boost::lexical_cast<int64_t>(columns[0]);
+        r->size = lexical_cast<int64_t>(columns[0]);
         r->success = true;
         return 0;
     }
@@ -182,7 +182,7 @@ entry_count_callback(void* data, int n_columns, char** columns, char** types)
 
     try
     {
-        r->n_entries = boost::lexical_cast<int64_t>(columns[0]);
+        r->n_entries = lexical_cast<int64_t>(columns[0]);
         r->success = true;
         return 0;
     }
@@ -216,7 +216,7 @@ get_cache_entry_count(disk_cache_impl& cache)
 int static
 cache_entries_callback(void* data, int n_columns, char** columns, char** types)
 {
-    if (n_columns != 4)
+    if (n_columns != 5)
         return -1;
 
     auto r = reinterpret_cast<std::vector<disk_cache_entry>*>(data);
@@ -225,9 +225,10 @@ cache_entries_callback(void* data, int n_columns, char** columns, char** types)
     {
         disk_cache_entry e;
         e.key = columns[0];
-        e.id = boost::lexical_cast<int64_t>(columns[1]);
-        e.size = columns[2] ? boost::lexical_cast<int64_t>(columns[2]) : 0;
-        e.crc32 = columns[3] ? boost::lexical_cast<uint32_t>(columns[3]) : 0;
+        e.id = lexical_cast<int64_t>(columns[1]);
+        e.in_db = columns[2] && lexical_cast<int>(columns[2]) != 0;
+        e.size = columns[3] ? lexical_cast<int64_t>(columns[3]) : 0;
+        e.crc32 = columns[4] ? lexical_cast<uint32_t>(columns[4]) : 0;
         r->push_back(e);
         return 0;
     }
@@ -242,7 +243,7 @@ get_entry_list(disk_cache_impl& cache)
     std::vector<disk_cache_entry> entries;
 
     string sql =
-        "select key, id, size, crc32 from entries where valid = 1 order by last_accessed;";
+        "select key, id, in_db, size, crc32 from entries where valid = 1 order by last_accessed;";
 
     char* msg;
     int code = sqlite3_exec(cache.db, sql.c_str(), cache_entries_callback, &entries, &msg);
@@ -257,12 +258,13 @@ get_entry_list(disk_cache_impl& cache)
 struct lru_entry
 {
     int64_t id, size;
+    bool in_db;
 };
 typedef std::vector<lru_entry> lru_entry_list;
 int static
 lru_entries_callback(void* data, int n_columns, char** columns, char** types)
 {
-    if (n_columns != 2)
+    if (n_columns != 3)
         return -1;
 
     lru_entry_list* r = reinterpret_cast<lru_entry_list*>(data);
@@ -270,8 +272,9 @@ lru_entries_callback(void* data, int n_columns, char** columns, char** types)
     try
     {
         lru_entry e;
-        e.id = boost::lexical_cast<int64_t>(columns[0]);
-        e.size = columns[1] ? boost::lexical_cast<int64_t>(columns[1]) : 0;
+        e.id = lexical_cast<int64_t>(columns[0]);
+        e.size = columns[1] ? lexical_cast<int64_t>(columns[1]) : 0;
+        e.in_db = columns[2] && lexical_cast<int>(columns[2]) != 0;
         r->push_back(e);
         return 0;
     }
@@ -286,7 +289,7 @@ get_lru_entries(disk_cache_impl& cache)
     lru_entry_list entries;
 
     string sql =
-        "select id, size from entries order by valid, last_accessed;";
+        "select id, size, in_db from entries order by valid, last_accessed;";
 
     char* msg;
     int code = sqlite3_exec(cache.db, sql.c_str(), lru_entries_callback, &entries, &msg);
@@ -297,27 +300,33 @@ get_lru_entries(disk_cache_impl& cache)
     return entries;
 }
 
-// Check if a particular key exists in the cache.
-struct exists_result
+// Get the entry associated with a particular key (if any).
+struct look_up_result
 {
     bool exists;
     int64_t id;
     bool valid;
+    bool in_db;
+    optional<string> value;
+    int64_t size;
     uint32_t crc32;
 };
 int static
-exists_callback(void* data, int n_columns, char** columns, char** types)
+look_up_callback(void* data, int n_columns, char** columns, char** types)
 {
-    if (n_columns != 3)
+    if (n_columns != 6)
         return -1;
 
-    exists_result* r = reinterpret_cast<exists_result*>(data);
+    look_up_result* r = reinterpret_cast<look_up_result*>(data);
 
     try
     {
-        r->id = boost::lexical_cast<int64_t>(columns[0]);
-        r->valid = boost::lexical_cast<int>(columns[1]) != 0;
-        r->crc32 = columns[2] ? boost::lexical_cast<uint32_t>(columns[2]) : 0;
+        r->id = lexical_cast<int64_t>(columns[0]);
+        r->valid = lexical_cast<int>(columns[1]) != 0;
+        r->in_db = columns[2] && lexical_cast<int>(columns[2]) != 0;
+        r->value = columns[3] ? some(string(columns[3])) : none;
+        r->size = columns[4] ? lexical_cast<int64_t>(columns[4]) : 0;
+        r->crc32 = columns[5] ? lexical_cast<uint32_t>(columns[5]) : 0;
         r->exists = true;
         return 0;
     }
@@ -326,34 +335,38 @@ exists_callback(void* data, int n_columns, char** columns, char** types)
         return -1;
     }
 }
-bool static
-exists(
+optional<disk_cache_entry> static
+look_up(
     disk_cache_impl const& cache,
     string const& key,
-    int64_t* id,
-    uint32_t* crc32,
     bool only_if_valid)
 {
-    string sql = "select id, valid, crc32 from entries where key='" + escape_string(key) + "';";
+    string sql =
+        "select id, valid, in_db, value, size, crc32 from entries where key='" +
+        escape_string(key) + "';";
 
-    exists_result result;
+    look_up_result result;
     result.exists = false;
     char* msg;
-    int code = sqlite3_exec(cache.db, sql.c_str(), exists_callback, &result,
-        &msg);
+    int code = sqlite3_exec(cache.db, sql.c_str(), look_up_callback, &result, &msg);
     string error = copy_and_free_message(msg);
     if (code != SQLITE_OK)
         throw_query_error(cache, sql, error);
 
     if (result.exists && (!only_if_valid || result.valid))
     {
-        *id = result.id;
-        if (crc32)
-            *crc32 = result.crc32;
-        return true;
+        return
+            some(
+                make_disk_cache_entry(
+                    key,
+                    result.id,
+                    result.in_db,
+                    result.value,
+                    result.size,
+                    result.crc32));
     }
     else
-        return false;
+        return none;
 }
 
 // DIRECTORY STUFF
@@ -363,42 +376,75 @@ exists(
 bool static
 create_directory_with_user_full_control_acl(string const& path)
 {
-    LPCTSTR lpPath = path.c_str();
+    LPCTSTR lp_path = path.c_str();
 
-    if (!CreateDirectory(lpPath, NULL))
+    if (!CreateDirectory(lp_path, NULL))
         return false;
 
-    HANDLE hDir = CreateFile(lpPath, READ_CONTROL |WRITE_DAC, 0, NULL,
-        OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    if(hDir == INVALID_HANDLE_VALUE)
+    HANDLE h_dir =
+        CreateFile(
+            lp_path,
+            READ_CONTROL | WRITE_DAC,
+            0,
+            NULL,
+            OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS,
+            NULL);
+    if (h_dir == INVALID_HANDLE_VALUE)
         return false;
 
-    ACL* pOldDACL;
-    SECURITY_DESCRIPTOR* pSD = NULL;
-    GetSecurityInfo(hDir, SE_FILE_OBJECT,DACL_SECURITY_INFORMATION, NULL, NULL, &pOldDACL, NULL, (void**)&pSD);
+    ACL* p_old_dacl;
+    SECURITY_DESCRIPTOR* p_sd = NULL;
+    GetSecurityInfo(
+        h_dir,
+        SE_FILE_OBJECT,DACL_SECURITY_INFORMATION,
+        NULL,
+        NULL,
+        &p_old_dacl,
+        NULL,
+        (void**)&p_sd);
 
-    PSID pSid = NULL;
-    SID_IDENTIFIER_AUTHORITY authNt = SECURITY_NT_AUTHORITY;
-    AllocateAndInitializeSid(&authNt,2,SECURITY_BUILTIN_DOMAIN_RID,DOMAIN_ALIAS_RID_USERS,0,0,0,0,0,0,&pSid);
+    PSID p_sid = NULL;
+    SID_IDENTIFIER_AUTHORITY auth_nt = SECURITY_NT_AUTHORITY;
+    AllocateAndInitializeSid(
+        &auth_nt,
+        2,
+        SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_USERS,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        &p_sid);
 
-    EXPLICIT_ACCESS ea={0};
+    EXPLICIT_ACCESS ea = {0};
     ea.grfAccessMode = GRANT_ACCESS;
     ea.grfAccessPermissions = GENERIC_ALL;
     ea.grfInheritance = CONTAINER_INHERIT_ACE|OBJECT_INHERIT_ACE;
     ea.Trustee.TrusteeType = TRUSTEE_IS_GROUP;
     ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-    ea.Trustee.ptstrName = (LPTSTR)pSid;
+    ea.Trustee.ptstrName = (LPTSTR)p_sid;
 
-    ACL* pNewDACL = 0;
-    SetEntriesInAcl(1, &ea, pOldDACL, &pNewDACL);
+    ACL* p_new_dacl = 0;
+    SetEntriesInAcl(1, &ea, p_old_dacl, &p_new_dacl);
 
-    if (pNewDACL)
-        SetSecurityInfo(hDir,SE_FILE_OBJECT,DACL_SECURITY_INFORMATION,NULL, NULL, pNewDACL, NULL);
+    if (p_new_dacl)
+    {
+        SetSecurityInfo(
+            h_dir,
+            SE_FILE_OBJECT,DACL_SECURITY_INFORMATION,
+            NULL,
+            NULL,
+            p_new_dacl,
+            NULL);
+    }
 
-    FreeSid(pSid);
-    LocalFree(pNewDACL);
-    LocalFree(pSD);
-    CloseHandle(hDir);
+    FreeSid(p_sid);
+    LocalFree(p_new_dacl);
+    LocalFree(p_sd);
+    CloseHandle(h_dir);
 
     return true;
 }
@@ -416,8 +462,7 @@ get_default_cache_dir()
     try
     {
         TCHAR path[MAX_PATH];
-        if (SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE,
-                NULL, 0, path) == S_OK)
+        if (SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, 0, path) == S_OK)
         {
             file_path app_data_dir(path, boost::filesystem::native);
             file_path cradle_dir = app_data_dir / "cradle";
@@ -457,18 +502,17 @@ get_default_cache_dir()
 file_path static
 get_path_for_id(disk_cache_impl& cache, int64_t id)
 {
-    return cache.dir / boost::lexical_cast<string>(id);
+    return cache.dir / lexical_cast<string>(id);
 }
 
 void static
-remove_entry(disk_cache_impl& cache, int64_t id)
+remove_entry(disk_cache_impl& cache, int64_t id, bool remove_file = true)
 {
     file_path path = get_path_for_id(cache, id);
-    if (exists(path))
+    if (remove_file && exists(path))
         remove(path);
 
-    string sql = "delete from entries where id=" +
-        boost::lexical_cast<string>(id) + ";";
+    string sql = "delete from entries where id=" + lexical_cast<string>(id) + ";";
 
     char* msg;
     int code = sqlite3_exec(cache.db, sql.c_str(), 0, 0, &msg);
@@ -493,7 +537,7 @@ enforce_cache_size_limit(disk_cache_impl& cache)
             {
                 try
                 {
-                    remove_entry(cache, i->id);
+                    remove_entry(cache, i->id, !i->in_db);
                     size -= i->size;
                     ++i;
                 }
@@ -520,7 +564,7 @@ record_usage_to_db(disk_cache_impl const& cache, int64_t id)
 {
     exec_sql(cache,
         "update entries set last_accessed=strftime('%Y-%m-%d %H:%M:%f', 'now') where id=" +
-        boost::lexical_cast<string>(id) + ";");
+        lexical_cast<string>(id) + ";");
 }
 
 void static
@@ -531,6 +575,16 @@ write_usage_records(disk_cache_impl& cache)
         record_usage_to_db(cache, record);
     t.commit();
     cache.usage_record_buffer.clear();
+}
+
+void
+record_cache_growth(disk_cache_impl& cache, size_t size)
+{
+    cache.bytes_inserted_since_last_sweep += size;
+    // Allow the cache to write out roughly 1% of its capacity between size checks.
+    // (So it could exceed its limit slightly, but only temporarily, and not by much.)
+    if (cache.bytes_inserted_since_last_sweep > cache.size_limit / 0x80)
+        enforce_cache_size_limit(cache);
 }
 
 void static
@@ -553,16 +607,17 @@ initialize(disk_cache_impl& cache, disk_cache_config const& config)
         "   key text unique not null,\n"
         "   valid boolean not null,\n"
         "   last_accessed datetime,\n"
-        "   size integer, crc32 integer);");
+        "   in_db boolean,\n"
+        "   value blob,\n"
+        "   size integer,\n"
+        "   crc32 integer);");
 
     exec_sql(cache,
         "pragma synchronous = off;");
-
-    // The disk cache database will be accessed concurrently from multiple
-    // threads and even multiple processes, but each access should be very
-    // short. If the database is busy when we try to access it, we want SQLite
-    // to keep trying for a while before it gives up.
-    sqlite3_busy_timeout(cache.db, 1000);
+    exec_sql(cache,
+        "pragma locking_mode = exclusive;");
+    exec_sql(cache,
+        "pragma journal_mode = memory;");
 
     record_activity(cache);
 
@@ -595,7 +650,6 @@ disk_cache::disk_cache()
     this->impl_ = new disk_cache_impl;
 }
 
-// Create a disk cache that's initialized with the given config.
 disk_cache::disk_cache(disk_cache_config const& config)
 {
     this->impl_ = new disk_cache_impl;
@@ -685,7 +739,7 @@ disk_cache::clear()
     {
         try
         {
-            cradle::remove_entry(cache, entry.id);
+            cradle::remove_entry(cache, entry.id, !entry.in_db);
         }
         catch (...)
         {
@@ -693,8 +747,8 @@ disk_cache::clear()
     }
 }
 
-bool
-disk_cache::entry_exists(string const& key, int64_t* id, uint32_t* crc32)
+optional<disk_cache_entry>
+disk_cache::find(string const& key)
 {
     auto& cache = *this->impl_;
     boost::lock_guard<boost::mutex> lock(cache.mutex);
@@ -702,7 +756,39 @@ disk_cache::entry_exists(string const& key, int64_t* id, uint32_t* crc32)
 
     record_activity(cache);
 
-    return exists(cache, key, id, crc32, true);
+    return look_up(cache, key, true);
+}
+
+void
+disk_cache::insert(string const& key, string const& value)
+{
+    auto& cache = *this->impl_;
+    boost::lock_guard<boost::mutex> lock(cache.mutex);
+    check_initialization(cache);
+
+    record_activity(cache);
+
+    auto entry = look_up(cache, key, false);
+    if (entry)
+    {
+        exec_sql(cache,
+            "update entries set valid=1, in_db=1,"
+            " size=" + lexical_cast<string>(value.size()) + ","
+            " value=\"" + escape_string(value) + "\","
+            " last_accessed=strftime('%Y-%m-%d %H:%M:%f', 'now')"
+            " where id=" + lexical_cast<string>(entry->id) + ";");
+    }
+    else
+    {
+        exec_sql(cache,
+            "insert into entries(key, valid, in_db, size, value, last_accessed) values("
+            "\"" + escape_string(key) + "\", 1, 1, " +
+            lexical_cast<string>(value.size()) + ", "
+            "\"" + escape_string(value) + "\", "
+            "strftime('%Y-%m-%d %H:%M:%f', 'now'));");
+    }
+
+    record_cache_growth(cache, value.size());
 }
 
 int64_t
@@ -714,23 +800,26 @@ disk_cache::initiate_insert(string const& key)
 
     record_activity(cache);
 
-    int64_t id;
-    if (exists(cache, key, &id, 0, false))
-        return id;
+    auto entry = look_up(cache, key, false);
+    if (entry)
+        return entry->id;
 
-    exec_sql(cache, "insert into entries(key, valid) values ('" + escape_string(key) + "', 0);");
+    exec_sql(cache,
+        "insert into entries(key, valid, in_db) values ('" + escape_string(key) + "', 0, 0);");
 
     // Get the ID that was inserted.
-    if (!exists(cache, key, &id, 0, false))
+    entry = look_up(cache, key, false);
+    if (!entry)
     {
-        // If the insert succceeded, we really shouldn't get here.
+        // Since we checked that the insert succceeded, we really shouldn't
+        // get here.
         CRADLE_THROW(
             disk_cache_failure() <<
                 disk_cache_path_info(cache.dir) <<
                 internal_error_message_info("failed to create entry in index.db"));
     }
 
-    return id;
+    return entry->id;
 }
 
 void
@@ -744,17 +833,14 @@ disk_cache::finish_insert(int64_t id, uint32_t crc32)
 
     int64_t size = file_size(cradle::get_path_for_id(cache, id));
 
-    exec_sql(cache, "update entries set valid=1,"
-        " size=" + boost::lexical_cast<string>(size) + ","
-        " crc32=" + boost::lexical_cast<string>(crc32) + ","
+    exec_sql(cache,
+        "update entries set valid=1, in_db=0,"
+        " size=" + lexical_cast<string>(size) + ","
+        " crc32=" + lexical_cast<string>(crc32) + ","
         " last_accessed=strftime('%Y-%m-%d %H:%M:%f', 'now')"
-        " where id=" + boost::lexical_cast<string>(id) + ";");
+        " where id=" + lexical_cast<string>(id) + ";");
 
-    cache.bytes_inserted_since_last_sweep += size;
-    // Allow the cache to write out roughly 1% of its capacity between size checks.
-    // (So it could exceed its limit slightly, but only temporarily, and not by much.)
-    if (cache.bytes_inserted_since_last_sweep > cache.size_limit / 0x80)
-        enforce_cache_size_limit(cache);
+    record_cache_growth(cache, size);
 }
 
 file_path
