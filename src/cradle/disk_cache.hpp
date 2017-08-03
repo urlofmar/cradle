@@ -56,6 +56,7 @@ struct disk_cache_interface
     get_summary_info() = 0;
 
     // Get a list of all entries in the cache.
+    // Note that none of the returned entries will include values.
     virtual std::vector<disk_cache_entry>
     get_entry_list() = 0;
 
@@ -67,34 +68,46 @@ struct disk_cache_interface
     virtual void
     clear() = 0;
 
-    // Check if the given key exists in the cache.
-    // If it does, the 64-bit ID associated with the key is written to *id.
-    // Also, if crc32 is not null, *crc32 receives the 32-bit CRC of the entry.
-    virtual bool
-    entry_exists(
-        string const& key,
-        int64_t* id,
-        uint32_t* crc32 = nullptr) = 0;
+    // Look up a key in the cache.
+    //
+    // The returned entry is valid iff there's a valid entry associated with
+    // :key.
+    //
+    // Note that for entries stored directly in the database, this also
+    // retrieves the value associated with the entry.
+    //
+    virtual optional<disk_cache_entry>
+    find(string const& key) = 0;
 
-    // Adding an entry to the cache is a two-part process.
+    // Add a small entry to the cache.
+    // This should only be used on entries that are known to be smaller than
+    // a few kB. Below this level, it is more efficient (both in time and
+    // storage) to store data directly in the SQLite database.
+    virtual void
+    insert(string const& key, string const& value) = 0;
+
+    // Add an arbitrarily large entry to the cache.
+    //
+    // This is a two-part process.
     // First, you initiate the insert to get the ID for the entry.
     // Then, once the entry is written to disk, you finish the insert.
-    // (If an error occurs, it's OK to simply abandon the entry, as it will be
-    // marked as invalid initially.)
+    // (If an error occurs in between, it's OK to simply abandon the entry,
+    // as it will be marked as invalid initially.)
+    //
     virtual int64_t
     initiate_insert(string const& key) = 0;
     virtual void
     finish_insert(int64_t id, uint32_t crc32) = 0;
 
     // Given an ID within the cache, this computes the path of the file that would
-    // store the data associated with that ID.
+    // store the data associated with that ID (assuming that entry were actually
+    // stored in a file rather than in the database).
     virtual file_path
     get_path_for_id(int64_t id) = 0;
 
     // Record that an ID within the cache was just used.
     // When a lot of small objects are being read from the cache, the calls to
-    // record_usage() can significantly slow down the loading process, as they
-    // require locking the database file.
+    // record_usage() can slow down the loading process.
     // To address this, calls are buffered and sent all at once when the cache is
     // idle.
     virtual void
@@ -146,11 +159,11 @@ struct disk_cache : disk_cache_interface, boost::noncopyable
     void
     clear();
 
-    bool
-    entry_exists(
-        string const& key,
-        int64_t* id,
-        uint32_t* crc32 = nullptr);
+    optional<disk_cache_entry>
+    find(string const& key);
+
+    void
+    insert(string const& key, string const& value);
 
     int64_t
     initiate_insert(string const& key);

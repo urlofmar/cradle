@@ -29,7 +29,10 @@ init_disk_cache(disk_cache& cache, string const& cache_dir = "disk_cache")
 
     disk_cache_config config;
     config.directory = some(cache_dir);
-    config.size_limit = 600;
+    // Given the way that the value strings are generated below, this is
+    // enough to hold a little under 20 items (which matters for testing
+    // the eviction behavior).
+    config.size_limit = 500;
 
     cache.reset(config);
     REQUIRE(cache.is_initialized());
@@ -48,7 +51,6 @@ generate_key_string(int item_id)
 }
 
 // Generate some (meaningless) value string for the item with the given ID.
-// The string length is chosen so that the cache fits a reasonable number (tens) of items.
 string static
 generate_value_string(int item_id)
 {
@@ -59,7 +61,13 @@ generate_value_string(int item_id)
 // cache. It works whether or not the item is already cached. (It will insert
 // it if it's not already there.) It tests various steps along the way,
 // including whether or not the cached item was valid.
+//
+// Since there are two methods of storing data in the cache (inside the
+// database or externally in files), this uses the in-database method for
+// even-numbered item IDs and the external method for odd-numbered IDs.
+//
 // The return value indicates whether or not the item was already cached.
+//
 bool static
 test_item_access(disk_cache& cache, int item_id)
 {
@@ -69,27 +77,48 @@ test_item_access(disk_cache& cache, int item_id)
     // We're faking the CRC. The cache doesn't care.
     auto computed_crc = uint32_t(item_id) + 1;
 
-    int64_t entry_id;
-    uint32_t stored_crc;
-    if (cache.entry_exists(key, &entry_id, &stored_crc))
+    auto entry = cache.find(key);
+    if (item_id % 2 == 1)
     {
-        auto cached_contents = get_file_contents(cache.get_path_for_id(entry_id));
-        REQUIRE(stored_crc == computed_crc);
-        cache.record_usage(entry_id);
-        cache.write_usage_records();
-        return true;
+        // Use external storage.
+        if (entry)
+        {
+            auto cached_contents = get_file_contents(cache.get_path_for_id(entry->id));
+            REQUIRE(cached_contents == value);
+            REQUIRE(entry->crc32 == computed_crc);
+            cache.record_usage(entry->id);
+            cache.write_usage_records();
+            return true;
+        }
+        else
+        {
+            auto entry_id = cache.initiate_insert(key);
+            {
+                auto entry_path = cache.get_path_for_id(entry_id);
+                std::ofstream output;
+                open(output, entry_path, std::ios::out | std::ios::trunc | std::ios::binary);
+                output << value;
+            }
+            cache.finish_insert(entry_id, computed_crc);
+            return false;
+        }
     }
     else
     {
-        entry_id = cache.initiate_insert(key);
+        // Use in-database storage.
+        if (entry)
         {
-            auto entry_path = cache.get_path_for_id(entry_id);
-            std::ofstream output;
-            open(output, entry_path, std::ios::out | std::ios::trunc | std::ios::binary);
-            output << value;
+            REQUIRE(entry->value);
+            REQUIRE(*entry->value == value);
+            cache.record_usage(entry->id);
+            cache.write_usage_records();
+            return true;
         }
-        cache.finish_insert(entry_id, computed_crc);
-        return false;
+        else
+        {
+            cache.insert(key, value);
+            return false;
+        }
     }
 }
 
@@ -109,6 +138,8 @@ TEST_CASE("simple item access", "[disk_cache]")
     // should be.
     REQUIRE(!test_item_access(cache, 0));
     REQUIRE(test_item_access(cache, 0));
+    REQUIRE(!test_item_access(cache, 1));
+    REQUIRE(test_item_access(cache, 1));
 }
 
 TEST_CASE("multiple initializations", "[disk_cache]")
@@ -119,6 +150,8 @@ TEST_CASE("multiple initializations", "[disk_cache]")
     // Test that it can still handle basic operations.
     REQUIRE(!test_item_access(cache, 0));
     REQUIRE(test_item_access(cache, 0));
+    REQUIRE(!test_item_access(cache, 1));
+    REQUIRE(test_item_access(cache, 1));
 }
 
 TEST_CASE("clearing", "[disk_cache]")
@@ -141,8 +174,8 @@ TEST_CASE("LRU removal", "[disk_cache]")
     test_item_access(cache, 0);
     test_item_access(cache, 1);
     // This pattern of access should ensure that entries 0 and 1 always remain
-    // in the cache while lower numbered entries eventually get evicted.
-    for (int i = 2; i != 40; ++i)
+    // in the cache while other low-numbered entries eventually get evicted.
+    for (int i = 2; i != 30; ++i)
     {
         REQUIRE(test_item_access(cache, 0));
         REQUIRE(test_item_access(cache, 1));
@@ -160,20 +193,20 @@ TEST_CASE("manual entry removal", "[disk_cache]")
 {
     disk_cache cache;
     init_disk_cache(cache);
-    // Insert the item and check that it was inserted.
-    REQUIRE(!test_item_access(cache, 0));
-    REQUIRE(test_item_access(cache, 0));
-    // Remove it.
+    for (int i = 0; i != 2; ++i)
     {
-        int64_t entry_id;
-        uint32_t stored_crc;
-        if (cache.entry_exists(generate_key_string(0), &entry_id, &stored_crc))
+        // Insert the item and check that it was inserted.
+        REQUIRE(!test_item_access(cache, i));
+        REQUIRE(test_item_access(cache, i));
+        // Remove it.
         {
-            cache.remove_entry(entry_id);
+            auto entry = cache.find(generate_key_string(i));
+            if (entry)
+                cache.remove_entry(entry->id);
         }
+        // Check that it's not there.
+        REQUIRE(!test_item_access(cache, i));
     }
-    // Check that it's not there.
-    REQUIRE(!test_item_access(cache, 0));
 }
 
 TEST_CASE("cache entry list", "[disk_cache]")
@@ -185,12 +218,9 @@ TEST_CASE("cache entry list", "[disk_cache]")
     test_item_access(cache, 2);
     // Remove an entry.
     {
-        int64_t entry_id;
-        uint32_t stored_crc;
-        if (cache.entry_exists(generate_key_string(0), &entry_id, &stored_crc))
-        {
-            cache.remove_entry(entry_id);
-        }
+        auto entry = cache.find(generate_key_string(0));
+        if (entry)
+            cache.remove_entry(entry->id);
     }
     // Check the entry list.
     auto entries = cache.get_entry_list();
@@ -200,9 +230,11 @@ TEST_CASE("cache entry list", "[disk_cache]")
     {
         REQUIRE(entries[0].key == generate_key_string(1));
         REQUIRE(size_t(entries[0].size) == generate_value_string(1).length());
+        REQUIRE(!entries[0].in_db);
     }
     {
         REQUIRE(entries[1].key == generate_key_string(2));
         REQUIRE(size_t(entries[1].size) == generate_value_string(2).length());
+        REQUIRE(entries[1].in_db);
     }
 }
