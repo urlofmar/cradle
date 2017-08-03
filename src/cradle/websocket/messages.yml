@@ -31,6 +31,33 @@ types:
         schema:
           string: {}
 
+- name: websocket_cache_insert
+  doc: ''
+  schema:
+    structure:
+    - key:
+        doc: ''
+        schema:
+          string: {}
+    - value:
+        doc: ''
+        schema:
+          string: {}
+
+- name: websocket_cache_response
+  doc: ''
+  schema:
+    structure:
+    - key:
+        doc: ''
+        schema:
+          string: {}
+    - value:
+        doc: ''
+        schema:
+          optional:
+            string: {}
+
 - name: websocket_client_message
   doc: ''
   schema:
@@ -51,6 +78,16 @@ types:
           named:
             app: cradle
             name: websocket_test_query
+    - cache_insert:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: websocket_cache_insert
+    - cache_query:
+        doc: ''
+        schema:
+          string: {}
 
 - name: websocket_server_message
   doc: ''
@@ -62,3 +99,9 @@ types:
           named:
             app: cradle
             name: websocket_test_response
+    - cache_response:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: websocket_cache_response

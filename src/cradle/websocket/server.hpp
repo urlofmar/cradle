@@ -8,8 +8,25 @@ namespace cradle {
 CRADLE_DEFINE_EXCEPTION(websocket_server_error)
 // This exception provides internal_error_message_info.
 
-void
-run_websocket_server(uint16_t port);
+// The websocket server uses this type to identify clients.
+typedef int websocket_client_id;
+
+struct websocket_server_impl;
+
+struct websocket_server
+{
+    websocket_server();
+    ~websocket_server();
+
+    void
+    listen(uint16_t port);
+
+    void
+    run();
+
+ private:
+    websocket_server_impl* impl_;
+};
 
 }
 
