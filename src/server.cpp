@@ -4,6 +4,8 @@ using namespace cradle;
 
 int main()
 {
-    run_websocket_server(41071);
+    websocket_server server;
+    server.listen(41071);
+    server.run();
     return 0;
 }
