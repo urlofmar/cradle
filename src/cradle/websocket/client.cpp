@@ -4,6 +4,7 @@
 #include <websocketpp/client.hpp>
 
 #include <cradle/io/json_io.hpp>
+#include <cradle/websocket/messages.hpp>
 
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;

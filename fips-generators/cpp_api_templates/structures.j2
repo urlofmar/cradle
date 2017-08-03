@@ -59,7 +59,7 @@ make_{{type_info.name}}__tagged(ArgPack&& args)
 }
 
 template<class ...Args>
-std::enable_if_t<has_hana_pair<Args...>::value,{{type_info.name}}>
+std::enable_if_t<cradle::has_hana_pair<Args...>::value,{{type_info.name}}>
 make_{{type_info.name}}(Args ...args)
 {
     return make_{{type_info.name}}__tagged(boost::hana::make_tuple(args...));

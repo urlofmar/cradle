@@ -2,6 +2,7 @@
 #define CRADLE_THINKNODE_CALC_HPP
 
 #include <cradle/common.hpp>
+#include <cradle/thinknode/types.hpp>
 
 namespace cradle {
 

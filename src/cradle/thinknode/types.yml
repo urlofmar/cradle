@@ -1,0 +1,378 @@
+imports:
+  - 'cradle/core/api_types'
+
+types:
+
+- name: thinknode_session
+  doc: ''
+  schema:
+    structure:
+    - api_url:
+        doc: ''
+        schema:
+          string: {}
+    - access_token:
+        doc: ''
+        schema:
+          string: {}
+
+- name: calculation_request
+  doc: ''
+  schema:
+    union:
+    - reference:
+        doc: ''
+        schema:
+          string: {}
+    - value:
+        doc: ''
+        schema:
+          dynamic: {}
+    - function:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: function_application
+    - array:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_array_request
+    - item:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_item_request
+    - object:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_object_request
+    - property:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_property_request
+    - let:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: let_calculation_request
+    - variable:
+        doc: ''
+        schema:
+          string: {}
+    - meta:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: meta_calculation_request
+
+- name: function_application
+  doc: ''
+  schema:
+    structure:
+    - account:
+        doc: ''
+        schema:
+          string: {}
+    - app:
+        doc: ''
+        schema:
+          string: {}
+    - name:
+        doc: ''
+        schema:
+          string: {}
+    - args:
+        doc: ''
+        schema:
+          array:
+            element_schema:
+              named:
+                app: cradle
+                name: calculation_request
+
+- name: calculation_array_request
+  doc: ''
+  schema:
+    structure:
+    - items:
+        doc: ''
+        schema:
+          array:
+            element_schema:
+              named:
+                app: cradle
+                name: calculation_request
+    - item_schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: api_type_info
+
+- name: calculation_object_request
+  doc: ''
+  schema:
+    structure:
+    - properties:
+        doc: ''
+        schema:
+          map:
+            key_schema:
+              string: {}
+            value_schema:
+              named:
+                app: cradle
+                name: calculation_request
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: api_type_info
+
+- name: calculation_item_request
+  doc: ''
+  schema:
+    structure:
+    - array:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+    - index:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: api_type_info
+
+- name: calculation_property_request
+  doc: ''
+  schema:
+    structure:
+    - object:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+    - field:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: api_type_info
+
+- name: meta_calculation_request
+  doc: ''
+  schema:
+    structure:
+    - generator:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: api_type_info
+
+- name: let_calculation_request
+  doc: ''
+  schema:
+    structure:
+    - variables:
+        doc: ''
+        schema:
+          map:
+            key_schema:
+              string: {}
+            value_schema:
+              named:
+                app: cradle
+                name: calculation_request
+    - in:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+
+- name: id_response
+  doc: 'This describes an HTTP response with just an ID field.'
+  schema:
+    structure:
+    - id:
+        doc: ''
+        schema:
+          string: {}
+
+- name: reported_calculation_info
+  doc: ''
+  schema:
+    structure:
+    - id:
+        doc: 'the Thinknode ID of the calculation'
+        schema:
+          string: {}
+    - label:
+        doc: 'a label for the calculation - Currently, this is just the function name.'
+        schema:
+          string: {}
+
+- name: let_calculation_submission_info
+  doc: ''
+  schema:
+    structure:
+    - main_calc_id:
+        doc: 'the ID of the top-level calculation'
+        schema:
+          string: {}
+    - reported_subcalcs:
+        doc: "info on any subcalculations whose progress we're interested in"
+        schema:
+          array:
+            element_schema:
+              named:
+                app: cradle
+                name: reported_calculation_info
+    - other_subcalc_ids:
+        doc: 'IDs of any other subcalculations'
+        schema:
+          array:
+            element_schema:
+              string: {}
+
+- name: augmented_calculation_request
+  doc: |
+    This augments a normal Thinknode calculation request with extra information
+    that's useful for status reporting.
+  schema:
+    structure:
+    - request:
+        doc: 'the underlying request'
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+    - reported_variables:
+        doc: 'any variables that should be reported on'
+        schema:
+          array:
+            element_schema:
+              string: {}
+
+- name: calculation_queue_type
+  doc: ''
+  schema:
+    enum:
+    - pending:
+        doc: ''
+    - ready:
+        doc: ''
+
+- name: calculation_calculating_status
+  doc: ''
+  schema:
+    structure:
+    - progress:
+        doc: ''
+        schema:
+          float: {}
+
+- name: calculation_uploading_status
+  doc: ''
+  schema:
+    structure:
+    - progress:
+        doc: ''
+        schema:
+          float: {}
+
+- name: calculation_failure_status
+  doc: ''
+  schema:
+    structure:
+    - code:
+        doc: ''
+        schema:
+          string: {}
+    - error:
+        doc: ''
+        schema:
+          string: {}
+    - message:
+        doc: ''
+        schema:
+          string: {}
+
+- name: calculation_status
+  doc: ''
+  schema:
+    union:
+    - calculating:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_calculating_status
+    - canceled:
+        doc: ''
+        schema:
+          nil: {}
+    - completed:
+        doc: ''
+        schema:
+          nil: {}
+    - failed:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_failure_status
+    - generating:
+        doc: ''
+        schema:
+          nil: {}
+    - queued:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_queue_type
+    - uploading:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_uploading_status
+    - waiting:
+        doc: ''
+        schema:
+          nil: {}

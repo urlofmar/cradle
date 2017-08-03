@@ -4,6 +4,7 @@
 #include <websocketpp/server.hpp>
 
 #include <cradle/io/json_io.hpp>
+#include <cradle/websocket/messages.hpp>
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 

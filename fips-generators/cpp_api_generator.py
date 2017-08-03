@@ -1,5 +1,5 @@
 # fips uses this to version the generator.
-version = 28
+version = 29
 
 # Import the fips generator utilities.
 import genutil
@@ -72,7 +72,7 @@ def generate(api_file_path, source_file_path, header_file_path, args):
             jinja_env,
             'hpp_file.j2',
             header_file_path,
-            {**args, 'api': api, 'version': version})
+            {**args, 'api': api, 'version': version, 'header_file_path': header_file_path})
 
         invoke_template(
             jinja_env,

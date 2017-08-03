@@ -1,0 +1,64 @@
+types:
+
+- name: http_request_method
+  doc: supported HTTP request methods
+  schema:
+    enum:
+    - get:
+        doc: 'GET'
+    - post:
+        doc: 'POST'
+    - put:
+        doc: 'PUT'
+    - patch:
+        doc: 'PATCH'
+    - delete:
+        doc: 'DELETE'
+
+- name: http_request
+  doc: ''
+  schema:
+    structure:
+    - method:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: http_request_method
+    - url:
+        doc: ''
+        schema:
+          string: {}
+    - headers:
+        doc: ''
+        schema:
+          map:
+            key_schema:
+              string: {}
+            value_schema:
+              string: {}
+    - body:
+        doc: ''
+        schema:
+          blob: {}
+
+- name: http_response
+  doc: ''
+  schema:
+    structure:
+    - status_code:
+        doc: ''
+        schema:
+          integer: {}
+    - headers:
+        doc: ''
+        schema:
+          map:
+            key_schema:
+              string: {}
+            value_schema:
+              string: {}
+    - body:
+        doc: ''
+        schema:
+          blob: {}

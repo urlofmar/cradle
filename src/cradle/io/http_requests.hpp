@@ -1,9 +1,9 @@
 #ifndef CRADLE_IO_HTTP_REQUESTS_HPP
 #define CRADLE_IO_HTTP_REQUESTS_HPP
 
-#include <cradle/common.hpp>
-
 #include <boost/core/noncopyable.hpp>
+
+#include <cradle/io/http_types.hpp>
 
 // This file defines a low-level facility for doing authenticated HTTP requests.
 
