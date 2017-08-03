@@ -12,7 +12,7 @@
 #include <cradle/io/msgpack_io.hpp>
 
 // Include this again to clean up preprocessor definitions.
-#include <cradle/api_types.hpp>
+#include <cradle/io/http_types.hpp>
 
 namespace cradle {
 

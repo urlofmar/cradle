@@ -1,0 +1,64 @@
+types:
+
+- name: websocket_registration_message
+  doc: ''
+  schema:
+    structure:
+    - name:
+        doc: ''
+        schema:
+          string: {}
+
+- name: websocket_test_query
+  doc: ''
+  schema:
+    structure:
+    - message:
+        doc: ''
+        schema:
+          string: {}
+
+- name: websocket_test_response
+  doc: ''
+  schema:
+    structure:
+    - name:
+        doc: ''
+        schema:
+          string: {}
+    - message:
+        doc: ''
+        schema:
+          string: {}
+
+- name: websocket_client_message
+  doc: ''
+  schema:
+    union:
+    - kill:
+        doc: ''
+        schema:
+          nil: {}
+    - registration:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: websocket_registration_message
+    - test:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: websocket_test_query
+
+- name: websocket_server_message
+  doc: ''
+  schema:
+    union:
+    - test:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: websocket_test_response

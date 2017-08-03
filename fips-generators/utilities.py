@@ -36,6 +36,10 @@ def type_schemas_definition_order(type_dict):
             for _, field_info in ordered_object_items(structure_info):
                 add_referenced_types(field_info.schema)
 
+        def add_referenced_types_in_named(named):
+            if named.name in type_dict:
+                add_type_tree(type_dict[named.name])
+
         cases = {
             "nil": lambda _: None,
             "boolean": lambda _: None,
@@ -48,7 +52,7 @@ def type_schemas_definition_order(type_dict):
             "array": lambda a: add_referenced_types(a.element_schema),
             "map": add_referenced_types_in_map,
             "reference": lambda _: None,
-            "named": lambda t: add_type_tree(type_dict[schema.named.name]),
+            "named": add_referenced_types_in_named,
             "union": lambda _: None, # Unions can be defined before the types they reference.
             "structure": add_referenced_types_in_structure,
             "enum": lambda _: None,

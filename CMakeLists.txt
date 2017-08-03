@@ -135,6 +135,7 @@ set_property(
 # Only generate tagged constructors on supported compilers.
 if(FIPS_GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "6.0")
     message(STATUS "Enabling tagged constructors")
+    add_definitions("-DCRADLE_USING_TAGGED_CONSTRUCTORS")
     set(GENERATE_TAGGED_CONSTRUCTORS True)
 else()
     set(GENERATE_TAGGED_CONSTRUCTORS False)
@@ -155,13 +156,22 @@ fips_begin_module(cradle)
             APPEND_STRING PROPERTY COMPILE_FLAGS " /wd4996 /wd4127 /wd4267 /wd4244")
     endif()
     fips_dir(.)
-    fips_generate(
-        FROM api.yml
-        TYPE cpp_api_generator
-        OUT_OF_SOURCE
-        SOURCE "generated/cradle/api_types.cpp"
-        HEADER "generated/cradle/api_types.hpp"
-        ARGS "{ app_name: cradle, generate_tagged_constructors: ${GENERATE_TAGGED_CONSTRUCTORS} }")
+    # Preprocess YAML files.
+    file(
+        GLOB_RECURSE YAML_SOURCE_FILES
+        RELATIVE ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/src/*.yml)
+    foreach(FILE ${YAML_SOURCE_FILES})
+        get_filename_component(FILE_DIRECTORY ${FILE} DIRECTORY)
+        get_filename_component(FILE_NAME_WE ${FILE} NAME_WE)
+        fips_generate(
+            FROM ${PROJECT_SOURCE_DIR}/src/${FILE}
+            TYPE cpp_api_generator
+            OUT_OF_SOURCE
+            SOURCE "generated/${FILE_DIRECTORY}/${FILE_NAME_WE}.cpp"
+            HEADER "generated/${FILE_DIRECTORY}/${FILE_NAME_WE}.hpp"
+            ARGS "{ app_name: cradle, generate_tagged_constructors: ${GENERATE_TAGGED_CONSTRUCTORS} }")
+    endforeach()
 fips_end_module()
 target_link_libraries(cradle ${CONAN_LIBS})
 cotire(cradle)
