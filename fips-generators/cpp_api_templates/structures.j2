@@ -233,13 +233,13 @@ from_value({{type_info.name}}* x, cradle::value const& v)
         {% for field, info in ordered_object_items(struct_info) %}
             {% if info["omissible"] %}
     {
-        cradle::value dynamic_field_value;
+        cradle::value const* dynamic_field_value;
         if (get_field(&dynamic_field_value, fields, "{{field}}"))
         {
             try
             {
                 {{info.schema | cpp_type_for_schema()}} field_value;
-                from_value(&field_value, dynamic_field_value);
+                from_value(&field_value, *dynamic_field_value);
                 x->{{field}} = cradle::some(field_value);
             }
             catch (boost::exception& e)
@@ -255,7 +255,7 @@ from_value({{type_info.name}}* x, cradle::value const& v)
     }
             {% else %}
     {
-        auto dynamic_field_value = get_field(fields, "{{field}}");
+        auto const& dynamic_field_value = get_field(fields, "{{field}}");
         try
         {
             from_value(&x->{{field}}, dynamic_field_value);

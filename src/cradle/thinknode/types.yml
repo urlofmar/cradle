@@ -1,6 +1,3 @@
-imports:
-  - 'cradle/core/api_types'
-
 types:
 
 - name: thinknode_session
@@ -117,7 +114,7 @@ types:
         schema:
           named:
             app: cradle
-            name: api_type_info
+            name: thinknode_type_info
 
 - name: calculation_object_request
   doc: ''
@@ -138,7 +135,7 @@ types:
         schema:
           named:
             app: cradle
-            name: api_type_info
+            name: thinknode_type_info
 
 - name: calculation_item_request
   doc: ''
@@ -161,7 +158,7 @@ types:
         schema:
           named:
             app: cradle
-            name: api_type_info
+            name: thinknode_type_info
 
 - name: calculation_property_request
   doc: ''
@@ -184,7 +181,7 @@ types:
         schema:
           named:
             app: cradle
-            name: api_type_info
+            name: thinknode_type_info
 
 - name: meta_calculation_request
   doc: ''
@@ -201,7 +198,7 @@ types:
         schema:
           named:
             app: cradle
-            name: api_type_info
+            name: thinknode_type_info
 
 - name: let_calculation_request
   doc: ''
@@ -376,3 +373,375 @@ types:
         doc: ''
         schema:
           nil: {}
+
+- name: thinknode_type_info
+  doc: ''
+  schema:
+    union:
+    - array_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_array_info
+    - blob_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_blob_type
+    - boolean_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_boolean_type
+    - datetime_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_datetime_type
+    - dynamic_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_dynamic_type
+    - enum_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_enum_info
+    - float_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_float_type
+    - integer_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_integer_type
+    - map_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_map_info
+    - named_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_named_type_reference
+    - nil_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_nil_type
+    - optional_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info
+    - reference_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info
+    - string_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_string_type
+    - structure_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_structure_info
+    - union_type:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_union_info
+
+- name: thinknode_nil_type
+  doc: ''
+  schema:
+    structure: []
+
+- name: thinknode_boolean_type
+  doc: ''
+  schema:
+    structure: []
+
+- name: thinknode_integer_type
+  doc: ''
+  schema:
+    structure: []
+
+- name: thinknode_float_type
+  doc: ''
+  schema:
+    structure: []
+
+- name: thinknode_string_type
+  doc: ''
+  schema:
+    structure: []
+
+- name: thinknode_datetime_type
+  doc: ''
+  schema:
+    structure: []
+
+- name: thinknode_blob_type
+  doc: ''
+  schema:
+    structure: []
+
+- name: thinknode_dynamic_type
+  doc: ''
+  schema:
+    structure: []
+
+- name: thinknode_structure_field_info
+  doc: ''
+  schema:
+    structure:
+    - doc:
+        doc: ''
+        schema:
+          string: {}
+    - omissible:
+        doc: ''
+        omissible: true
+        schema:
+          boolean: {}
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info
+
+- name: thinknode_structure_info
+  doc: ''
+  schema:
+    structure:
+    - fields:
+        doc: ''
+        schema:
+          map:
+            key_schema:
+              string: {}
+            value_schema:
+              named:
+                app: cradle
+                name: thinknode_structure_field_info
+
+- name: thinknode_union_member_info
+  doc: ''
+  schema:
+    structure:
+    - doc:
+        doc: ''
+        schema:
+          string: {}
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info
+
+- name: thinknode_union_info
+  doc: ''
+  schema:
+    structure:
+    - fields:
+        doc: ''
+        schema:
+          map:
+            key_schema:
+              string: {}
+            value_schema:
+              named:
+                app: cradle
+                name: thinknode_union_member_info
+
+- name: thinknode_enum_value_info
+  doc: ''
+  schema:
+    structure:
+    - doc:
+        doc: ''
+        schema:
+          string: {}
+
+- name: thinknode_enum_info
+  doc: ''
+  schema:
+    map:
+      key_schema:
+        string: {}
+      value_schema:
+        named:
+          app: cradle
+          name: thinknode_enum_value_info
+
+- name: thinknode_array_info
+  doc: ''
+  schema:
+    structure:
+    - element_schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info
+    - size:
+        doc: If size is absent, any size is acceptable.
+        omissible: true
+        schema:
+          integer: {}
+
+- name: thinknode_map_info
+  doc: ''
+  schema:
+    structure:
+    - key_schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info
+    - value_schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info
+
+- name: thinknode_named_type_reference
+  doc: ''
+  schema:
+    structure:
+    - account:
+        doc: ''
+        omissible: true
+        schema:
+          string: {}
+    - app:
+        doc: ''
+        schema:
+          string: {}
+    - name:
+        doc: ''
+        schema:
+          string: {}
+
+- name: thinknode_function_parameter_info
+  doc: ''
+  schema:
+    structure:
+    - doc:
+        doc: ''
+        schema:
+          string: {}
+    - name:
+        doc: ''
+        schema:
+          string: {}
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info
+
+- name: thinknode_function_result_info
+  doc: ''
+  schema:
+    structure:
+    - doc:
+        doc: ''
+        schema:
+          string: {}
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info
+
+- name: thinknode_function_type_info
+  doc: ''
+  schema:
+    structure:
+    - parameters:
+        doc: ''
+        schema:
+          array:
+            element_schema:
+              named:
+                app: cradle
+                name: thinknode_function_parameter_info
+    - returns:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_function_result_info
+
+- name: thinknode_function_info
+  doc: ''
+  schema:
+    structure:
+    - doc:
+        doc: ''
+        schema:
+          string: {}
+    - execution_class:
+        doc: ''
+        schema:
+          string: {}
+    - name:
+        doc: ''
+        schema:
+          string: {}
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_function_type_info
+
+- name: thinknode_named_type_info
+  doc: ''
+  schema:
+    structure:
+    - doc:
+        doc: ''
+        schema:
+          string: {}
+    - name:
+        doc: ''
+        schema:
+          string: {}
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_type_info

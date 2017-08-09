@@ -34,9 +34,10 @@ TEST_CASE("ISS object resolution", "[thinknode][iss]")
         {
             auto expected_request =
                 make_get_request(
-                    "https://mgh.thinknode.io/api/v1.0/iss/abc/immutable?context=123",
+                    "https://mgh.thinknode.io/api/v1.0/iss/abc/immutable?context=123"
+                        "&ignore_upgrades=false",
                     {
-                        { "Authorization", "Bearer 'xyz'" },
+                        { "Authorization", "Bearer xyz" },
                         { "Accept", "application/json" }
                     });
             REQUIRE(request == expected_request);
@@ -48,7 +49,7 @@ TEST_CASE("ISS object resolution", "[thinknode][iss]")
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    auto id = resolve_iss_object_to_immutable(mock_connection.get(), session, "123", "abc");
+    auto id = resolve_iss_object_to_immutable(mock_connection.get(), session, "123", "abc", false);
     REQUIRE(id == "def");
 }
 
@@ -65,7 +66,7 @@ TEST_CASE("ISS immutable retrieval", "[thinknode][iss]")
                 make_get_request(
                     "https://mgh.thinknode.io/api/v1.0/iss/immutable/abc?context=123",
                     {
-                        { "Authorization", "Bearer 'xyz'" },
+                        { "Authorization", "Bearer xyz" },
                         { "Accept", "application/octet-stream" }
                     });
             REQUIRE(request == expected_request);
@@ -165,7 +166,7 @@ TEST_CASE("ISS POST", "[thinknode][iss]")
                     http_request_method::POST,
                     "https://mgh.thinknode.io/api/v1.0/iss/string?context=123",
                     {
-                        { "Authorization", "Bearer 'xyz'" },
+                        { "Authorization", "Bearer xyz" },
                         { "Accept", "application/json" },
                         { "Content-Type", "application/octet-stream" }
                     },

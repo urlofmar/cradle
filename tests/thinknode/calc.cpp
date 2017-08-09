@@ -96,7 +96,7 @@ TEST_CASE("calc status query", "[thinknode][tn_calc]")
                 make_get_request(
                     "https://mgh.thinknode.io/api/v1.0/calc/abc/status?context=123",
                     {
-                        { "Authorization", "Bearer 'xyz'" },
+                        { "Authorization", "Bearer xyz" },
                         { "Accept", "application/json" }
                     });
             REQUIRE(request == expected_request);
@@ -112,6 +112,35 @@ TEST_CASE("calc status query", "[thinknode][tn_calc]")
     REQUIRE(status == make_calculation_status_with_completed(nil));
 }
 
+TEST_CASE("calc request retrieval", "[thinknode][tn_calc]")
+{
+    Mock<http_connection_interface> mock_connection;
+
+    When(Method(mock_connection, perform_request)).Do(
+        [&](check_in_interface& check_in,
+            progress_reporter_interface& reporter,
+            http_request const& request)
+        {
+            auto expected_request =
+                make_get_request(
+                    "https://mgh.thinknode.io/api/v1.0/calc/abc?context=123",
+                    {
+                        { "Authorization", "Bearer xyz" },
+                        { "Accept", "application/json" }
+                    });
+            REQUIRE(request == expected_request);
+
+            return make_mock_response("{ \"value\": [2.1, 4.2] }");
+        });
+
+    thinknode_session session;
+    session.api_url = "https://mgh.thinknode.io/api/v1.0";
+    session.access_token = "xyz";
+
+    auto request = retrieve_calculation_request(mock_connection.get(), session, "123", "abc");
+    REQUIRE(request == make_calculation_request_with_value(value({ 2.1, 4.2 })));
+}
+
 TEST_CASE("calc status long polling", "[thinknode][tn_calc]")
 {
     Mock<http_connection_interface> mock_connection;
@@ -121,21 +150,21 @@ TEST_CASE("calc status long polling", "[thinknode][tn_calc]")
             make_get_request(
                 "https://mgh.thinknode.io/api/v1.0/calc/abc/status?context=123",
                 {
-                    { "Authorization", "Bearer 'xyz'" },
+                    { "Authorization", "Bearer xyz" },
                     { "Accept", "application/json" }
                 }),
             make_get_request(
                 "https://mgh.thinknode.io/api/v1.0/calc/abc/status"
                     "?status=calculating&progress=0.12&timeout=120&context=123",
                 {
-                    { "Authorization", "Bearer 'xyz'" },
+                    { "Authorization", "Bearer xyz" },
                     { "Accept", "application/json" }
                 }),
             make_get_request(
                 "https://mgh.thinknode.io/api/v1.0/calc/abc/status"
                     "?status=completed&timeout=120&context=123",
                 {
-                    { "Authorization", "Bearer 'xyz'" },
+                    { "Authorization", "Bearer xyz" },
                     { "Accept", "application/json" }
                 })
         };
@@ -195,7 +224,7 @@ TEST_CASE("calc variable substitution", "[thinknode][tn_calc]")
     auto variable_a = make_calculation_request_with_variable("a");
     auto variable_b = make_calculation_request_with_variable("b");
 
-    auto item_schema = make_api_type_info_with_string(api_string_type());
+    auto item_schema = make_thinknode_type_info_with_string_type(thinknode_string_type());
 
     // value
     auto value_calc = make_calculation_request_with_value(value("xyz"));
@@ -238,7 +267,7 @@ TEST_CASE("calc variable substitution", "[thinknode][tn_calc]")
                 item_schema));
     REQUIRE(substitute_variables(substitutions, original_array) == substituted_array);
     auto array_schema =
-        make_api_type_info_with_array(make_api_array_info(item_schema, none));
+        make_thinknode_type_info_with_array_type(make_thinknode_array_info(item_schema, none));
 
     // item
     auto original_item =
@@ -257,12 +286,13 @@ TEST_CASE("calc variable substitution", "[thinknode][tn_calc]")
 
     // object
     auto object_schema =
-        make_api_type_info_with_structure(
-            {
-                { "i", make_api_structure_field_info("", none, item_schema) },
-                { "j", make_api_structure_field_info("", none, item_schema) },
-                { "k", make_api_structure_field_info("", none, item_schema) }
-            });
+        make_thinknode_type_info_with_structure_type(
+            make_thinknode_structure_info(
+                {
+                    { "i", make_thinknode_structure_field_info("", none, item_schema) },
+                    { "j", make_thinknode_structure_field_info("", none, item_schema) },
+                    { "k", make_thinknode_structure_field_info("", none, item_schema) }
+                }));
     auto original_object =
         make_calculation_request_with_object(
             make_calculation_object_request(
@@ -367,7 +397,8 @@ TEST_CASE("let calculation submission", "[thinknode][tn_calc]")
                                     make_calculation_request_with_variable("c"),
                                     make_calculation_request_with_variable("d")
                                 },
-                                make_api_type_info_with_string(api_string_type())))))));
+                                make_thinknode_type_info_with_string_type(
+                                    thinknode_string_type())))))));
 
     std::vector<calculation_request> expected_requests =
         {
@@ -391,7 +422,7 @@ TEST_CASE("let calculation submission", "[thinknode][tn_calc]")
                         make_calculation_request_with_reference("c-id"),
                         make_calculation_request_with_reference("d-id")
                     },
-                    make_api_type_info_with_string(api_string_type())))
+                    make_thinknode_type_info_with_string_type(thinknode_string_type())))
         };
 
     std::vector<string> mock_responses =

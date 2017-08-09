@@ -3,6 +3,7 @@
 #include <cradle/core/monitoring.hpp>
 #include <cradle/io/http_requests.hpp>
 #include <cradle/io/msgpack_io.hpp>
+#include <cradle/thinknode/calc.hpp>
 
 namespace cradle {
 
@@ -11,19 +12,60 @@ resolve_iss_object_to_immutable(
     http_connection_interface& connection,
     thinknode_session const& session,
     string const& context_id,
-    string const& object_id)
+    string const& object_id,
+    bool ignore_upgrades)
 {
     auto query =
         make_get_request(
-            session.api_url + "/iss/" + object_id + "/immutable?context=" + context_id,
+            session.api_url + "/iss/" + object_id + "/immutable?context=" + context_id +
+                "&ignore_upgrades=" + (ignore_upgrades ? "true" : "false"),
             {
-                { "Authorization", "Bearer '" + session.access_token + "'" },
+                { "Authorization", "Bearer " + session.access_token },
                 { "Accept", "application/json" }
             });
     null_check_in check_in;
     null_progress_reporter reporter;
     auto response = connection.perform_request(check_in, reporter, query);
-    return from_value<id_response>(parse_json_response(response)).id;
+    switch (response.status_code)
+    {
+     case 200:
+      {
+        return from_value<id_response>(parse_json_response(response)).id;
+      }
+     case 202:
+      {
+        // The ISS object we're interested in is the result of a calculation
+        // that hasn't finished yet, so wait for it to resolve and try again.
+        long_poll_calculation_status(
+            check_in,
+            [ ](calculation_status const& status)
+            {
+            },
+            connection,
+            session,
+            context_id,
+            response.headers["Thinknode-Reference-Id"]);
+        return
+            resolve_iss_object_to_immutable(
+                connection,
+                session,
+                context_id,
+                object_id,
+                ignore_upgrades);
+      }
+     case 204:
+      {
+        // The ISS object we're interested in is the result of a calculation
+        // that failed.
+      }
+     default:
+      {
+        CRADLE_THROW(
+            bad_http_status_code() <<
+                attempted_http_request_info(query) <<
+                http_response_info(response));
+      }
+    }
 }
 
 value
@@ -37,7 +79,7 @@ retrieve_immutable(
         make_get_request(
             session.api_url + "/iss/immutable/" + immutable_id + "?context=" + context_id,
             {
-                { "Authorization", "Bearer '" + session.access_token + "'" },
+                { "Authorization", "Bearer " + session.access_token },
                 { "Accept", "application/octet-stream" }
             });
     null_check_in check_in;
@@ -134,7 +176,7 @@ post_iss_object(
             http_request_method::POST,
             session.api_url + "/iss/" + get_url_type_string(schema) + "?context=" + context_id,
             {
-                { "Authorization", "Bearer '" + session.access_token + "'" },
+                { "Authorization", "Bearer " + session.access_token },
                 { "Accept", "application/json" },
                 { "Content-Type", "application/octet-stream" }
             },
