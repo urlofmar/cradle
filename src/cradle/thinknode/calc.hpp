@@ -9,6 +9,14 @@ namespace cradle {
 struct http_connection_interface;
 struct check_in_interface;
 
+// Post a calculation to Thinknode.
+string
+post_calculation(
+    http_connection_interface& connection,
+    thinknode_session const& session,
+    string const& context_id,
+    calculation_request const& request);
+
 // Given a calculation status, get the next status that would represent
 // meaningful progress. If the result is none, no further progress is possible.
 optional<calculation_status>
@@ -21,6 +29,14 @@ calc_status_as_query_string(calculation_status status);
 // Query the status of a calculation.
 calculation_status
 query_calculation_status(
+    http_connection_interface& connection,
+    thinknode_session const& session,
+    string const& context_id,
+    string const& calc_id);
+
+// Retrieve a calculation request from Thinknode.
+calculation_request
+retrieve_calculation_request(
     http_connection_interface& connection,
     thinknode_session const& session,
     string const& context_id,
@@ -92,7 +108,7 @@ submit_let_calculation_request(
     thinknode_session const& session,
     string const& context_id,
     augmented_calculation_request const& request,
-    bool dry_run);
+    bool dry_run = false);
 
 }
 

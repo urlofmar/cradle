@@ -4,8 +4,34 @@
 
 #include <cradle/core/monitoring.hpp>
 #include <cradle/io/http_requests.hpp>
+#include <cradle/thinknode/iss.hpp>
 
 namespace cradle {
+
+string
+post_calculation(
+    http_connection_interface& connection,
+    thinknode_session const& session,
+    string const& context_id,
+    calculation_request const& request)
+{
+    auto request_iss_id =
+        post_iss_object(connection, session, context_id,
+            make_api_type_info_with_dynamic(api_dynamic_type()),
+            to_value(request));
+    auto query =
+        make_http_request(
+            http_request_method::POST,
+            session.api_url + "/calc/" + request_iss_id + "?context=" + context_id,
+            {
+                { "Authorization", "Bearer " + session.access_token }
+            },
+            blob());
+    null_check_in check_in;
+    null_progress_reporter reporter;
+    auto response = connection.perform_request(check_in, reporter, query);
+    return from_value<id_response>(parse_json_response(response)).id;
+}
 
 optional<calculation_status>
 get_next_calculation_status(calculation_status current)
@@ -133,13 +159,33 @@ query_calculation_status(
         make_get_request(
             session.api_url + "/calc/" + calc_id + "/status?context=" + context_id,
             {
-                { "Authorization", "Bearer '" + session.access_token + "'" },
+                { "Authorization", "Bearer " + session.access_token },
                 { "Accept", "application/json" }
             });
     null_check_in check_in;
     null_progress_reporter reporter;
     auto response = connection.perform_request(check_in, reporter, query);
     return from_value<calculation_status>(parse_json_response(response));
+}
+
+calculation_request
+retrieve_calculation_request(
+    http_connection_interface& connection,
+    thinknode_session const& session,
+    string const& context_id,
+    string const& calc_id)
+{
+    auto query =
+        make_get_request(
+            session.api_url + "/calc/" + calc_id + "?context=" + context_id,
+            {
+                { "Authorization", "Bearer " + session.access_token },
+                { "Accept", "application/json" }
+            });
+    null_check_in check_in;
+    null_progress_reporter reporter;
+    auto response = connection.perform_request(check_in, reporter, query);
+    return from_value<calculation_request>(parse_json_response(response));
 }
 
 void
@@ -165,8 +211,8 @@ long_poll_calculation_status(
         if (!next_status)
             return;
 
-        // Long poll for that status and update the actual status
-        // with whatever Thinknode reports back.
+        // Long poll for that status and update the actual status with whatever
+        // Thinknode reports back.
         null_progress_reporter reporter;
         auto long_poll_request =
             make_get_request(
@@ -176,7 +222,7 @@ long_poll_calculation_status(
                     "&timeout=120" +
                     "&context=" + context_id,
                 {
-                    { "Authorization", "Bearer '" + session.access_token + "'" },
+                    { "Authorization", "Bearer " + session.access_token },
                     { "Accept", "application/json" }
                 });
         status =

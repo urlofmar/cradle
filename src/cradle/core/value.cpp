@@ -276,22 +276,22 @@ bool operator>(value const& a, value const& b)
 bool operator>=(value const& a, value const& b)
 { return !(a < b); }
 
-value get_field(value_map const& r, string const& field)
+value const& get_field(value_map const& r, string const& field)
 {
-    value v;
+    value const* v;
     if (!get_field(&v, r, field))
     {
         CRADLE_THROW(missing_field() << field_name_info(field));
     }
-    return v;
+    return *v;
 }
 
-bool get_field(value* v, value_map const& r, string const& field)
+bool get_field(value const** v, value_map const& r, string const& field)
 {
     auto i = r.find(value(field));
     if (i == r.end())
         return false;
-    *v = i->second;
+    *v = &i->second;
     return true;
 }
 

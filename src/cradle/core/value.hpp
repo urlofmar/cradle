@@ -31,14 +31,14 @@ CRADLE_DEFINE_ERROR_INFO(value_type, actual_value_type)
 
 // This queries a map for a field with a key matching the given string.
 // If the field is not present in the map, an exception is thrown.
-value get_field(value_map const& r, string const& field);
+value const& get_field(value_map const& r, string const& field);
 
 CRADLE_DEFINE_EXCEPTION(missing_field)
 CRADLE_DEFINE_ERROR_INFO(string, field_name)
 
 // This is the same as above, but its return value indicates whether or not
 // the field is in the map.
-bool get_field(value* v, value_map const& r, string const& field);
+bool get_field(value const** v, value_map const& r, string const& field);
 
 // Given a value_map that's meant to represent a union value, this checks that
 // the map contains only one value and returns its key.

@@ -13,7 +13,8 @@ resolve_iss_object_to_immutable(
     http_connection_interface& connection,
     thinknode_session const& session,
     string const& context_id,
-    string const& object_id);
+    string const& object_id,
+    bool ignore_upgrades);
 
 // Retrieve an immutable data object.
 value

@@ -3,6 +3,8 @@
 
 #include <cradle/core/utilities.hpp>
 
+#include <iostream>
+
 #ifdef CRADLE_USING_TAGGED_CONSTRUCTORS
 #include <boost/hana.hpp>
 #endif
@@ -128,6 +130,31 @@ struct value
     void get(boost::posix_time::ptime const** v) const;
     void get(value_list const** v) const;
     void get(value_map const** v) const;
+
+    // value(value const& other)
+    //   : type_(other.type_),
+    //     value_(other.value_)
+    // {
+    //     std::cerr << "value: copy constructor\n";
+    // }
+    // value(value&& other)
+    //   : type_(std::move(other.type_)),
+    //     value_(std::move(other.value_))
+    // {
+    // }
+    // value& operator=(value const& other)
+    // {
+    //     std::cerr << "value: copy assignment\n";
+    //     type_ = other.type_;
+    //     value_ = other.value_;
+    //     return *this;
+    // }
+    // value& operator=(value&& other)
+    // {
+    //     type_ = std::move(other.type_);
+    //     value_ = std::move(other.value_);
+    //     return *this;
+    // }
 
  private:
     void set(nil_t _);

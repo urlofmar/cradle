@@ -50,7 +50,9 @@ TEST_CASE("websocket client/server", "[ws]")
             {
                 client.send(
                     make_websocket_client_message_with_registration(
-                        websocket_registration_message{"Kasey"}));
+                        make_websocket_registration_message(
+                            "Kasey",
+                            make_thinknode_session("", ""))));
                 client.send(
                     make_websocket_client_message_with_cache_insert(
                         make_websocket_cache_insert("test_key", "test_value")));

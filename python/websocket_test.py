@@ -42,7 +42,11 @@ def test_websocket_server():
         json.dumps(
             {
                 "registration": {
-                    "name": "Channing"
+                    "name": "Channing",
+                    "session": {
+                        "api_url": "",
+                        "access_token": "",
+                    }
                 }
             }))
     ws.send(

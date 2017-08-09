@@ -1,3 +1,7 @@
+imports:
+  - 'cradle/core/api_types'
+  - 'cradle/thinknode/types'
+
 types:
 
 - name: websocket_registration_message
@@ -8,6 +12,12 @@ types:
         doc: ''
         schema:
           string: {}
+    - session:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: thinknode_session
 
 - name: websocket_test_query
   doc: ''
@@ -58,6 +68,172 @@ types:
           optional:
             string: {}
 
+- name: get_iss_object_request
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - context_id:
+        doc: ''
+        schema:
+          string: {}
+    - object_id:
+        doc: ''
+        schema:
+          string: {}
+    - ignore_upgrades:
+        doc: ''
+        schema:
+          boolean: {}
+
+- name: get_iss_object_response
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - object:
+        doc: ''
+        schema:
+          dynamic: {}
+
+- name: post_iss_object_request
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - context_id:
+        doc: ''
+        schema:
+          string: {}
+    - schema:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: api_type_info
+    - object:
+        doc: ''
+        schema:
+          dynamic: {}
+
+- name: post_iss_object_response
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - object_id:
+        doc: ''
+        schema:
+          string: {}
+
+- name: post_calculation_request
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - context_id:
+        doc: ''
+        schema:
+          string: {}
+    - calculation:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+
+- name: post_calculation_response
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - calculation_id:
+        doc: ''
+        schema:
+          string: {}
+
+- name: resolve_meta_chain_request
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - context_id:
+        doc: ''
+        schema:
+          string: {}
+    - generator:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+
+- name: resolve_meta_chain_response
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - calculation_id:
+        doc: ''
+        schema:
+          string: {}
+
+- name: get_calculation_request_message
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - context_id:
+        doc: ''
+        schema:
+          string: {}
+    - calculation_id:
+        doc: ''
+        schema:
+          string: {}
+
+- name: get_calculation_request_response
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - calculation:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_request
+
 - name: websocket_client_message
   doc: ''
   schema:
@@ -88,6 +264,36 @@ types:
         doc: ''
         schema:
           string: {}
+    - get_iss_object:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: get_iss_object_request
+    - post_iss_object:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: post_iss_object_request
+    - post_calculation:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: post_calculation_request
+    - resolve_meta_chain:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: resolve_meta_chain_request
+    - get_calculation_request:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: get_calculation_request_message
 
 - name: websocket_server_message
   doc: ''
@@ -105,3 +311,37 @@ types:
           named:
             app: cradle
             name: websocket_cache_response
+    - error:
+        doc: ''
+        schema:
+          string: {}
+    - get_iss_object_response:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: get_iss_object_response
+    - post_iss_object_response:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: post_iss_object_response
+    - post_calculation_response:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: post_calculation_response
+    - resolve_meta_chain_response:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: resolve_meta_chain_response
+    - get_calculation_request_response:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: get_calculation_request_response
