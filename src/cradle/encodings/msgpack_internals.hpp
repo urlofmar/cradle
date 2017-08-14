@@ -1,8 +1,8 @@
-#ifndef CRADLE_IO_MSGPACK_INTERNALS_HPP
-#define CRADLE_IO_MSGPACK_INTERNALS_HPP
+#ifndef CRADLE_ENCODINGS_MSGPACK_INTERNALS_HPP
+#define CRADLE_ENCODINGS_MSGPACK_INTERNALS_HPP
 
-// This file provides a generic implementation of msgpack I/O on dynamic values.
-// (Well, currently only output is implemented.)
+// This file provides a generic implementation of msgpack encodings/decoding on dynamic values.
+// (Well, currently only encoding is implemented.)
 //
 // This takes care of understanding CRADLE dynamic values and interfacing them with
 // msgpack-c, but it leaves it up to you to supply the implementation of msgpack-c's
@@ -15,7 +15,7 @@
 #include <boost/endian/conversion.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <cradle/io/msgpack_io.hpp>
+#include <cradle/encodings/msgpack.hpp>
 
 // Include msgpack-c, disabling any warnings that it would trigger.
 #define MSGPACK_USE_CPP03

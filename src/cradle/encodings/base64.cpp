@@ -1,4 +1,4 @@
-#include <cradle/io/base64.hpp>
+#include <cradle/encodings/base64.hpp>
 
 #include <boost/scoped_array.hpp>
 #include <sstream>

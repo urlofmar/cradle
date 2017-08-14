@@ -1,5 +1,5 @@
-#ifndef CRADLE_IO_BASE64_HPP
-#define CRADLE_IO_BASE64_HPP
+#ifndef CRADLE_ENCODINGS_BASE64_HPP
+#define CRADLE_ENCODINGS_BASE64_HPP
 
 #include <cradle/common.hpp>
 

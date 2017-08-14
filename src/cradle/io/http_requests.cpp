@@ -8,8 +8,8 @@
 #include <curl/curl.h>
 
 #include <cradle/core/monitoring.hpp>
-#include <cradle/io/json_io.hpp>
-#include <cradle/io/msgpack_io.hpp>
+#include <cradle/encodings/json.hpp>
+#include <cradle/encodings/msgpack.hpp>
 
 // Include this again to clean up preprocessor definitions.
 #include <cradle/io/http_types.hpp>

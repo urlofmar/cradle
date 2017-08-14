@@ -4,7 +4,7 @@
 
 #include <cradle/core/monitoring.hpp>
 #include <cradle/core/testing.hpp>
-#include <cradle/io/json_io.hpp>
+#include <cradle/encodings/json.hpp>
 
 using namespace cradle;
 

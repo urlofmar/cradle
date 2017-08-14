@@ -4,7 +4,7 @@
 #include <algorithm>
 
 #include <cradle/common.hpp>
-#include <cradle/io/json_io.hpp>
+#include <cradle/encodings/json.hpp>
 
 namespace cradle {
 

@@ -1,4 +1,4 @@
-#include <cradle/io/json_io.hpp>
+#include <cradle/encodings/json.hpp>
 
 #include <cradle/core/testing.hpp>
 
@@ -13,7 +13,7 @@ strip_whitespace(string s)
 
 // Test that a JSON string can be translated to and from its expected value form.
 void static
-test_json_io(string const& json, value const& expected_value)
+test_json_encoding(string const& json, value const& expected_value)
 {
     CAPTURE(json)
 
@@ -35,59 +35,59 @@ test_json_io(string const& json, value const& expected_value)
         converted_json);
 }
 
-TEST_CASE("basic JSON I/O", "[io][json]")
+TEST_CASE("basic JSON encoding", "[encodings][json]")
 {
     // Try some basic types.
-    test_json_io(
+    test_json_encoding(
         R"(
             null
         )",
         nil);
-    test_json_io(
+    test_json_encoding(
         R"(
             false
         )",
         false);
-    test_json_io(
+    test_json_encoding(
         R"(
             true
         )",
         true);
-    test_json_io(
+    test_json_encoding(
         R"(
             1
         )",
         integer(1));
-    test_json_io(
+    test_json_encoding(
         R"(
             -1
         )",
         integer(-1));
-    test_json_io(
+    test_json_encoding(
         R"(
             1.25
         )",
         1.25);
-    test_json_io(
+    test_json_encoding(
         R"(
             "hi"
         )",
         "hi");
 
     // Try some arrays.
-    test_json_io(
+    test_json_encoding(
         R"(
             [ 1, 2, 3 ]
         )",
         value({ integer(1), integer(2), integer(3) }));
-    test_json_io(
+    test_json_encoding(
         R"(
             []
         )",
         value_list());
 
     // Try a map with string keys.
-    test_json_io(
+    test_json_encoding(
         R"(
             {
                 "happy": true,
@@ -100,7 +100,7 @@ TEST_CASE("basic JSON I/O", "[io][json]")
         });
 
     // Try a map with non-string keys.
-    test_json_io(
+    test_json_encoding(
         R"(
             [
                 {
@@ -120,7 +120,7 @@ TEST_CASE("basic JSON I/O", "[io][json]")
             }));
 
     // Try some other JSON that looks like the above.
-    test_json_io(
+    test_json_encoding(
         R"(
             [
                 {
@@ -139,7 +139,7 @@ TEST_CASE("basic JSON I/O", "[io][json]")
                 { "key", true }
             }
         });
-    test_json_io(
+    test_json_encoding(
         R"(
             [
                 {
@@ -162,7 +162,7 @@ TEST_CASE("basic JSON I/O", "[io][json]")
                 { "valu", "yes" }
             }
         });
-    test_json_io(
+    test_json_encoding(
         R"(
             [
                 {
@@ -187,14 +187,14 @@ TEST_CASE("basic JSON I/O", "[io][json]")
         });
 
     // Try some ptimes.
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017-04-26T01:02:03.000Z"
         )",
         ptime(
             date(2017,boost::gregorian::Apr,26),
             boost::posix_time::time_duration(1,2,3)));
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017-05-26T13:02:03.456Z"
         )",
@@ -205,62 +205,62 @@ TEST_CASE("basic JSON I/O", "[io][json]")
 
     // Try some thing that look like a ptime at first and check that they're just treated
     // as strings.
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017-05-26T13:13:03.456ZABC"
         )",
         "2017-05-26T13:13:03.456ZABC");
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017-05-26T13:XX:03.456Z"
         )",
         "2017-05-26T13:XX:03.456Z");
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017-05-26T13:03.456Z"
         )",
         "2017-05-26T13:03.456Z");
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017-05-26T42:00:03.456Z"
         )",
         "2017-05-26T42:00:03.456Z");
-    test_json_io(
+    test_json_encoding(
         R"(
             "X017-05-26T13:02:03.456Z"
         )",
         "X017-05-26T13:02:03.456Z");
-    test_json_io(
+    test_json_encoding(
         R"(
             "2X17-05-26T13:02:03.456Z"
         )",
         "2X17-05-26T13:02:03.456Z");
-    test_json_io(
+    test_json_encoding(
         R"(
             "20X7-05-26T13:02:03.456Z"
         )",
         "20X7-05-26T13:02:03.456Z");
-    test_json_io(
+    test_json_encoding(
         R"(
             "201X-05-26T13:02:03.456Z"
         )",
         "201X-05-26T13:02:03.456Z");
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017X05-26T13:02:03.456Z"
         )",
         "2017X05-26T13:02:03.456Z");
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017-05-26T13:02:03.456_"
         )",
         "2017-05-26T13:02:03.456_");
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017-05-26T13:02:03.456_"
         )",
         "2017-05-26T13:02:03.456_");
-    test_json_io(
+    test_json_encoding(
         R"(
             "2017-05-26T13:02:03.45Z"
         )",
@@ -268,7 +268,7 @@ TEST_CASE("basic JSON I/O", "[io][json]")
 
     // Try a blob.
     char blob_data[] = "some blob data";
-    test_json_io(
+    test_json_encoding(
         R"(
             {
                 "blob": "c29tZSBibG9iIGRhdGE=",
@@ -278,7 +278,7 @@ TEST_CASE("basic JSON I/O", "[io][json]")
         blob(ownership_holder(), blob_data, sizeof(blob_data) - 1));
 
     // Try some other things that aren't blobs but look similar.
-    test_json_io(
+    test_json_encoding(
         R"(
             {
                 "blob": "asdf",
@@ -286,7 +286,7 @@ TEST_CASE("basic JSON I/O", "[io][json]")
             }
         )",
         { { "type", "blob" }, { "blob", "asdf" } });
-    test_json_io(
+    test_json_encoding(
         R"(
             {
                 "blob": "asdf",
@@ -296,7 +296,7 @@ TEST_CASE("basic JSON I/O", "[io][json]")
         { { "type", integer(12) }, { "blob", "asdf" } });
 }
 
-TEST_CASE("malformed JSON blob", "[io][json]")
+TEST_CASE("malformed JSON blob", "[encodings][json]")
 {
     try
     {
@@ -372,7 +372,7 @@ test_malformed_json(string const& malformed_json)
     }
 }
 
-TEST_CASE("malformed JSON", "[io][json]")
+TEST_CASE("malformed JSON", "[encodings][json]")
 {
     test_malformed_json(
         R"(

@@ -8,8 +8,8 @@
 
 #include <cradle/core/monitoring.hpp>
 #include <cradle/core/testing.hpp>
+#include <cradle/encodings/msgpack.hpp>
 #include <cradle/io/http_requests.hpp>
-#include <cradle/io/msgpack_io.hpp>
 
 using namespace cradle;
 using namespace fakeit;

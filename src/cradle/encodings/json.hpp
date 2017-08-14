@@ -1,9 +1,9 @@
-#ifndef CRADLE_IO_JSON_IO_HPP
-#define CRADLE_IO_JSON_IO_HPP
+#ifndef CRADLE_ENCODINGS_JSON_HPP
+#define CRADLE_ENCODINGS_JSON_HPP
 
 #include <cradle/common.hpp>
 
-// JSON I/O - conversion to and from JSON strings
+// JSON - conversion to and from JSON strings
 
 namespace cradle {
 
