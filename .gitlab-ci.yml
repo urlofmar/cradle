@@ -1,5 +1,5 @@
 test:
-  image: ubuntu:artful
+  image: ubuntu:zesty
   cache:
     paths:
     - cache
