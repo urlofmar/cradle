@@ -1,8 +1,8 @@
 #include <cradle/thinknode/iss.hpp>
 
 #include <cradle/core/monitoring.hpp>
+#include <cradle/encodings/msgpack.hpp>
 #include <cradle/io/http_requests.hpp>
-#include <cradle/io/msgpack_io.hpp>
 #include <cradle/thinknode/calc.hpp>
 
 namespace cradle {

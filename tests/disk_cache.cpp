@@ -3,7 +3,7 @@
 #include <boost/filesystem/operations.hpp>
 
 #include <cradle/core/testing.hpp>
-#include <cradle/io/base64.hpp>
+#include <cradle/encodings/base64.hpp>
 
 using namespace cradle;
 

@@ -1,11 +1,11 @@
-#include <cradle/io/json_io.hpp>
+#include <cradle/encodings/json.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/format.hpp>
 
 #include <nlohmann/json.hpp>
 
-#include <cradle/io/base64.hpp>
+#include <cradle/encodings/base64.hpp>
 
 namespace cradle {
 

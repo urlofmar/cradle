@@ -17,11 +17,11 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
+#include <cradle/encodings/base64.hpp>
+#include <cradle/encodings/json.hpp>
+#include <cradle/encodings/msgpack.hpp>
 #include <cradle/disk_cache.hpp>
-#include <cradle/io/base64.hpp>
 #include <cradle/io/http_requests.hpp>
-#include <cradle/io/json_io.hpp>
-#include <cradle/io/msgpack_io.hpp>
 #include <cradle/thinknode/calc.hpp>
 #include <cradle/thinknode/iss.hpp>
 #include <cradle/websocket/messages.hpp>

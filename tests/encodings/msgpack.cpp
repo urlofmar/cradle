@@ -1,15 +1,15 @@
-#include <cradle/io/msgpack_io.hpp>
+#include <cradle/encodings/msgpack.hpp>
 
 #include <cstring>
 
 #include <cradle/core/testing.hpp>
-#include <cradle/io/json_io.hpp>
+#include <cradle/encodings/json.hpp>
 
 using namespace cradle;
 
 // Test that some MessagePack data can be translated to and from its expected value form.
 void static
-test_msgpack_io(uint8_t const* msgpack, size_t size, value const& expected_value)
+test_msgpack_encoding(uint8_t const* msgpack, size_t size, value const& expected_value)
 {
     // Parse it and check that it matches.
     auto converted_value = parse_msgpack_value(msgpack, size);
@@ -34,7 +34,7 @@ test_msgpack_io(uint8_t const* msgpack, size_t size, value const& expected_value
     REQUIRE(std::memcmp(msgpack_blob.data, msgpack, size) == 0);
 }
 
-TEST_CASE("basic msgpack I/O", "[io][msgpack]")
+TEST_CASE("basic msgpack encoding", "[encodings][msgpack]")
 {
     uint8_t const msgpack_data[] =
     {
@@ -87,11 +87,11 @@ TEST_CASE("basic msgpack I/O", "[io][msgpack]")
                 "xi": [ null, true, false ]
             }
         )";
-    test_msgpack_io(msgpack_data, sizeof(msgpack_data),
+    test_msgpack_encoding(msgpack_data, sizeof(msgpack_data),
         parse_json_value(json_equivalent));
 }
 
-TEST_CASE("custom MessagePack blob ownership", "[io][msgpack]")
+TEST_CASE("custom MessagePack blob ownership", "[encodings][msgpack]")
 {
     auto blob =
         parse_json_value(
@@ -114,7 +114,7 @@ TEST_CASE("custom MessagePack blob ownership", "[io][msgpack]")
     REQUIRE(boost::any_cast<string>(parsed_blob.ownership) == "custom");
 }
 
-TEST_CASE("unsupported MessagePack extension type", "[io][msgpack]")
+TEST_CASE("unsupported MessagePack extension type", "[encodings][msgpack]")
 {
     uint8_t msgpack_data[] = { 0xd4, 0x02, 0x00 };
     try
@@ -130,7 +130,7 @@ TEST_CASE("unsupported MessagePack extension type", "[io][msgpack]")
     }
 }
 
-TEST_CASE("malformed MessagePack", "[io][msgpack]")
+TEST_CASE("malformed MessagePack", "[encodings][msgpack]")
 {
     {
         uint8_t msgpack_data[] = { 0xd4, 0x01, 0x00 };
@@ -142,7 +142,7 @@ TEST_CASE("malformed MessagePack", "[io][msgpack]")
     }
 }
 
-TEST_CASE("blob too large for MessagePack", "[io][msgpack]")
+TEST_CASE("blob too large for MessagePack", "[encodings][msgpack]")
 {
     try
     {

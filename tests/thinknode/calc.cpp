@@ -8,8 +8,8 @@
 
 #include <cradle/core/monitoring.hpp>
 #include <cradle/core/testing.hpp>
+#include <cradle/encodings/json.hpp>
 #include <cradle/io/http_requests.hpp>
-#include <cradle/io/json_io.hpp>
 
 using namespace cradle;
 using namespace fakeit;

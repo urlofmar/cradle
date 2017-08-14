@@ -1,4 +1,4 @@
-#include <cradle/io/base64.hpp>
+#include <cradle/encodings/base64.hpp>
 
 #include <boost/scoped_array.hpp>
 
@@ -6,7 +6,7 @@
 
 using namespace cradle;
 
-// This tests the entire base64 I/O interface on a single string.
+// This tests the entire base64 encode/decode interface on a single string.
 void static
 test_base64_encoding(
     string const& original,
@@ -43,7 +43,7 @@ test_base64_encoding(
     }
 }
 
-TEST_CASE("MIME base64 I/O", "[io][base64]")
+TEST_CASE("MIME base64 encoding", "[encodings][base64]")
 {
     test_base64_encoding(
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
@@ -69,7 +69,7 @@ TEST_CASE("MIME base64 I/O", "[io][base64]")
         get_mime_base64_character_set());
 }
 
-TEST_CASE("missing base64 padding", "[io][base64]")
+TEST_CASE("missing base64 padding", "[encodings][base64]")
 {
     INFO("Testing that the base64 decoder is tolerant of missing padding characters.");
 
@@ -114,7 +114,7 @@ test_malformed_base64(
     }
 }
 
-TEST_CASE("malformed base64", "[io][base64]")
+TEST_CASE("malformed base64", "[encodings][base64]")
 {
     // These have an impossible number of characters.
     test_malformed_base64("V", get_mime_base64_character_set());

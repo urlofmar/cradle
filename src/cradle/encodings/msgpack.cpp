@@ -1,6 +1,6 @@
-#include <cradle/io/msgpack_io.hpp>
+#include <cradle/encodings/msgpack.hpp>
 
-#include <cradle/io/msgpack_internals.hpp>
+#include <cradle/encodings/msgpack_internals.hpp>
 
 namespace cradle {
 

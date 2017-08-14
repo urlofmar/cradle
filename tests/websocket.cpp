@@ -3,7 +3,7 @@
 
 #include <thread>
 
-#include <cradle/io/base64.hpp>
+#include <cradle/encodings/base64.hpp>
 #include <cradle/websocket/messages.hpp>
 
 using namespace cradle;

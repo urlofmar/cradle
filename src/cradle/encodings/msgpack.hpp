@@ -1,5 +1,5 @@
-#ifndef CRADLE_IO_MSGPACK_IO_HPP
-#define CRADLE_IO_MSGPACK_IO_HPP
+#ifndef CRADLE_ENCODINGS_MSGPACK_HPP
+#define CRADLE_ENCODINGS_MSGPACK_HPP
 
 #include <cradle/common.hpp>
 
