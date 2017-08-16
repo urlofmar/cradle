@@ -4,3 +4,4 @@
 .gcovr.txt
 .lcov.info
 *.pyc
+python/config.yml

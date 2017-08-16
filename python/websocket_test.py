@@ -4,6 +4,9 @@ import subprocess
 import json
 import time
 import websocket
+import random
+import thinknode
+import pytest
 
 def create_connection_robustly(url):
     """Attempt to connect to a server, retrying for a brief period if it doesn't initially work."""
@@ -58,6 +61,64 @@ def test_websocket_server():
             }))
     response = json.loads(ws.recv())["test"]
     assert response == {"message": "Hello, Tigger!", "name": "Channing"}
+
+    session = thinknode.Session()
+
+    test_object = \
+       ("Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
+        "Nulla sodales lectus cursus lectus tempor, ut accumsan enim ultrices. "
+        "Praesent elit est, lobortis a lacinia at, posuere non lectus.")
+
+    test_iss_id = session.post_iss_object("string", test_object)
+
+    assert session.get_iss_object(test_iss_id) == test_object
+
+    a = random.random()
+    b = random.random()
+    c = random.random()
+
+    test_calc = \
+        {
+            "let": {
+                "variables": {
+                    "x": {
+                        "function": {
+                            "account": "decimal",
+                            "app": "dosimetry",
+                            "name": "addition",
+                            "args": [
+                                {
+                                    "value": a
+                                },
+                                {
+                                    "value": b
+                                }
+                            ]
+                        }
+                    }
+                },
+                "in": {
+                    "function": {
+                        "account": "decimal",
+                        "app": "dosimetry",
+                        "name": "addition",
+                        "args": [
+                            {
+                                "variable": "x",
+                            },
+                            {
+                                "value": c
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+    test_calc_id = session.post_calc(test_calc)
+
+    assert session.get_iss_object(test_calc_id) == pytest.approx(a + b + c)
+
     ws.send(
         json.dumps(
             {
