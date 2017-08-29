@@ -7,7 +7,7 @@
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include <cradle/core/value.hpp>
+#include <cradle/core/dynamic.hpp>
 
 // This file provides implementations of the CRADLE Regular interface
 // for all the core CRADLE types.
@@ -44,16 +44,16 @@ deep_sizeof(nil_t)
     return 0;
 }
 
-struct value;
+struct dynamic;
 
-// Note that we don't have to do anything here because callers of to_value are required to
-// provide an uninitialized value, which defaults to :nil.
+// Note that we don't have to do anything here because callers of to_dynamic are required to
+// provide an uninitialized dynamic, which defaults to nil.
 void static inline
-to_value(value* v, nil_t n)
+to_dynamic(dynamic* v, nil_t n)
 {}
 
 void static inline
-from_value(nil_t* n, value const& v)
+from_dynamic(nil_t* n, dynamic const& v)
 {}
 
 size_t static inline
@@ -81,19 +81,19 @@ deep_sizeof(bool)
 }
 
 void
-to_value(value* v, bool x);
+to_dynamic(dynamic* v, bool x);
 
 void
-from_value(bool* x, value const& v);
+from_dynamic(bool* x, dynamic const& v);
 
 // INTEGERS AND FLOATS
 
 #define CRADLE_DECLARE_NUMBER_INTERFACE(T) \
     void \
-    to_value(value* v, T x); \
+    to_dynamic(dynamic* v, T x); \
     \
     void \
-    from_value(T* x, value const& v); \
+    from_dynamic(T* x, dynamic const& v); \
     \
     size_t static inline \
     deep_sizeof(T) { return sizeof(T); }
@@ -162,10 +162,10 @@ deep_sizeof(string const& x)
 }
 
 void
-to_value(value* v, string const& x);
+to_dynamic(dynamic* v, string const& x);
 
 void
-from_value(string* x, value const& v);
+from_dynamic(string* x, dynamic const& v);
 
 // DATE
 
@@ -175,10 +175,10 @@ using boost::gregorian::date;
 string to_string(date const& d);
 
 void
-to_value(value* v, date const& x);
+to_dynamic(dynamic* v, date const& x);
 
 void
-from_value(date* x, value const& v);
+from_dynamic(date* x, dynamic const& v);
 
 template<>
 struct type_info_query<date>
@@ -223,10 +223,10 @@ string
 to_value_string(ptime const& t);
 
 void
-to_value(value* v, ptime const& x);
+to_dynamic(dynamic* v, ptime const& x);
 
 void
-from_value(ptime* x, value const& v);
+from_dynamic(ptime* x, dynamic const& v);
 
 template<>
 struct type_info_query<ptime>
@@ -287,13 +287,13 @@ deep_sizeof(blob const& b)
     return sizeof(blob) + b.size;
 }
 
-struct value;
+struct dynamic;
 
 void
-to_value(value* v, blob const& x);
+to_dynamic(dynamic* v, blob const& x);
 
 void
-from_value(blob* x, value const& v);
+from_dynamic(blob* x, dynamic const& v);
 
 size_t
 hash_value(blob const& x);
@@ -308,30 +308,30 @@ make_string_blob(string&& s);
 
 template<class T>
 void
-to_value(value* v, std::vector<T> const& x)
+to_dynamic(dynamic* v, std::vector<T> const& x)
 {
-    value_list l;
+    dynamic_array array;
     size_t n_elements = x.size();
-    l.resize(n_elements);
+    array.resize(n_elements);
     for (size_t i = 0; i != n_elements; ++i)
     {
-        to_value(&l[i], x[i]);
+        to_dynamic(&array[i], x[i]);
     }
-    *v = std::move(l);
+    *v = std::move(array);
 }
 
 template<class T>
 void
-from_value(std::vector<T>* x, value const& v)
+from_dynamic(std::vector<T>* x, dynamic const& v)
 {
-    value_list const& l = cast<value_list>(v);
-    size_t n_elements = l.size();
+    dynamic_array const& array = cast<dynamic_array>(v);
+    size_t n_elements = array.size();
     x->resize(n_elements);
     for (size_t i = 0; i != n_elements; ++i)
     {
         try
         {
-            from_value(&(*x)[i], l[i]);
+            from_dynamic(&(*x)[i], array[i]);
         }
         catch (boost::exception& e)
         {
@@ -368,28 +368,28 @@ deep_sizeof(std::vector<T> const& x)
 
 template<class T, size_t N>
 void
-to_value(value* v, std::array<T,N> const& x)
+to_dynamic(dynamic* v, std::array<T,N> const& x)
 {
-    value_list l;
+    dynamic_array l;
     l.resize(N);
     for (size_t i = 0; i != N; ++i)
     {
-        to_value(&l[i], x[i]);
+        to_dynamic(&l[i], x[i]);
     }
     *v = std::move(l);
 }
 
 template<class T, size_t N>
 void
-from_value(std::array<T,N>* x, value const& v)
+from_dynamic(std::array<T,N>* x, dynamic const& v)
 {
-    value_list const& l = cast<value_list>(v);
+    dynamic_array const& l = cast<dynamic_array>(v);
     check_array_size(N, l.size());
     for (size_t i = 0; i != N; ++i)
     {
         try
         {
-            from_value(&(*x)[i], l[i]);
+            from_dynamic(&(*x)[i], l[i]);
         }
         catch (boost::exception& e)
         {
@@ -426,25 +426,25 @@ deep_sizeof(std::array<T,N> const& x)
 
 template<class Key, class Value>
 void
-to_value(value* v, std::map<Key,Value> const& x)
+to_dynamic(dynamic* v, std::map<Key,Value> const& x)
 {
-    value_map record;
+    dynamic_map record;
     for (auto const& i : x)
-        to_value(&record[to_value(i.first)], i.second);
+        to_dynamic(&record[to_dynamic(i.first)], i.second);
     *v = std::move(record);
 }
 
 template<class Key, class Value>
 void
-from_value(std::map<Key,Value>* x, value const& v)
+from_dynamic(std::map<Key,Value>* x, dynamic const& v)
 {
     x->clear();
-    value_map const& record = cast<value_map>(v);
+    dynamic_map const& record = cast<dynamic_map>(v);
     for (auto const& i : record)
     {
         try
         {
-            from_value(&(*x)[from_value<Key>(i.first)], i.second);
+            from_dynamic(&(*x)[from_dynamic<Key>(i.first)], i.second);
         }
         catch (boost::exception& e)
         {
@@ -499,16 +499,16 @@ deep_sizeof(optional<T> const& x)
 
 template<class T>
 void
-to_value(cradle::value* v, optional<T> const& x)
+to_dynamic(cradle::dynamic* v, optional<T> const& x)
 {
-    cradle::value_map record;
+    cradle::dynamic_map record;
     if (x)
     {
-        to_value(&record[cradle::value("some")], *x);
+        to_dynamic(&record[cradle::dynamic("some")], *x);
     }
     else
     {
-        to_value(&record[cradle::value("none")], cradle::nil);
+        to_dynamic(&record[cradle::dynamic("none")], cradle::nil);
     }
     *v = std::move(record);
 }
@@ -518,15 +518,15 @@ CRADLE_DEFINE_ERROR_INFO(string, optional_type_tag)
 
 template<class T>
 void
-from_value(optional<T>* x, cradle::value const& v)
+from_dynamic(optional<T>* x, cradle::dynamic const& v)
 {
-    cradle::value_map const& record = cradle::cast<cradle::value_map>(v);
+    cradle::dynamic_map const& record = cradle::cast<cradle::dynamic_map>(v);
     string type;
-    from_value(&type, cradle::get_union_value_type(record));
+    from_dynamic(&type, cradle::get_union_value_type(record));
     if (type == "some")
     {
         T t;
-        from_value(&t, cradle::get_field(record, "some"));
+        from_dynamic(&t, cradle::get_field(record, "some"));
         *x = t;
     }
     else if (type == "none")

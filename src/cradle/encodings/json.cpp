@@ -53,8 +53,8 @@ parse_time(std::string const& s)
             parsed_text_info(s));
 }
 
-// Read a JSON value into a CRADLE value.
-value static
+// Read a JSON value into a CRADLE dynamic.
+dynamic static
 read_json_value(nlohmann::json const& json)
 {
     switch (json.type())
@@ -104,7 +104,7 @@ read_json_value(nlohmann::json const& json)
         // If this resembles an encoded map, read it as that.
         if (!json.empty() && list_resembles_map(json))
         {
-            value_map map;
+            dynamic_map map;
             for (auto const& i : json)
             {
                 map[read_json_value(i["key"])] = read_json_value(i["value"]);
@@ -114,7 +114,7 @@ read_json_value(nlohmann::json const& json)
         // Otherwise, read it as an actual list.
         else
         {
-            value_list array;
+            dynamic_array array;
             array.reserve(json.size());
             for (auto const& i : json)
             {
@@ -158,7 +158,7 @@ read_json_value(nlohmann::json const& json)
         else
         {
             // Otherwise, interpret it as a record.
-            value_map map;
+            dynamic_map map;
             for (nlohmann::json::const_iterator i = json.begin(); i != json.end(); ++i)
             {
                 map[i.key()] = read_json_value(i.value());
@@ -169,7 +169,7 @@ read_json_value(nlohmann::json const& json)
     }
 }
 
-value
+dynamic
 parse_json_value(char const* json, size_t length)
 {
     nlohmann::json parsed_json;
@@ -189,7 +189,7 @@ parse_json_value(char const* json, size_t length)
 }
 
 bool static
-has_only_string_keys(value_map const& map)
+has_only_string_keys(dynamic_map const& map)
 {
     for (auto const& i : map)
     {
@@ -200,7 +200,7 @@ has_only_string_keys(value_map const& map)
 }
 
 nlohmann::json static
-to_nlohmann_json(value const& v)
+to_nlohmann_json(dynamic const& v)
 {
     switch (v.type())
     {
@@ -232,7 +232,7 @@ to_nlohmann_json(value const& v)
      case value_type::LIST:
       {
         nlohmann::json json(nlohmann::json::value_t::array);
-        for (auto const& i : cast<value_list>(v))
+        for (auto const& i : cast<dynamic_array>(v))
         {
             json.push_back(to_nlohmann_json(i));
         }
@@ -240,7 +240,7 @@ to_nlohmann_json(value const& v)
       }
      case value_type::MAP:
       {
-        value_map const& x = cast<value_map>(v);
+        dynamic_map const& x = cast<dynamic_map>(v);
         // If the map has only key strings, encode it directly as a JSON object.
         if (has_only_string_keys(x))
         {
@@ -268,13 +268,13 @@ to_nlohmann_json(value const& v)
     }
 }
 
-string value_to_json(value const& v)
+string value_to_json(dynamic const& v)
 {
     auto json = to_nlohmann_json(v);
     return json.dump(4);
 }
 
-blob value_to_json_blob(value const& v)
+blob value_to_json_blob(dynamic const& v)
 {
     string json = value_to_json(v);
     blob blob;

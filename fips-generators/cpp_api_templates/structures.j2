@@ -106,10 +106,10 @@ size_t
 hash_value({{type_info.name}} const& x);
 
 void
-to_value(cradle::value* v, {{type_info.name}} const& x);
+to_dynamic(cradle::dynamic* v, {{type_info.name}} const& x);
 
 void
-from_value({{type_info.name}}* x, cradle::value const& v);
+from_dynamic({{type_info.name}}* x, cradle::dynamic const& v);
 
     {% endwith %}
 {% endmacro %}
@@ -170,7 +170,7 @@ operator<({{type_info.name}} const& a, {{type_info.name}} const& b)
 std::ostream&
 operator<<(std::ostream& stream, {{type_info.name}} const& x)
 {
-    return stream << to_value(x);
+    return stream << to_dynamic(x);
 }
 
 void
@@ -209,37 +209,37 @@ hash_value({{type_info.name}} const& x)
 }
 
 void
-to_value(cradle::value* v, {{type_info.name}} const& x)
+to_dynamic(cradle::dynamic* v, {{type_info.name}} const& x)
 {
-    cradle::value_map fields;
+    cradle::dynamic_map fields;
     {% for field, info in ordered_object_items(struct_info) %}
         {% if info["omissible"] %}
     if (x.{{field}})
     {
-        to_value(&fields["{{field}}"], *x.{{field}});
+        to_dynamic(&fields["{{field}}"], *x.{{field}});
     }
         {% else %}
-    to_value(&fields["{{field}}"], x.{{field}});
+    to_dynamic(&fields["{{field}}"], x.{{field}});
         {% endif %}
     {% endfor %}
     *v = std::move(fields);
 }
 
 void
-from_value({{type_info.name}}* x, cradle::value const& v)
+from_dynamic({{type_info.name}}* x, cradle::dynamic const& v)
 {
     {% if not ordered_object_empty(struct_info) %}
-    auto const& fields = cradle::cast<cradle::value_map>(v);
+    auto const& fields = cradle::cast<cradle::dynamic_map>(v);
         {% for field, info in ordered_object_items(struct_info) %}
             {% if info["omissible"] %}
     {
-        cradle::value const* dynamic_field_value;
+        cradle::dynamic const* dynamic_field_value;
         if (get_field(&dynamic_field_value, fields, "{{field}}"))
         {
             try
             {
                 {{info.schema | cpp_type_for_schema()}} field_value;
-                from_value(&field_value, *dynamic_field_value);
+                from_dynamic(&field_value, *dynamic_field_value);
                 x->{{field}} = cradle::some(field_value);
             }
             catch (boost::exception& e)
@@ -258,7 +258,7 @@ from_value({{type_info.name}}* x, cradle::value const& v)
         auto const& dynamic_field_value = get_field(fields, "{{field}}");
         try
         {
-            from_value(&x->{{field}}, dynamic_field_value);
+            from_dynamic(&x->{{field}}, dynamic_field_value);
         }
         catch (boost::exception& e)
         {

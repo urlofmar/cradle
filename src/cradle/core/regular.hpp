@@ -31,10 +31,10 @@ struct Regular
         using std::swap;
         swap(t, t);
 
-        // T must support conversion to and from cradle::value.
-        cradle::value v;
-        to_value(&v, t);
-        from_value(&t, v);
+        // T must support conversion to and from cradle::dynamic.
+        cradle::dynamic v;
+        to_dynamic(&v, t);
+        from_dynamic(&t, v);
     }
 
  private:

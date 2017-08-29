@@ -66,7 +66,7 @@ struct type_info_query
 
 struct api_type_info;
 
-struct value;
+struct dynamic;
 
 enum class value_type
 {
@@ -77,42 +77,42 @@ enum class value_type
     STRING,         // string
     BLOB,           // binary blob, blob
     DATETIME,       // boost::posix_time::ptime
-    LIST,           // ordered list of values, value_list
-    MAP,            // collection of named values, value_map
+    LIST,           // ordered list of values, dynamic_array
+    MAP,            // collection of named values, dynamic_map
 };
 
 // Lists are represented as std::vectors and can be manipulated as such.
-typedef std::vector<value> value_list;
+typedef std::vector<dynamic> dynamic_array;
 
 // Maps are represented as std::maps and can be manipulated as such.
-typedef std::map<value,value> value_map;
+typedef std::map<dynamic,dynamic> dynamic_map;
 
-struct value
+struct dynamic
 {
     // CONSTRUCTORS
 
     // Default construction creates a nil value.
-    value() { set(nil); }
+    dynamic() { set(nil); }
 
-    // Construct a value from one of the base types.
-    value(nil_t v) { set(v); }
-    value(bool v) { set(v); }
-    value(integer v) { set(v); }
-    value(double v) { set(v); }
-    value(string const& v) { set(v); }
-    value(string&& v) { set(std::move(v)); }
-    value(char const* v) { set(string(v)); }
-    value(blob const& v) { set(v); }
-    value(blob&& v) { set(std::move(v)); }
-    value(boost::posix_time::ptime const& v) { set(v); }
-    value(boost::posix_time::ptime&& v) { set(std::move(v)); }
-    value(value_list const& v) { set(v); }
-    value(value_list&& v) { set(std::move(v)); }
-    value(value_map const& v) { set(v); }
-    value(value_map&& v) { set(std::move(v)); }
+    // Construct a dynamic from one of the base types.
+    dynamic(nil_t v) { set(v); }
+    dynamic(bool v) { set(v); }
+    dynamic(integer v) { set(v); }
+    dynamic(double v) { set(v); }
+    dynamic(string const& v) { set(v); }
+    dynamic(string&& v) { set(std::move(v)); }
+    dynamic(char const* v) { set(string(v)); }
+    dynamic(blob const& v) { set(v); }
+    dynamic(blob&& v) { set(std::move(v)); }
+    dynamic(boost::posix_time::ptime const& v) { set(v); }
+    dynamic(boost::posix_time::ptime&& v) { set(std::move(v)); }
+    dynamic(dynamic_array const& v) { set(v); }
+    dynamic(dynamic_array&& v) { set(std::move(v)); }
+    dynamic(dynamic_map const& v) { set(v); }
+    dynamic(dynamic_map&& v) { set(std::move(v)); }
 
     // Construct from an initializer list.
-    value(std::initializer_list<value> list);
+    dynamic(std::initializer_list<dynamic> list);
 
     // GETTERS
 
@@ -128,8 +128,8 @@ struct value
     void get(string const** v) const;
     void get(blob const** v) const;
     void get(boost::posix_time::ptime const** v) const;
-    void get(value_list const** v) const;
-    void get(value_map const** v) const;
+    void get(dynamic_array const** v) const;
+    void get(dynamic_map const** v) const;
 
     // value(value const& other)
     //   : type_(other.type_),
@@ -168,12 +168,12 @@ struct value
     void set(blob&& v);
     void set(boost::posix_time::ptime const& v);
     void set(boost::posix_time::ptime&& v);
-    void set(value_list const& v);
-    void set(value_list&& v);
-    void set(value_map const& v);
-    void set(value_map&& v);
+    void set(dynamic_array const& v);
+    void set(dynamic_array&& v);
+    void set(dynamic_map const& v);
+    void set(dynamic_map&& v);
 
-    friend void swap(value& a, value& b);
+    friend void swap(dynamic& a, dynamic& b);
 
     value_type type_;
     any value_;

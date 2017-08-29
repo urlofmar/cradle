@@ -4,7 +4,7 @@
 
 namespace cradle {
 
-value static
+dynamic static
 read_msgpack_value(
     ownership_holder const& ownership,
     msgpack::object const& object)
@@ -39,7 +39,7 @@ read_msgpack_value(
      case msgpack::type::ARRAY:
       {
         size_t size = object.via.array.size;
-        value_list array;
+        dynamic_array array;
         array.reserve(size);
         for (size_t i = 0; i != size; ++i)
         {
@@ -49,7 +49,7 @@ read_msgpack_value(
       }
      case msgpack::type::MAP:
       {
-        value_map map;
+        dynamic_map map;
         for (size_t i = 0; i != object.via.map.size; ++i)
         {
             auto const& pair = object.via.map.ptr[i];
@@ -109,7 +109,8 @@ read_msgpack_value(
     }
 }
 
-value parse_msgpack_value(uint8_t const* data, size_t size)
+dynamic
+parse_msgpack_value(uint8_t const* data, size_t size)
 {
     // msgpack::unpack returns a unique handle which contains the object and
     // also owns the data stored within the object. Copying the handle
@@ -128,7 +129,8 @@ value parse_msgpack_value(uint8_t const* data, size_t size)
     return read_msgpack_value(ownership, shared_handle->get());
 }
 
-value parse_msgpack_value(string const& msgpack)
+dynamic
+parse_msgpack_value(string const& msgpack)
 {
     return
         parse_msgpack_value(
@@ -149,7 +151,7 @@ msgpack_unpack_reference_type(
     return type == msgpack::type::BIN;
 }
 
-value
+dynamic
 parse_msgpack_value(
     ownership_holder const& ownership,
     uint8_t const* data,
@@ -163,7 +165,8 @@ parse_msgpack_value(
     return read_msgpack_value(ownership, handle.get());
 }
 
-string value_to_msgpack_string(value const& v)
+string
+value_to_msgpack_string(dynamic const& v)
 {
     std::stringstream stream;
     msgpack::packer<std::stringstream> packer(stream);
@@ -171,7 +174,8 @@ string value_to_msgpack_string(value const& v)
     return stream.str();
 }
 
-blob value_to_msgpack_blob(value const& v)
+blob
+value_to_msgpack_blob(dynamic const& v)
 {
     std::shared_ptr<msgpack::sbuffer> sbuffer(new msgpack::sbuffer);
     msgpack::packer<msgpack::sbuffer> packer(*sbuffer);

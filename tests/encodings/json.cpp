@@ -11,9 +11,9 @@ strip_whitespace(string s)
     return s;
 }
 
-// Test that a JSON string can be translated to and from its expected value form.
+// Test that a JSON string can be translated to and from its expected dynamic form.
 void static
-test_json_encoding(string const& json, value const& expected_value)
+test_json_encoding(string const& json, dynamic const& expected_value)
 {
     CAPTURE(json)
 
@@ -79,12 +79,12 @@ TEST_CASE("basic JSON encoding", "[encodings][json]")
         R"(
             [ 1, 2, 3 ]
         )",
-        value({ integer(1), integer(2), integer(3) }));
+        dynamic({ integer(1), integer(2), integer(3) }));
     test_json_encoding(
         R"(
             []
         )",
-        value_list());
+        dynamic_array());
 
     // Try a map with string keys.
     test_json_encoding(
@@ -113,7 +113,7 @@ TEST_CASE("basic JSON encoding", "[encodings][json]")
                 }
             ]
         )",
-        value_map(
+        dynamic_map(
             {
                 { false, "no" },
                 { true, "yes" }

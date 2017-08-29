@@ -59,10 +59,10 @@ std::string
 get_value_id({{type_info.name}} value);
 
 void
-to_value(cradle::value* v, {{type_info.name}} x);
+to_dynamic(cradle::dynamic* v, {{type_info.name}} x);
 
 void
-from_value({{type_info.name}}* x, cradle::value const& v);
+from_dynamic({{type_info.name}}* x, cradle::dynamic const& v);
     {% endwith %}
 {% endmacro %}
 
@@ -96,13 +96,13 @@ get_value_id({{type_info.name}} x)
 }
 
 void
-to_value(cradle::value* v, {{type_info.name}} x)
+to_dynamic(cradle::dynamic* v, {{type_info.name}} x)
 {
     *v = get_value_id(x);
 }
 
 void
-from_value({{type_info.name}}* x, cradle::value const& v)
+from_dynamic({{type_info.name}}* x, cradle::dynamic const& v)
 {
     auto s = boost::to_lower_copy(cradle::cast<std::string>(v));
     {% for name, info in ordered_object_items(enum_info) %}
