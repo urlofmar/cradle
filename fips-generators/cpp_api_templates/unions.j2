@@ -103,10 +103,10 @@ size_t
 hash_value({{type_info.name}} const& x);
 
 void
-to_value(cradle::value* v, {{type_info.name}} const& x);
+to_dynamic(cradle::dynamic* v, {{type_info.name}} const& x);
 
 void
-from_value({{type_info.name}}* x, cradle::value const& v);
+from_dynamic({{type_info.name}}* x, cradle::dynamic const& v);
 
     {% endwith %}
 {% endmacro %}
@@ -197,7 +197,7 @@ operator<({{type_info.name}} const& a, {{type_info.name}} const& b)
 std::ostream&
 operator<<(std::ostream& stream, {{type_info.name}} const& x)
 {
-    return stream << to_value(x);
+    return stream << to_dynamic(x);
 }
 
 size_t
@@ -232,14 +232,14 @@ hash_value({{type_info.name}} const& x)
 }
 
 void
-to_value(cradle::value* v, {{type_info.name}} const& x)
+to_dynamic(cradle::dynamic* v, {{type_info.name}} const& x)
 {
-    cradle::value_map fields;
+    cradle::dynamic_map fields;
     switch (get_tag(x))
     {
     {% for case_name, case_info in ordered_object_items(union_info) %}
      case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
-        to_value(&fields["{{case_name}}"], as_{{case_name}}(x));
+        to_dynamic(&fields["{{case_name}}"], as_{{case_name}}(x));
         break;
     {% endfor %}
     }
@@ -247,10 +247,10 @@ to_value(cradle::value* v, {{type_info.name}} const& x)
 }
 
 void
-from_value({{type_info.name}}* x, cradle::value const& v)
+from_dynamic({{type_info.name}}* x, cradle::dynamic const& v)
 {
-    cradle::value_map const& fields = cradle::cast<cradle::value_map>(v);
-    from_value(&x->tag_, get_union_value_type(fields));
+    cradle::dynamic_map const& fields = cradle::cast<cradle::dynamic_map>(v);
+    from_dynamic(&x->tag_, get_union_value_type(fields));
     switch (x->tag_)
     {
     {% for case_name, case_info in ordered_object_items(union_info) %}
@@ -259,7 +259,7 @@ from_value({{type_info.name}}* x, cradle::value const& v)
         try
         {
             {{case_info.schema | cpp_type_for_schema}} case_value;
-            from_value(&case_value, get_field(fields, "{{case_name}}"));
+            from_dynamic(&case_value, get_field(fields, "{{case_name}}"));
             x->contents_ = case_value;
         }
         catch (boost::exception& e)

@@ -16,7 +16,8 @@
 
 namespace cradle {
 
-value parse_json_response(http_response const& response)
+dynamic
+parse_json_response(http_response const& response)
 {
     return
         parse_json_value(
@@ -24,7 +25,8 @@ value parse_json_response(http_response const& response)
             response.body.size);
 }
 
-value parse_msgpack_response(http_response const& response)
+dynamic
+parse_msgpack_response(http_response const& response)
 {
     return
         parse_msgpack_value(

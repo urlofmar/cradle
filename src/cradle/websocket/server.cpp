@@ -145,7 +145,7 @@ struct websocket_server_impl
 void static
 send(websocket_server_impl& server, connection_hdl hdl, websocket_server_message const& message)
 {
-    auto dynamic = to_value(message);
+    auto dynamic = to_dynamic(message);
     auto json = value_to_json(dynamic);
     websocketpp::lib::error_code ec;
     server.ws.send(hdl, json, websocketpp::frame::opcode::text, ec);
@@ -165,7 +165,7 @@ compute_crc32(string const& s)
     return crc.checksum();
 }
 
-value static
+dynamic static
 retrieve_immutable(
     disk_cache& cache,
     http_connection& connection,
@@ -177,7 +177,7 @@ retrieve_immutable(
     auto cache_key =
         picosha2::hash256_hex_string(
             value_to_msgpack_string(
-                value({ "retrieve_immutable", session.api_url, immutable_id })));
+                dynamic({ "retrieve_immutable", session.api_url, immutable_id })));
     try
     {
         auto entry = cache.find(cache_key);
@@ -227,7 +227,7 @@ resolve_iss_object_to_immutable(
     auto cache_key =
         picosha2::hash256_hex_string(
             value_to_msgpack_string(
-                value(
+                dynamic(
                     {
                         "resolve_iss_object_to_immutable",
                         session.api_url,
@@ -265,7 +265,7 @@ resolve_iss_object_to_immutable(
     return immutable_id;
 }
 
-value static
+dynamic static
 get_iss_object(
     disk_cache& cache,
     http_connection& connection,
@@ -296,18 +296,18 @@ post_iss_object(
     thinknode_session const& session,
     string const& context_id,
     api_type_info const& schema,
-    value const& object)
+    dynamic const& object)
 {
     // Try the disk cache.
     auto cache_key =
         picosha2::hash256_hex_string(
             value_to_msgpack_string(
-                value(
+                dynamic(
                     {
                         "post_iss_object",
                         session.api_url,
                         context_id,
-                        to_value(schema),
+                        to_dynamic(schema),
                         object
                     })));
     try
@@ -348,7 +348,7 @@ get_calculation_request(
     auto cache_key =
         picosha2::hash256_hex_string(
             value_to_msgpack_string(
-                value({ "get_calculation_request", session.api_url, calculation_id })));
+                dynamic({ "get_calculation_request", session.api_url, calculation_id })));
     try
     {
         auto entry = cache.find(cache_key);
@@ -357,7 +357,7 @@ get_calculation_request(
         if (entry && entry->value)
         {
             return
-                from_value<calculation_request>(
+                from_dynamic<calculation_request>(
                     parse_msgpack_value(
                         base64_decode(*entry->value, get_mime_base64_character_set())));
         }
@@ -375,7 +375,7 @@ get_calculation_request(
     cache.insert(
         cache_key,
         base64_encode(
-            value_to_msgpack_string(to_value(request)),
+            value_to_msgpack_string(to_dynamic(request)),
             get_mime_base64_character_set()));
 
     return request;
@@ -393,12 +393,12 @@ post_calculation(
     auto cache_key =
         picosha2::hash256_hex_string(
             value_to_msgpack_string(
-                value(
+                dynamic(
                     {
                         "post_calculation",
                         session.api_url,
                         context_id,
-                        to_value(calculation)
+                        to_dynamic(calculation)
                     })));
     try
     {
@@ -473,7 +473,7 @@ resolve_meta_chain(
                 context_id,
                 augmented_calculation_request{ generator, {} });
         request =
-            from_value<calculation_request>(
+            from_dynamic<calculation_request>(
                 get_iss_object(
                     cache,
                     connection,
@@ -665,7 +665,7 @@ on_message(
     websocket_client_message message;
     try
     {
-        from_value(&message, parse_json_value(raw_message->get_payload()));
+        from_dynamic(&message, parse_json_value(raw_message->get_payload()));
         enqueue_job(server.requests, client_request{hdl, message});
         if (is_kill(message))
         {

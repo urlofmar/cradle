@@ -5,7 +5,7 @@
 #include <catch.hpp>
 
 #include <cradle/core/regular.hpp>
-#include <cradle/core/value.hpp>
+#include <cradle/core/dynamic.hpp>
 
 namespace cradle {
 
@@ -54,11 +54,11 @@ test_regular_value(T const& x)
     }
 
     {
-        INFO("Conversion to cradle::value and then back should produce an equal value.")
-        cradle::value v;
-        to_value(&v, x);
+        INFO("Conversion to cradle::dynamic and then back should produce an equal value.")
+        cradle::dynamic v;
+        to_dynamic(&v, x);
         T y;
-        from_value(&y, v);
+        from_dynamic(&y, v);
         REQUIRE(y == x);
     }
 }

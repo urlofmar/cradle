@@ -5,20 +5,20 @@
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <cradle/core/value.hpp>
+#include <cradle/core/dynamic.hpp>
 
 namespace cradle {
 
 // BOOL
 
 void
-to_value(value* v, bool x)
+to_dynamic(dynamic* v, bool x)
 {
     *v = x;
 }
 
 void
-from_value(bool* x, value const& v)
+from_dynamic(bool* x, dynamic const& v)
 {
     *x = cast<bool>(v);
 }
@@ -26,13 +26,13 @@ from_value(bool* x, value const& v)
 // STRING
 
 void
-to_value(value* v, string const& x)
+to_dynamic(dynamic* v, string const& x)
 {
     *v = x;
 }
 
 void
-from_value(string* x, value const& v)
+from_dynamic(string* x, dynamic const& v)
 {
     // Strings are also used to encode datetimes in JSON, so it's possible we
     // might misinterpret a string as a datetime.
@@ -46,12 +46,12 @@ from_value(string* x, value const& v)
 
 #define CRADLE_DEFINE_INTEGER_INTERFACE(T) \
     void \
-    to_value(value* v, T x) \
+    to_dynamic(dynamic* v, T x) \
     { \
         *v = boost::numeric_cast<integer>(x); \
     } \
     void \
-    from_value(T* x, value const& v) \
+    from_dynamic(T* x, dynamic const& v) \
     { \
         /* Floats can also be acceptable as integers if they convert properly. */ \
         if (v.type() == value_type::FLOAT) \
@@ -75,12 +75,12 @@ CRADLE_DEFINE_INTEGER_INTERFACE(unsigned long long)
 
 #define CRADLE_DEFINE_FLOAT_INTERFACE(T) \
     void \
-    to_value(value* v, T x) \
+    to_dynamic(dynamic* v, T x) \
     { \
         *v = double(x); \
     } \
     void \
-    from_value(T* x, value const& v) \
+    from_dynamic(T* x, dynamic const& v) \
     { \
         /* Integers can also acceptable as floats if they convert properly. */ \
         if (v.type() == value_type::INTEGER) \
@@ -131,13 +131,13 @@ to_string(date const& d)
 }
 
 void
-to_value(value* v, date const& x)
+to_dynamic(dynamic* v, date const& x)
 {
     *v = to_string(x);
 }
 
 void
-from_value(date* x, value const& v)
+from_dynamic(date* x, dynamic const& v)
 {
     *x = parse_date(cast<string>(v));
 }
@@ -172,13 +172,13 @@ to_value_string(ptime const& t)
 }
 
 void
-to_value(value* v, ptime const& x)
+to_dynamic(dynamic* v, ptime const& x)
 {
     *v = x;
 }
 
 void
-from_value(ptime* x, value const& v)
+from_dynamic(ptime* x, dynamic const& v)
 {
     *x = cast<ptime>(v);
 }
@@ -202,13 +202,13 @@ operator<(blob const& a, blob const& b)
 }
 
 void
-to_value(value* v, blob const& x)
+to_dynamic(dynamic* v, blob const& x)
 {
     *v = x;
 }
 
 void
-from_value(blob* x, value const& v)
+from_dynamic(blob* x, dynamic const& v)
 {
     *x = cast<blob>(v);
 }

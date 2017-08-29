@@ -17,7 +17,7 @@ resolve_iss_object_to_immutable(
     bool ignore_upgrades);
 
 // Retrieve an immutable data object.
-value
+dynamic
 retrieve_immutable(
     http_connection_interface& connection,
     thinknode_session const& session,
@@ -35,7 +35,7 @@ post_iss_object(
     thinknode_session const& session,
     string const& context_id,
     api_type_info const& schema,
-    value const& data);
+    dynamic const& data);
 
 }
 

@@ -33,7 +33,7 @@ TEST_CASE("request headers", "[io][http]")
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
     http_header_list response_headers;
-    from_value(&response_headers, get_field(cast<value_map>(body), "headers"));
+    from_dynamic(&response_headers, get_field(cast<dynamic_map>(body), "headers"));
     for (auto const& header : request_headers)
     {
         CAPTURE(header.first);
@@ -69,7 +69,7 @@ TEST_CASE("GET request", "[io][http]")
             make_get_request("http://postman-echo.com/get?color=navy", http_header_list()));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
-    REQUIRE(get_field(cast<value_map>(body), "args") == value({ { "color", "navy" } }));
+    REQUIRE(get_field(cast<dynamic_map>(body), "args") == dynamic({ { "color", "navy" } }));
 }
 
 TEST_CASE("HTTPS request", "[io][http]")
@@ -79,14 +79,14 @@ TEST_CASE("HTTPS request", "[io][http]")
             make_get_request("https://postman-echo.com/get?color=navy", http_header_list()));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
-    REQUIRE(get_field(cast<value_map>(body), "args") == value({ { "color", "navy" } }));
+    REQUIRE(get_field(cast<dynamic_map>(body), "args") == dynamic({ { "color", "navy" } }));
 }
 
 void
 test_method_with_content(http_request_method method)
 {
     auto content =
-        value({ { "numbers", value({ integer(4), integer(3), integer(2), integer(1) }) } });
+        dynamic({ { "numbers", dynamic({ integer(4), integer(3), integer(2), integer(1) }) } });
     auto response =
         perform_simple_request(
             make_http_request(
@@ -99,7 +99,7 @@ test_method_with_content(http_request_method method)
                 make_string_blob(value_to_json(content))));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
-    REQUIRE(get_field(cast<value_map>(body), "json") == content);
+    REQUIRE(get_field(cast<dynamic_map>(body), "json") == content);
 }
 
 TEST_CASE("PUT request", "[io][http]")
@@ -131,7 +131,7 @@ TEST_CASE("large HTTP request", "[io][http]")
     {
         numbers.push_back(i);
     }
-    auto content = value({ { "numbers", to_value(numbers) } });
+    auto content = dynamic({ { "numbers", to_dynamic(numbers) } });
     auto response =
         perform_simple_request(
             make_http_request(
@@ -144,7 +144,7 @@ TEST_CASE("large HTTP request", "[io][http]")
                 make_string_blob(value_to_json(content))));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
-    REQUIRE(get_field(cast<value_map>(body), "json") == content);
+    REQUIRE(get_field(cast<dynamic_map>(body), "json") == content);
 }
 
 TEST_CASE("404 response code", "[io][http]")

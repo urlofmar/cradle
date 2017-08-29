@@ -1,11 +1,11 @@
-#include <cradle/core/value.hpp>
+#include <cradle/core/dynamic.hpp>
 
 #include <cradle/common.hpp>
 #include <cradle/core/testing.hpp>
 
 using namespace cradle;
 
-TEST_CASE("value_type streaming", "[core][value]")
+TEST_CASE("value_type streaming", "[core][dynamic]")
 {
     REQUIRE(boost::lexical_cast<string>(value_type::NIL) == "nil");
     REQUIRE(boost::lexical_cast<string>(value_type::BOOLEAN) == "boolean");
@@ -21,7 +21,7 @@ TEST_CASE("value_type streaming", "[core][value]")
         invalid_enum_value const&);
 }
 
-TEST_CASE("value type checking", "[core][value]")
+TEST_CASE("dynamic type checking", "[core][dynamic]")
 {
     try
     {
@@ -37,117 +37,117 @@ TEST_CASE("value type checking", "[core][value]")
     REQUIRE_NOTHROW(check_type(value_type::NIL, value_type::NIL));
 }
 
-TEST_CASE("value initializer lists", "[core][value]")
+TEST_CASE("dynamic initializer lists", "[core][dynamic]")
 {
     // Test a simple initializer list.
     REQUIRE(
-        (value{ 0., 1., 2. }) ==
-        value(value_list{ value(0.), value(1.), value(2.) }));
+        (dynamic{ 0., 1., 2. }) ==
+        dynamic(dynamic_array{ dynamic(0.), dynamic(1.), dynamic(2.) }));
 
     // Test that lists that look like maps are treated like maps.
     REQUIRE(
-        (value{ { "foo", 0. }, { "bar", 1. } }) ==
-        value(value_map{ { value("foo"), value(0.) }, { value("bar"), value(1.) } }));
+        (dynamic{ { "foo", 0. }, { "bar", 1. } }) ==
+        dynamic(dynamic_map{ { dynamic("foo"), dynamic(0.) }, { dynamic("bar"), dynamic(1.) } }));
 
     // Test that the conversion to map only happens with string keys.
     REQUIRE(
-        (value{ { "foo", 0. }, { 0., 1. } }) ==
-        value(
-            value_list{
-                value_list{ value("foo"), value(0.) },
-                value_list{ value(0.), value(1.) } }));
+        (dynamic{ { "foo", 0. }, { 0., 1. } }) ==
+        dynamic(
+            dynamic_array{
+                dynamic_array{ dynamic("foo"), dynamic(0.) },
+                dynamic_array{ dynamic(0.), dynamic(1.) } }));
 }
 
-TEST_CASE("value type interface", "[core][value]")
+TEST_CASE("dynamic type interface", "[core][dynamic]")
 {
     test_regular_value_pair(
-        value(false),
-        value(true));
+        dynamic(false),
+        dynamic(true));
 
     test_regular_value_pair(
-        value(integer(0)),
-        value(integer(1)));
+        dynamic(integer(0)),
+        dynamic(integer(1)));
 
     test_regular_value_pair(
-        value(0.),
-        value(1.));
+        dynamic(0.),
+        dynamic(1.));
 
     test_regular_value_pair(
-        value(string("bar")),
-        value(string("foo")));
+        dynamic(string("bar")),
+        dynamic(string("foo")));
 
     char blob_data[] = { 'a', 'b' };
     test_regular_value_pair(
-        value(blob(ownership_holder(), blob_data, 1)),
-        value(blob(ownership_holder(), blob_data, 2)));
+        dynamic(blob(ownership_holder(), blob_data, 1)),
+        dynamic(blob(ownership_holder(), blob_data, 2)));
 
     test_regular_value_pair(
-        value(
+        dynamic(
             boost::posix_time::ptime(
                 boost::gregorian::date(2017,boost::gregorian::Apr,26),
                 boost::posix_time::time_duration(1,2,3))),
-        value(
+        dynamic(
             boost::posix_time::ptime(
                 boost::gregorian::date(2017,boost::gregorian::Apr,26),
                 boost::posix_time::time_duration(1,2,4))));
 
     test_regular_value_pair(
-        value(value_list({ value(0.), value(1.) })),
-        value(value_list({ value(1.), value(2.) })));
+        dynamic(dynamic_array({ dynamic(0.), dynamic(1.) })),
+        dynamic(dynamic_array({ dynamic(1.), dynamic(2.) })));
 
     test_regular_value_pair(
-        value(value_map({ { value(0.), value(1.) } })),
-        value(value_map({ { value(1.), value(2.) } })));
+        dynamic(dynamic_map({ { dynamic(0.), dynamic(1.) } })),
+        dynamic(dynamic_map({ { dynamic(1.), dynamic(2.) } })));
 }
 
-TEST_CASE("value deep_sizeof", "[core][value]")
+TEST_CASE("dynamic deep_sizeof", "[core][dynamic]")
 {
-    REQUIRE(deep_sizeof(value(nil)) == sizeof(value) + deep_sizeof(nil));
-    REQUIRE(deep_sizeof(value(false)) == sizeof(value) + deep_sizeof(false));
+    REQUIRE(deep_sizeof(dynamic(nil)) == sizeof(dynamic) + deep_sizeof(nil));
+    REQUIRE(deep_sizeof(dynamic(false)) == sizeof(dynamic) + deep_sizeof(false));
     REQUIRE(
-        deep_sizeof(value(integer(0))) ==
-        sizeof(value) + deep_sizeof(integer(0)));
-    REQUIRE(deep_sizeof(value(0.)) == sizeof(value) + deep_sizeof(0.));
+        deep_sizeof(dynamic(integer(0))) ==
+        sizeof(dynamic) + deep_sizeof(integer(0)));
+    REQUIRE(deep_sizeof(dynamic(0.)) == sizeof(dynamic) + deep_sizeof(0.));
     REQUIRE(
-        deep_sizeof(value(string("foo"))) ==
-        sizeof(value) + deep_sizeof(string("foo")));
+        deep_sizeof(dynamic(string("foo"))) ==
+        sizeof(dynamic) + deep_sizeof(string("foo")));
     char blob_data[] = { 'a', 'b' };
     blob blob(ownership_holder(), blob_data, 2);
-    REQUIRE(deep_sizeof(value(blob)) == sizeof(value) + deep_sizeof(blob));
+    REQUIRE(deep_sizeof(dynamic(blob)) == sizeof(dynamic) + deep_sizeof(blob));
     auto time =
         boost::posix_time::ptime(
             boost::gregorian::date(2017,boost::gregorian::Apr,26),
             boost::posix_time::time_duration(1,2,3));
-    REQUIRE(deep_sizeof(value(time)) == sizeof(value) + deep_sizeof(time));
-    auto list = value_list({ value(3.), value(1.), value(2.) });
-    REQUIRE(deep_sizeof(value(list)) == sizeof(value) + deep_sizeof(list));
-    auto map = value_map({ { value(0.), value(1.) }, { value(1.), value(2.) } });
-    REQUIRE(deep_sizeof(value(map)) == sizeof(value) + deep_sizeof(map));
+    REQUIRE(deep_sizeof(dynamic(time)) == sizeof(dynamic) + deep_sizeof(time));
+    auto list = dynamic_array({ dynamic(3.), dynamic(1.), dynamic(2.) });
+    REQUIRE(deep_sizeof(dynamic(list)) == sizeof(dynamic) + deep_sizeof(list));
+    auto map = dynamic_map({ { dynamic(0.), dynamic(1.) }, { dynamic(1.), dynamic(2.) } });
+    REQUIRE(deep_sizeof(dynamic(map)) == sizeof(dynamic) + deep_sizeof(map));
 
-    REQUIRE(deep_sizeof(value_list()) == sizeof(value_list));
-    REQUIRE(deep_sizeof(value_map()) == sizeof(value_map));
+    REQUIRE(deep_sizeof(dynamic_array()) == sizeof(dynamic_array));
+    REQUIRE(deep_sizeof(dynamic_map()) == sizeof(dynamic_map));
 }
 
-TEST_CASE("empty list/map equivalence", "[core][value]")
+TEST_CASE("empty list/map equivalence", "[core][dynamic]")
 {
     {
         INFO("Dynamic values containing empty maps can be treated as empty lists.")
-        REQUIRE(cast<value_list>(value(value_map())) == value_list());
+        REQUIRE(cast<dynamic_array>(dynamic(dynamic_map())) == dynamic_array());
         INFO("This doesn't work for non-empty maps.")
-        REQUIRE_THROWS(cast<value_list>(value(value_map({ { value(0.), value(1.) } }))));
+        REQUIRE_THROWS(cast<dynamic_array>(dynamic(dynamic_map({ { dynamic(0.), dynamic(1.) } }))));
     }
     {
         INFO("Dynamic values containing empty lists can be treated as empty maps.")
-        REQUIRE(cast<value_map>(value(value_list())) == value_map());
+        REQUIRE(cast<dynamic_map>(dynamic(dynamic_array())) == dynamic_map());
         INFO("This doesn't work for non-empty lists.")
-        REQUIRE_THROWS(cast<value_map>(value(value_list({ value(1.) }))));
+        REQUIRE_THROWS(cast<dynamic_map>(dynamic(dynamic_array({ dynamic(1.) }))));
     }
 }
 
-TEST_CASE("get_field", "[core][value]")
+TEST_CASE("get_field", "[core][dynamic]")
 {
     auto map =
-        value_map(
+        dynamic_map(
             {
                 { "a", 12. },
                 { "b", false }
@@ -169,12 +169,12 @@ TEST_CASE("get_field", "[core][value]")
     }
 }
 
-TEST_CASE("get_union_value_type", "[core][value]")
+TEST_CASE("get_union_value_type", "[core][dynamic]")
 {
-    // Try getting the type from a proper union value.
+    // Try getting the type from a proper union dynamic.
     REQUIRE(
         get_union_value_type(
-            value_map(
+            dynamic_map(
                 {
                     { "a", 12. },
                 })) ==
@@ -183,7 +183,7 @@ TEST_CASE("get_union_value_type", "[core][value]")
     // Try with an empty map.
     try
     {
-        get_union_value_type(value_map());
+        get_union_value_type(dynamic_map());
         FAIL("no exception thrown");
     }
     catch (multifield_union& )
@@ -194,7 +194,7 @@ TEST_CASE("get_union_value_type", "[core][value]")
     try
     {
         get_union_value_type(
-            value_map(
+            dynamic_map(
                 {
                     { "a", 12. },
                     { "b", false }
@@ -206,11 +206,11 @@ TEST_CASE("get_union_value_type", "[core][value]")
     }
 }
 
-TEST_CASE("value operators", "[core][value]")
+TEST_CASE("dynamic operators", "[core][dynamic]")
 {
-    value a;
-    value b(integer(0));
-    value c(integer(1));
+    dynamic a;
+    dynamic b(integer(0));
+    dynamic c(integer(1));
 
     REQUIRE(a == a);
     REQUIRE(b == b);

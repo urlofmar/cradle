@@ -71,7 +71,7 @@ TEST_CASE("ISS immutable retrieval", "[thinknode][iss]")
                     });
             REQUIRE(request == expected_request);
 
-            return make_mock_response(value_to_msgpack_string(value("the-data")));
+            return make_mock_response(value_to_msgpack_string(dynamic("the-data")));
         });
 
     thinknode_session session;
@@ -79,7 +79,7 @@ TEST_CASE("ISS immutable retrieval", "[thinknode][iss]")
     session.access_token = "xyz";
 
     auto data = retrieve_immutable(mock_connection.get(), session, "123", "abc");
-    REQUIRE(data == value("the-data"));
+    REQUIRE(data == dynamic("the-data"));
 }
 
 TEST_CASE("URL type string", "[thinknode][iss]")
@@ -170,7 +170,7 @@ TEST_CASE("ISS POST", "[thinknode][iss]")
                         { "Accept", "application/json" },
                         { "Content-Type", "application/octet-stream" }
                     },
-                    value_to_msgpack_blob(value("payload")));
+                    value_to_msgpack_blob(dynamic("payload")));
             REQUIRE(request == expected_request);
 
             return make_mock_response("{ \"id\": \"def\" }");
@@ -186,6 +186,6 @@ TEST_CASE("ISS POST", "[thinknode][iss]")
             session,
             "123",
             make_api_type_info_with_string(api_string_type()),
-            value("payload"));
+            dynamic("payload"));
     REQUIRE(id == "def");
 }

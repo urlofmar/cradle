@@ -26,10 +26,10 @@ make_get_request(string const& url, http_header_list const& headers)
 }
 
 // Parse a http_response as a JSON value.
-value parse_json_response(http_response const& response);
+dynamic parse_json_response(http_response const& response);
 
 // Parse a http_response as a MessagePack value.
-value parse_msgpack_response(http_response const& response);
+dynamic parse_msgpack_response(http_response const& response);
 
 // This exception indicates a general failure in the HTTP request
 // system (e.g., a failure to initialize).

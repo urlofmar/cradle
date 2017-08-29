@@ -1,4 +1,4 @@
-#include <cradle/core/value.hpp>
+#include <cradle/core/dynamic.hpp>
 
 
 #include <algorithm>
@@ -59,162 +59,162 @@ void check_type(value_type expected, value_type actual)
     }
 }
 
-value::value(std::initializer_list<value> list)
+dynamic::dynamic(std::initializer_list<dynamic> list)
 {
     // If this is a list of lists, all of which are length two and have strings as their
     // first elements, treat it as a map.
     if (std::all_of(
             list.begin(), list.end(),
-            [ ](value const& v)
+            [ ](dynamic const& v)
             {
                 return
                     v.type() == value_type::LIST &&
-                    cast<value_list>(v).size() == 2 &&
-                    cast<value_list>(v)[0].type() == value_type::STRING;
+                    cast<dynamic_array>(v).size() == 2 &&
+                    cast<dynamic_array>(v)[0].type() == value_type::STRING;
             }))
     {
-        value_map map;
+        dynamic_map map;
         for (auto v : list)
         {
-            auto const& array = cast<value_list>(v);
+            auto const& array = cast<dynamic_array>(v);
             map[array[0]] = array[1];
         }
         *this = std::move(map);
     }
     else
     {
-        *this = value_list(list);
+        *this = dynamic_array(list);
     }
 }
 
-void value::get(bool const** v) const
+void dynamic::get(bool const** v) const
 {
     check_type(value_type::BOOLEAN, type_);
     *v = boost::any_cast<bool>(&value_);
 }
-void value::get(integer const** v) const
+void dynamic::get(integer const** v) const
 {
     check_type(value_type::INTEGER, type_);
     *v = boost::any_cast<integer>(&value_);
 }
-void value::get(double const** v) const
+void dynamic::get(double const** v) const
 {
     check_type(value_type::FLOAT, type_);
     *v = boost::any_cast<double>(&value_);
 }
-void value::get(string const** v) const
+void dynamic::get(string const** v) const
 {
     check_type(value_type::STRING, type_);
     *v = boost::any_cast<string>(&value_);
 }
-void value::get(blob const** v) const
+void dynamic::get(blob const** v) const
 {
     check_type(value_type::BLOB, type_);
     *v = boost::any_cast<blob>(&value_);
 }
-void value::get(boost::posix_time::ptime const** v) const
+void dynamic::get(boost::posix_time::ptime const** v) const
 {
     check_type(value_type::DATETIME, type_);
     *v = boost::any_cast<boost::posix_time::ptime>(&value_);
 }
-void value::get(value_list const** v) const
+void dynamic::get(dynamic_array const** v) const
 {
     // Certain ways of encoding values (e.g., JSON) have the same representation for empty
     // arrays and empty maps, so if we encounter an empty map here, we should treat it as
     // an empty list.
-    if (type_ == value_type::MAP && cast<value_map>(*this).empty())
+    if (type_ == value_type::MAP && cast<dynamic_map>(*this).empty())
     {
-        static const value_list empty_list;
+        static const dynamic_array empty_list;
         *v = &empty_list;
         return;
     }
     check_type(value_type::LIST, type_);
-    *v = boost::any_cast<value_list>(&value_);
+    *v = boost::any_cast<dynamic_array>(&value_);
 }
-void value::get(value_map const** v) const
+void dynamic::get(dynamic_map const** v) const
 {
     // Same logic as in the list case.
-    if (type_ == value_type::LIST && cast<value_list>(*this).empty())
+    if (type_ == value_type::LIST && cast<dynamic_array>(*this).empty())
     {
-        static const value_map empty_map;
+        static const dynamic_map empty_map;
         *v = &empty_map;
         return;
     }
     check_type(value_type::MAP, type_);
-    *v = boost::any_cast<value_map>(&value_);
+    *v = boost::any_cast<dynamic_map>(&value_);
 }
 
-void value::set(nil_t _)
+void dynamic::set(nil_t _)
 {
     type_ = value_type::NIL;
 }
-void value::set(bool v)
+void dynamic::set(bool v)
 {
     type_ = value_type::BOOLEAN;
     value_ = v;
 }
-void value::set(integer v)
+void dynamic::set(integer v)
 {
     type_ = value_type::INTEGER;
     value_ = v;
 }
-void value::set(double v)
+void dynamic::set(double v)
 {
     type_ = value_type::FLOAT;
     value_ = v;
 }
-void value::set(string const& v)
+void dynamic::set(string const& v)
 {
     type_ = value_type::STRING;
     value_ = v;
 }
-void value::set(string&& v)
+void dynamic::set(string&& v)
 {
     type_ = value_type::STRING;
     value_ = std::move(v);
 }
-void value::set(blob const& v)
+void dynamic::set(blob const& v)
 {
     type_ = value_type::BLOB;
     value_ = v;
 }
-void value::set(blob&& v)
+void dynamic::set(blob&& v)
 {
     type_ = value_type::BLOB;
     value_ = std::move(v);
 }
-void value::set(boost::posix_time::ptime const& v)
+void dynamic::set(boost::posix_time::ptime const& v)
 {
     type_ = value_type::DATETIME;
     value_ = v;
 }
-void value::set(boost::posix_time::ptime&& v)
+void dynamic::set(boost::posix_time::ptime&& v)
 {
     type_ = value_type::DATETIME;
     value_ = std::move(v);
 }
-void value::set(value_list const& v)
+void dynamic::set(dynamic_array const& v)
 {
     type_ = value_type::LIST;
     value_ = v;
 }
-void value::set(value_list&& v)
+void dynamic::set(dynamic_array&& v)
 {
     type_ = value_type::LIST;
     value_ = std::move(v);
 }
-void value::set(value_map const& v)
+void dynamic::set(dynamic_map const& v)
 {
     type_ = value_type::MAP;
     value_ = v;
 }
-void value::set(value_map&& v)
+void dynamic::set(dynamic_map&& v)
 {
     type_ = value_type::MAP;
     value_ = std::move(v);
 }
 
-void swap(value& a, value& b)
+void swap(dynamic& a, dynamic& b)
 {
     using std::swap;
     swap(a.type_, b.type_);
@@ -222,30 +222,30 @@ void swap(value& a, value& b)
 }
 
 std::ostream&
-operator<<(std::ostream& os, value const& v)
+operator<<(std::ostream& os, dynamic const& v)
 {
     os << value_to_json(v);
     return os;
 }
 
-size_t deep_sizeof(value const& v)
+size_t deep_sizeof(dynamic const& v)
 {
-    return sizeof(value) + apply_to_value(CRADLE_LAMBDIFY(deep_sizeof), v);
+    return sizeof(dynamic) + apply_to_dynamic(CRADLE_LAMBDIFY(deep_sizeof), v);
 }
 
-size_t hash_value(value const& x)
+size_t hash_value(dynamic const& x)
 {
-    return apply_to_value(CRADLE_LAMBDIFY(invoke_hash), x);
+    return apply_to_dynamic(CRADLE_LAMBDIFY(invoke_hash), x);
 }
 
 // COMPARISON OPERATORS
 
-bool operator==(value const& a, value const& b)
+bool operator==(dynamic const& a, dynamic const& b)
 {
     if (a.type() != b.type())
         return false;
     return
-        apply_to_value_pair(
+        apply_to_dynamic_pair(
             [ ](auto const& x, auto const& y)
             {
                 return x == y;
@@ -253,15 +253,15 @@ bool operator==(value const& a, value const& b)
             a,
             b);
 }
-bool operator!=(value const& a, value const& b)
+bool operator!=(dynamic const& a, dynamic const& b)
 { return !(a == b); }
 
-bool operator<(value const& a, value const& b)
+bool operator<(dynamic const& a, dynamic const& b)
 {
     if (a.type() != b.type())
         return a.type() < b.type();
     return
-        apply_to_value_pair(
+        apply_to_dynamic_pair(
             [ ](auto const& x, auto const& y)
             {
                 return x < y;
@@ -269,16 +269,17 @@ bool operator<(value const& a, value const& b)
             a,
             b);
 }
-bool operator<=(value const& a, value const& b)
+bool operator<=(dynamic const& a, dynamic const& b)
 { return !(b < a); }
-bool operator>(value const& a, value const& b)
+bool operator>(dynamic const& a, dynamic const& b)
 { return b < a; }
-bool operator>=(value const& a, value const& b)
+bool operator>=(dynamic const& a, dynamic const& b)
 { return !(a < b); }
 
-value const& get_field(value_map const& r, string const& field)
+dynamic const&
+get_field(dynamic_map const& r, string const& field)
 {
-    value const* v;
+    dynamic const* v;
     if (!get_field(&v, r, field))
     {
         CRADLE_THROW(missing_field() << field_name_info(field));
@@ -286,16 +287,18 @@ value const& get_field(value_map const& r, string const& field)
     return *v;
 }
 
-bool get_field(value const** v, value_map const& r, string const& field)
+bool
+get_field(dynamic const** v, dynamic_map const& r, string const& field)
 {
-    auto i = r.find(value(field));
+    auto i = r.find(dynamic(field));
     if (i == r.end())
         return false;
     *v = &i->second;
     return true;
 }
 
-value const& get_union_value_type(value_map const& map)
+dynamic const&
+get_union_value_type(dynamic_map const& map)
 {
     if (map.size() != 1)
     {
@@ -305,16 +308,16 @@ value const& get_union_value_type(value_map const& map)
 }
 
 void
-add_dynamic_path_element(boost::exception& e, value const& path_element)
+add_dynamic_path_element(boost::exception& e, dynamic const& path_element)
 {
-    std::list<value>* info = get_error_info<dynamic_value_path_info>(e);
+    std::list<dynamic>* info = get_error_info<dynamic_value_path_info>(e);
     if (info)
     {
         info->push_front(path_element);
     }
     else
     {
-        e << dynamic_value_path_info(std::list<value>({ path_element }));
+        e << dynamic_value_path_info(std::list<dynamic>({ path_element }));
     }
 }
 

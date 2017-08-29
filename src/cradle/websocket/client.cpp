@@ -56,7 +56,7 @@ websocket_client::set_message_handler(
         [=](websocketpp::connection_hdl hdl, message_ptr message)
         {
             handler(
-                from_value<websocket_server_message>(
+                from_dynamic<websocket_server_message>(
                     parse_json_value(message->get_payload())));
         });
 }
@@ -64,7 +64,7 @@ websocket_client::set_message_handler(
 void
 websocket_client::send(websocket_client_message const& message)
 {
-    auto json = value_to_json(to_value(message));
+    auto json = value_to_json(to_dynamic(message));
     websocketpp::lib::error_code ec;
     impl_->client.send(impl_->server_handle, json, websocketpp::frame::opcode::text, ec);
     if (ec)

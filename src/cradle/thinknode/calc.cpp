@@ -18,7 +18,7 @@ post_calculation(
     auto request_iss_id =
         post_iss_object(connection, session, context_id,
             make_api_type_info_with_dynamic(api_dynamic_type()),
-            to_value(request));
+            to_dynamic(request));
     auto query =
         make_http_request(
             http_request_method::POST,
@@ -30,7 +30,7 @@ post_calculation(
     null_check_in check_in;
     null_progress_reporter reporter;
     auto response = connection.perform_request(check_in, reporter, query);
-    return from_value<id_response>(parse_json_response(response)).id;
+    return from_dynamic<id_response>(parse_json_response(response)).id;
 }
 
 optional<calculation_status>
@@ -165,7 +165,7 @@ query_calculation_status(
     null_check_in check_in;
     null_progress_reporter reporter;
     auto response = connection.perform_request(check_in, reporter, query);
-    return from_value<calculation_status>(parse_json_response(response));
+    return from_dynamic<calculation_status>(parse_json_response(response));
 }
 
 calculation_request
@@ -185,7 +185,7 @@ retrieve_calculation_request(
     null_check_in check_in;
     null_progress_reporter reporter;
     auto response = connection.perform_request(check_in, reporter, query);
-    return from_value<calculation_request>(parse_json_response(response));
+    return from_dynamic<calculation_request>(parse_json_response(response));
 }
 
 void
@@ -226,7 +226,7 @@ long_poll_calculation_status(
                     { "Accept", "application/json" }
                 });
         status =
-            cradle::from_value<calculation_status>(
+            cradle::from_dynamic<calculation_status>(
                 parse_json_response(
                     connection.perform_request(check_in, reporter, long_poll_request)));
     }

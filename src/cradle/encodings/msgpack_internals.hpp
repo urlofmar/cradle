@@ -37,7 +37,7 @@ namespace cradle {
 
 template<class Buffer>
 void
-write_msgpack_value(msgpack::packer<Buffer>& packer, value const& v)
+write_msgpack_value(msgpack::packer<Buffer>& packer, dynamic const& v)
 {
     switch (v.type())
     {
@@ -119,7 +119,7 @@ write_msgpack_value(msgpack::packer<Buffer>& packer, value const& v)
       }
      case value_type::LIST:
       {
-        value_list const& x = cast<value_list>(v);
+        dynamic_array const& x = cast<dynamic_array>(v);
         size_t size = x.size();
         packer.pack_array(boost::numeric_cast<uint32_t>(size));
         for (size_t i = 0; i != size; ++i)
@@ -128,7 +128,7 @@ write_msgpack_value(msgpack::packer<Buffer>& packer, value const& v)
       }
      case value_type::MAP:
       {
-        value_map const& x = cast<value_map>(v);
+        dynamic_map const& x = cast<dynamic_map>(v);
         packer.pack_map(boost::numeric_cast<uint32_t>(x.size()));
         for (auto const& i : x)
         {

@@ -30,7 +30,7 @@ resolve_iss_object_to_immutable(
     {
      case 200:
       {
-        return from_value<id_response>(parse_json_response(response)).id;
+        return from_dynamic<id_response>(parse_json_response(response)).id;
       }
      case 202:
       {
@@ -68,7 +68,7 @@ resolve_iss_object_to_immutable(
     }
 }
 
-value
+dynamic
 retrieve_immutable(
     http_connection_interface& connection,
     thinknode_session const& session,
@@ -169,7 +169,7 @@ post_iss_object(
     thinknode_session const& session,
     string const& context_id,
     api_type_info const& schema,
-    value const& data)
+    dynamic const& data)
 {
     auto query =
         make_http_request(
@@ -184,7 +184,7 @@ post_iss_object(
     null_check_in check_in;
     null_progress_reporter reporter;
     auto response = connection.perform_request(check_in, reporter, query);
-    return from_value<id_response>(parse_json_response(response)).id;
+    return from_dynamic<id_response>(parse_json_response(response)).id;
 }
 
 }

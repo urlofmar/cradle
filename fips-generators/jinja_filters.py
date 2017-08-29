@@ -50,7 +50,7 @@ def cpp_type_for_schema(schema, omissible=False):
         "map": cpp_type_for_map,
         "reference": lambda _: "std::string",
         "named": lambda t: t.app + "::" + t.name,
-        "dynamic": lambda t: "cradle::value"
+        "dynamic": lambda t: "cradle::dynamic"
     }
 
     # Check the tag of the schema and invoke the appropriate case.
