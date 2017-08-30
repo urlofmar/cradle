@@ -1,9 +1,9 @@
-#include <cradle/io/file.hpp>
+#include <cradle/fs/file_io.hpp>
 
 namespace cradle {
 
 void
-open(std::fstream& file, file_path const& path, std::ios::openmode mode)
+open_file(std::fstream& file, file_path const& path, std::ios::openmode mode)
 {
     file.open(path.c_str(), mode);
     if (!file)
@@ -17,7 +17,7 @@ open(std::fstream& file, file_path const& path, std::ios::openmode mode)
     file.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
 }
 void
-open(std::ifstream& file, file_path const& path, std::ios::openmode mode)
+open_file(std::ifstream& file, file_path const& path, std::ios::openmode mode)
 {
     file.open(path.c_str(), mode);
     if (!file)
@@ -31,7 +31,7 @@ open(std::ifstream& file, file_path const& path, std::ios::openmode mode)
     file.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
 }
 void
-open(std::ofstream& file, file_path const& path, std::ios::openmode mode)
+open_file(std::ofstream& file, file_path const& path, std::ios::openmode mode)
 {
     file.open(path.c_str(), mode);
     if (!file)
@@ -49,7 +49,7 @@ string
 get_file_contents(file_path const& path)
 {
     std::ifstream in;
-    open(in, path, std::ios::in | std::ios::binary);
+    open_file(in, path, std::ios::in | std::ios::binary);
     string contents;
     in.seekg(0, std::ios::end);
     contents.resize(in.tellg());

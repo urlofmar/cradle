@@ -1,10 +1,12 @@
 #include <cradle/disk_cache.hpp>
+
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <sqlite3.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
+
+#include <sqlite3.h>
 
 #ifdef WIN32
 #include <windows.h>

@@ -21,6 +21,7 @@
 #include <cradle/encodings/json.hpp>
 #include <cradle/encodings/msgpack.hpp>
 #include <cradle/disk_cache.hpp>
+#include <cradle/fs/file_io.hpp>
 #include <cradle/io/http_requests.hpp>
 #include <cradle/thinknode/calc.hpp>
 #include <cradle/thinknode/iss.hpp>
@@ -206,7 +207,7 @@ retrieve_immutable(
     {
         auto entry_path = cache.get_path_for_id(cache_id);
         std::ofstream output;
-        open(output, entry_path, std::ios::out | std::ios::trunc | std::ios::binary);
+        open_file(output, entry_path, std::ios::out | std::ios::trunc | std::ios::binary);
         output << msgpack;
     }
     cache.finish_insert(cache_id, compute_crc32(msgpack));

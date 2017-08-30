@@ -1,6 +1,6 @@
 #include <cradle/core/utilities.hpp>
 
-#include <cradle/core/testing.hpp>
+#include <cstdlib>
 
 namespace cradle {
 
@@ -25,6 +25,40 @@ void check_array_size(size_t expected_size, size_t actual_size)
                 expected_size_info(expected_size) <<
                 actual_size_info(actual_size));
     }
+}
+
+string
+get_environment_variable(string const& name)
+{
+    auto value = get_optional_environment_variable(name);
+    if (!value)
+    {
+        CRADLE_THROW(
+            missing_environment_variable() <<
+                variable_name_info(name));
+    }
+    return *value;
+}
+
+optional<string>
+get_optional_environment_variable(string const& name)
+{
+    char const* value = std::getenv(name.c_str());
+    return value && *value != '\0' ? some(string(value)) : none;
+}
+
+void
+set_environment_variable(string const& name, string const& value)
+{
+  #ifdef WIN32
+    auto assignment = name + "=" + value;
+    _putenv(assignment.c_str());
+  #else
+    if (value.empty())
+        unsetenv(name.c_str());
+    else
+        setenv(name.c_str(), value.c_str(), 1);
+  #endif
 }
 
 }

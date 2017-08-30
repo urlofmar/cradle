@@ -4,6 +4,7 @@
 
 #include <cradle/core/testing.hpp>
 #include <cradle/encodings/base64.hpp>
+#include <cradle/fs/file_io.hpp>
 
 using namespace cradle;
 
@@ -96,7 +97,7 @@ test_item_access(disk_cache& cache, int item_id)
             {
                 auto entry_path = cache.get_path_for_id(entry_id);
                 std::ofstream output;
-                open(output, entry_path, std::ios::out | std::ios::trunc | std::ios::binary);
+                open_file(output, entry_path, std::ios::out | std::ios::trunc | std::ios::binary);
                 output << value;
             }
             cache.finish_insert(entry_id, computed_crc);
