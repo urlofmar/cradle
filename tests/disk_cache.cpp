@@ -27,6 +27,7 @@ init_disk_cache(disk_cache& cache, string const& cache_dir = "disk_cache")
 {
     if (boost::filesystem::exists(cache_dir))
         boost::filesystem::remove_all(cache_dir);
+    boost::filesystem::create_directory(cache_dir);
 
     disk_cache_config config;
     config.directory = some(cache_dir);
@@ -84,7 +85,7 @@ test_item_access(disk_cache& cache, int item_id)
         // Use external storage.
         if (entry)
         {
-            auto cached_contents = get_file_contents(cache.get_path_for_id(entry->id));
+            auto cached_contents = read_file_contents(cache.get_path_for_id(entry->id));
             REQUIRE(cached_contents == value);
             REQUIRE(entry->crc32 == computed_crc);
             cache.record_usage(entry->id);
@@ -94,12 +95,7 @@ test_item_access(disk_cache& cache, int item_id)
         else
         {
             auto entry_id = cache.initiate_insert(key);
-            {
-                auto entry_path = cache.get_path_for_id(entry_id);
-                std::ofstream output;
-                open_file(output, entry_path, std::ios::out | std::ios::trunc | std::ios::binary);
-                output << value;
-            }
+            dump_string_to_file(cache.get_path_for_id(entry_id), value);
             cache.finish_insert(entry_id, computed_crc);
             return false;
         }

@@ -2,6 +2,7 @@
 #define CRADLE_WEBSOCKET_SERVER_HPP
 
 #include <cradle/common.hpp>
+#include <cradle/config.hpp>
 
 namespace cradle {
 
@@ -15,11 +16,11 @@ struct websocket_server_impl;
 
 struct websocket_server
 {
-    websocket_server();
+    websocket_server(server_config const& config);
     ~websocket_server();
 
     void
-    listen(uint16_t port);
+    listen();
 
     void
     run();

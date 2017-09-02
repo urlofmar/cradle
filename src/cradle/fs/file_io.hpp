@@ -25,7 +25,11 @@ CRADLE_DEFINE_ERROR_INFO(std::ios::openmode, open_mode)
 
 // Get the contents of a file as a string.
 string
-get_file_contents(file_path const& path);
+read_file_contents(file_path const& path);
+
+// Write a string to a file (overwriting anything that might have been in it).
+void
+dump_string_to_file(file_path const& path, string const& contents);
 
 }
 

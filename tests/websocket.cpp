@@ -10,8 +10,8 @@ using namespace cradle;
 
 TEST_CASE("websocket client/server", "[ws]")
 {
-    websocket_server server;
-    server.listen(41072);
+    websocket_server server(make_server_config(none, 41072));
+    server.listen();
     std::thread server_thread([&](){ server.run(); });
 
     optional<websocket_test_response> test_response;

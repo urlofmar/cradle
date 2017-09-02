@@ -1,0 +1,20 @@
+imports:
+- 'cradle/cache_types'
+
+types:
+- name: server_config
+  doc: ''
+  schema:
+    structure:
+    - disk_cache:
+        doc: config for the disk cache
+        omissible: true
+        schema:
+          named:
+            app: cradle
+            name: disk_cache_config
+    - port:
+        doc: the WebSocket port on which the server will listen
+        omissible: true
+        schema:
+          integer: {}

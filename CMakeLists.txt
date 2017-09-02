@@ -156,7 +156,7 @@ fips_begin_module(cradle)
             APPEND_STRING PROPERTY COMPILE_FLAGS " /wd4996 /wd4127 /wd4267 /wd4244")
     endif()
     fips_dir(.)
-    # Preprocess YAML files.
+    # Add rules for preprocessing YAML files.
     file(
         GLOB_RECURSE YAML_SOURCE_FILES
         RELATIVE ${PROJECT_SOURCE_DIR}/src
@@ -172,6 +172,11 @@ fips_begin_module(cradle)
             HEADER "generated/${FILE_DIRECTORY}/${FILE_NAME_WE}.hpp"
             ARGS "{ app_name: cradle, generate_tagged_constructors: ${GENERATE_TAGGED_CONSTRUCTORS} }")
     endforeach()
+    # Add the rule for generating version info.
+    fips_generate(
+        FROM ${PROJECT_SOURCE_DIR}/fips-generators/version_info_generator.py
+        OUT_OF_SOURCE
+        HEADER "generated/cradle/version_info.hpp")
 fips_end_module()
 target_link_libraries(cradle ${CONAN_LIBS})
 cotire(cradle)
@@ -209,7 +214,7 @@ if(FIPS_GCC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
         COMMAND lcov --directory . --zerocounters
         COMMAND unit_test_runner
         COMMAND lcov --directory . --capture --output-file raw.info
-        COMMAND lcov --extract raw.info '${PROJECT_SOURCE_DIR}/src/*' --output-file filtered.info
+        COMMAND lcov --extract raw.info '${PROJECT_SOURCE_DIR}/src/cradle/*' --output-file filtered.info
         COMMAND cp filtered.info ${PROJECT_SOURCE_DIR}/.lcov.info
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         DEPENDS unit_test_runner)
