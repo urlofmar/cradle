@@ -15,6 +15,8 @@
 #include <aclapi.h>
 #endif
 
+#include <cradle/fs/app_dirs.hpp>
+
 namespace cradle {
 
 struct disk_cache_impl
@@ -371,134 +373,6 @@ look_up(
         return none;
 }
 
-// DIRECTORY STUFF
-
-#ifdef WIN32
-
-bool static
-create_directory_with_user_full_control_acl(string const& path)
-{
-    LPCTSTR lp_path = path.c_str();
-
-    if (!CreateDirectory(lp_path, NULL))
-        return false;
-
-    HANDLE h_dir =
-        CreateFile(
-            lp_path,
-            READ_CONTROL | WRITE_DAC,
-            0,
-            NULL,
-            OPEN_EXISTING,
-            FILE_FLAG_BACKUP_SEMANTICS,
-            NULL);
-    if (h_dir == INVALID_HANDLE_VALUE)
-        return false;
-
-    ACL* p_old_dacl;
-    SECURITY_DESCRIPTOR* p_sd = NULL;
-    GetSecurityInfo(
-        h_dir,
-        SE_FILE_OBJECT,DACL_SECURITY_INFORMATION,
-        NULL,
-        NULL,
-        &p_old_dacl,
-        NULL,
-        (void**)&p_sd);
-
-    PSID p_sid = NULL;
-    SID_IDENTIFIER_AUTHORITY auth_nt = SECURITY_NT_AUTHORITY;
-    AllocateAndInitializeSid(
-        &auth_nt,
-        2,
-        SECURITY_BUILTIN_DOMAIN_RID,
-        DOMAIN_ALIAS_RID_USERS,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        &p_sid);
-
-    EXPLICIT_ACCESS ea = {0};
-    ea.grfAccessMode = GRANT_ACCESS;
-    ea.grfAccessPermissions = GENERIC_ALL;
-    ea.grfInheritance = CONTAINER_INHERIT_ACE|OBJECT_INHERIT_ACE;
-    ea.Trustee.TrusteeType = TRUSTEE_IS_GROUP;
-    ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-    ea.Trustee.ptstrName = (LPTSTR)p_sid;
-
-    ACL* p_new_dacl = 0;
-    SetEntriesInAcl(1, &ea, p_old_dacl, &p_new_dacl);
-
-    if (p_new_dacl)
-    {
-        SetSecurityInfo(
-            h_dir,
-            SE_FILE_OBJECT,DACL_SECURITY_INFORMATION,
-            NULL,
-            NULL,
-            p_new_dacl,
-            NULL);
-    }
-
-    FreeSid(p_sid);
-    LocalFree(p_new_dacl);
-    LocalFree(p_sd);
-    CloseHandle(h_dir);
-
-    return true;
-}
-
-void static
-create_directory_if_needed(file_path const& dir)
-{
-    if (!exists(dir))
-        create_directory_with_user_full_control_acl(dir.string());
-}
-
-file_path
-get_default_cache_dir()
-{
-    try
-    {
-        TCHAR path[MAX_PATH];
-        if (SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, 0, path) == S_OK)
-        {
-            file_path app_data_dir(path, boost::filesystem::native);
-            file_path cradle_dir = app_data_dir / "cradle";
-            create_directory_if_needed(cradle_dir);
-            return cradle_dir / "cache";
-        }
-        else
-            return file_path();
-    }
-    catch (...)
-    {
-        return file_path();
-    }
-}
-
-#else // Unix-based systems
-
-void static
-create_directory_if_needed(file_path const& dir)
-{
-    if (!exists(dir))
-        create_directory(dir);
-}
-
-file_path
-get_default_cache_dir()
-{
-    file_path shared_cache_dir("/var/cache");
-    create_directory_if_needed(shared_cache_dir);
-    return shared_cache_dir / "cradle";
-}
-
-#endif
-
 // OTHER UTILITIES
 
 file_path static
@@ -594,8 +468,7 @@ initialize(disk_cache_impl& cache, disk_cache_config const& config)
 {
     cache.db = 0;
 
-    cache.dir = config.directory ? *config.directory : get_default_cache_dir();
-    create_directory_if_needed(cache.dir);
+    cache.dir = config.directory ? *config.directory : get_shared_cache_dir(none, "cradle");
 
     cache.size_limit = config.size_limit;
 

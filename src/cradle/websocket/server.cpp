@@ -136,6 +136,7 @@ struct client_request
 
 struct websocket_server_impl
 {
+    server_config config;
     http_request_system http_system;
     ws_server_type ws;
     client_connection_list clients;
@@ -185,7 +186,7 @@ retrieve_immutable(
         // Cached immutables are stored externally in files.
         if (entry && !entry->value)
         {
-            auto data = get_file_contents(cache.get_path_for_id(entry->id));
+            auto data = read_file_contents(cache.get_path_for_id(entry->id));
             if (compute_crc32(data) == entry->crc32)
             {
                 return parse_msgpack_value(data);
@@ -685,9 +686,14 @@ on_message(
 }
 
 void static
-initialize(websocket_server_impl& server)
+initialize(websocket_server_impl& server, server_config const& config)
 {
-    server.cache.reset(make_disk_cache_config(none, 0x1'00'00'00'00));
+    server.config = config;
+
+    server.cache.reset(
+        config.disk_cache ?
+            *config.disk_cache :
+            make_disk_cache_config(none, 0x1'00'00'00'00));
 
     server.ws.clear_access_channels(websocketpp::log::alevel::all);
     server.ws.init_asio();
@@ -708,10 +714,10 @@ initialize(websocket_server_impl& server)
         });
 }
 
-websocket_server::websocket_server()
+websocket_server::websocket_server(server_config const& config)
 {
     impl_ = new websocket_server_impl;
-    initialize(*impl_);
+    initialize(*impl_, config);
 }
 
 websocket_server::~websocket_server()
@@ -720,11 +726,13 @@ websocket_server::~websocket_server()
 }
 
 void
-websocket_server::listen(uint16_t port)
+websocket_server::listen()
 {
     auto& server = *impl_;
     server.ws.listen(
-        boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string("::1"), port));
+        boost::asio::ip::tcp::endpoint(
+            boost::asio::ip::address::from_string("::1"),
+            server.config.port ? *server.config.port : 41071));
     server.ws.start_accept();
 }
 

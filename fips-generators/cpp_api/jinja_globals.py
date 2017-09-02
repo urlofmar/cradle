@@ -7,15 +7,15 @@ Anything that shouldn't be imported should have a name that starts with an under
 
 import types as _types
 
-from utilities import union_tag
-from utilities import object_empty
-from utilities import object_items
-from utilities import object_keys
-from utilities import ordered_object_empty
-from utilities import ordered_object_items
-from utilities import ordered_object_keys
-from utilities import type_schemas_definition_order
-from utilities import unique_field_names
+from cpp_api.utilities import union_tag
+from cpp_api.utilities import object_empty
+from cpp_api.utilities import object_items
+from cpp_api.utilities import object_keys
+from cpp_api.utilities import ordered_object_empty
+from cpp_api.utilities import ordered_object_items
+from cpp_api.utilities import ordered_object_keys
+from cpp_api.utilities import type_schemas_definition_order
+from cpp_api.utilities import unique_field_names
 
 def tag_schema_for_union(union):
     """Generate the enum type to represent the tag for a union type."""

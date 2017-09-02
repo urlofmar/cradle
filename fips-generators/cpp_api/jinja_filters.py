@@ -6,7 +6,7 @@ Anything that shouldn't be imported should have a name that starts with an under
 """
 
 import textwrap as _textwrap
-from jinja_globals import union_tag as _union_tag
+from cpp_api.jinja_globals import union_tag as _union_tag
 
 def format_comment(value, width=79):
     """Transform a string into a C++ comment with proper wrapping."""

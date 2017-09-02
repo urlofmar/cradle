@@ -14,12 +14,12 @@ def initialize_jinja_env():
     import jinja2
     import os
 
-    import jinja_filters
-    import jinja_globals
+    from cpp_api import jinja_filters
+    from cpp_api import jinja_globals
 
     # Templates are stored in a subdirectory of the directory where this script lives.
     template_dir = \
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "cpp_api_templates")
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "cpp_api/templates")
 
     jinja_env = \
         jinja2.Environment(

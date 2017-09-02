@@ -41,14 +41,12 @@ TEST_CASE("file error bits set", "[fs][file_io]")
     }
 }
 
-TEST_CASE("get_file_contents", "[fs][file_io]")
+TEST_CASE("read_file_contents", "[fs][file_io]")
 {
-    auto path = file_path("get_file_contents.txt");
+    auto path = file_path("read_file_contents.txt");
+    if (exists(path))
+        remove(path);
     auto text = "some simple\n  text\n";
-    {
-        std::ofstream fs;
-        open_file(fs, path, std::ios::out | std::ios::trunc | std::ios::binary);
-        fs << text;
-    }
-    REQUIRE(get_file_contents(path) == text);
+    dump_string_to_file(path, text);
+    REQUIRE(read_file_contents(path) == text);
 }
