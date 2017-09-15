@@ -512,10 +512,10 @@ record_activity(disk_cache_impl& cache)
 void static
 record_usage_to_db(disk_cache_impl const& cache, int64_t id)
 {
-
-    execute_sql(cache,
-        "update entries set last_accessed=strftime('%Y-%m-%d %H:%M:%f', 'now') where id=" +
-        lexical_cast<string>(id) + ";");
+    bind_int64(cache, cache.record_usage_statement, 1, id);
+    execute_prepared_statement(
+        cache,
+        cache.record_usage_statement);
 }
 
 void static
