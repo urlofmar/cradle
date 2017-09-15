@@ -114,6 +114,19 @@ test_item_access(disk_cache& cache, int item_id)
         else
         {
             cache.insert(key, value);
+            // Check that it's been added.
+            auto new_entry = cache.find(key);
+            REQUIRE(new_entry);
+            REQUIRE(new_entry->value);
+            REQUIRE(*new_entry->value == value);
+            // Overwrite it with a dummy value.
+            cache.insert(key, "overwritten");
+            // Do it all again to test update behavior.
+            cache.insert(key, value);
+            new_entry = cache.find(key);
+            REQUIRE(new_entry);
+            REQUIRE(new_entry->value);
+            REQUIRE(*new_entry->value == value);
             return false;
         }
     }
@@ -204,6 +217,53 @@ TEST_CASE("manual entry removal", "[disk_cache]")
         // Check that it's not there.
         REQUIRE(!test_item_access(cache, i));
     }
+}
+
+TEST_CASE("cache summary info", "[disk_cache]")
+{
+    disk_cache cache;
+
+    int64_t expected_size = 0;
+    int64_t expected_count = 0;
+    auto check_summary_info =
+        [&]()
+        {
+            auto summary = cache.get_summary_info();
+            REQUIRE(summary.entry_count == expected_count);
+            REQUIRE(summary.total_size == expected_size);
+        };
+
+    // Test an empty cache.
+    init_disk_cache(cache);
+    check_summary_info();
+
+    // Add an entry.
+    test_item_access(cache, 0);
+    expected_size += generate_value_string(0).length();
+    ++expected_count;
+    check_summary_info();
+
+    // Add another entry.
+    test_item_access(cache, 1);
+    expected_size += generate_value_string(1).length();
+    ++expected_count;
+    check_summary_info();
+
+    // Add another entry.
+    test_item_access(cache, 2);
+    expected_size += generate_value_string(2).length();
+    ++expected_count;
+    check_summary_info();
+
+    // Remove an entry.
+    {
+        auto entry = cache.find(generate_key_string(0));
+        if (entry)
+            cache.remove_entry(entry->id);
+    }
+    expected_size -= generate_value_string(0).length();
+    --expected_count;
+    check_summary_info();
 }
 
 TEST_CASE("cache entry list", "[disk_cache]")
