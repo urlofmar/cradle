@@ -3,6 +3,14 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#ifdef WIN32
+
+#include <AccCtrl.h>
+#include <Aclapi.h>
+#include <Shlobj.h>
+
+#endif
+
 namespace cradle {
 
 #ifdef WIN32
