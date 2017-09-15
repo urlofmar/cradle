@@ -100,27 +100,6 @@ execute_sql(disk_cache_impl const& cache, string const& sql)
         throw_query_error(cache, sql, error);
 }
 
-struct db_transaction
-{
-    db_transaction(disk_cache_impl& cache)
-      : cache_(&cache), committed_(false)
-    {
-        execute_sql(*cache_, "begin transaction;");
-    }
-    void commit()
-    {
-        execute_sql(*cache_, "commit transaction;");
-        committed_ = true;
-    }
-    ~db_transaction()
-    {
-        if (!committed_)
-            execute_sql(*cache_, "rollback transaction;");
-    }
-    disk_cache_impl* cache_;
-    bool committed_;
-};
-
 // Check a return code from SQLite.
 void static
 check_sqlite_code(disk_cache_impl const& cache, int code)
@@ -548,10 +527,8 @@ record_usage_to_db(disk_cache_impl const& cache, int64_t id)
 void static
 write_usage_records(disk_cache_impl& cache)
 {
-    db_transaction t(cache);
     for (auto const& record : cache.usage_record_buffer)
         record_usage_to_db(cache, record);
-    t.commit();
     cache.usage_record_buffer.clear();
 }
 
