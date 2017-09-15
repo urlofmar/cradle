@@ -59,12 +59,6 @@ open_db(sqlite3** db, file_path const& file)
     }
 }
 
-string static
-escape_string(string const& s)
-{
-    return boost::replace_all_copy(s, "'", "''");
-}
-
 void static
 throw_query_error(disk_cache_impl const& cache, string const& sql, string const& error)
 {
