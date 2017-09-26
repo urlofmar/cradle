@@ -8,6 +8,8 @@
 
 #include <sqlite3.h>
 
+#include <hashids.h>
+
 #include <cradle/fs/app_dirs.hpp>
 
 namespace cradle {
@@ -456,7 +458,8 @@ look_up(
 file_path static
 get_path_for_id(disk_cache_impl& cache, int64_t id)
 {
-    return cache.dir / lexical_cast<string>(id);
+    hashidsxx::Hashids hash("cradle", 6);
+    return cache.dir / hash.encode(&id, &id + 1);
 }
 
 void static
@@ -695,6 +698,7 @@ check_initialization(disk_cache_impl& cache)
         CRADLE_THROW(disk_cache_uninitialized());
     }
 }
+
 
 // API
 
