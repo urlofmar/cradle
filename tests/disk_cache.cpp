@@ -6,7 +6,17 @@
 #include <cradle/encodings/base64.hpp>
 #include <cradle/fs/file_io.hpp>
 
+#include <sqlite3.h>
+
 using namespace cradle;
+
+void static
+reset_directory(file_path const& dir)
+{
+    if (exists(dir))
+        remove_all(dir);
+    create_directory(dir);
+}
 
 TEST_CASE("uninitialized disk cache", "[disk_cache]")
 {
@@ -25,9 +35,7 @@ TEST_CASE("uninitialized disk cache", "[disk_cache]")
 void static
 init_disk_cache(disk_cache& cache, string const& cache_dir = "disk_cache")
 {
-    if (boost::filesystem::exists(cache_dir))
-        boost::filesystem::remove_all(cache_dir);
-    boost::filesystem::create_directory(cache_dir);
+    reset_directory(cache_dir);
 
     disk_cache_config config;
     config.directory = some(cache_dir);
@@ -294,4 +302,39 @@ TEST_CASE("cache entry list", "[disk_cache]")
         REQUIRE(size_t(entries[1].size) == generate_value_string(2).length());
         REQUIRE(entries[1].in_db);
     }
+}
+
+TEST_CASE("corrupt cache", "[disk_cache]")
+{
+    // Set up an invalid cache directory.
+    reset_directory("disk_cache");
+    dump_string_to_file("disk_cache/index.db", "invalid database contents");
+    file_path extraneous_file("disk_cache/some_other_file");
+    dump_string_to_file(extraneous_file, "abc");
+
+    // Check that the cache still initializes and that the extraneous file
+    // is removed.
+    disk_cache cache;
+    init_disk_cache(cache);
+    REQUIRE(!exists(extraneous_file));
+}
+
+TEST_CASE("incompatible cache", "[disk_cache]")
+{
+    // Set up a cache directory with an incompatible database version number.
+    reset_directory("disk_cache");
+    {
+        sqlite3* db = nullptr;
+        REQUIRE(sqlite3_open("disk_cache/index.db", &db) == SQLITE_OK);
+        REQUIRE(sqlite3_exec(db, "pragma user_version = 9600;", 0, 0, 0) == SQLITE_OK);
+        sqlite3_close(db);
+    }
+    file_path extraneous_file("disk_cache/some_other_file");
+    dump_string_to_file(extraneous_file, "abc");
+
+    // Check that the cache still initializes and that the extraneous file
+    // is removed.
+    disk_cache cache;
+    init_disk_cache(cache);
+    REQUIRE(!exists(extraneous_file));
 }
