@@ -19,6 +19,7 @@ struct disk_cache_impl
     sqlite3* db = nullptr;
 
     // prepared statements
+    sqlite3_stmt* database_version_query = nullptr;
     sqlite3_stmt* record_usage_statement = nullptr;
     sqlite3_stmt* update_entry_value_statement = nullptr;
     sqlite3_stmt* insert_new_value_statement = nullptr;
@@ -34,7 +35,7 @@ struct disk_cache_impl
     int64_t size_limit;
 
     // used to track when we need to check if the cache is too big
-    int64_t bytes_inserted_since_last_sweep;
+    int64_t bytes_inserted_since_last_sweep = 0;
 
     // list of IDs that whose usage needs to be recorded
     std::vector<int64_t> usage_record_buffer;
@@ -537,29 +538,102 @@ record_cache_growth(disk_cache_impl& cache, size_t size)
 }
 
 void static
-initialize(disk_cache_impl& cache, disk_cache_config const& config)
+shut_down(disk_cache_impl& cache)
 {
-    cache.db = 0;
+    if (cache.db)
+    {
+        sqlite3_finalize(cache.database_version_query);
+        sqlite3_finalize(cache.record_usage_statement);
+        sqlite3_finalize(cache.update_entry_value_statement);
+        sqlite3_finalize(cache.insert_new_value_statement);
+        sqlite3_finalize(cache.initiate_insert_statement);
+        sqlite3_finalize(cache.finish_insert_statement);
+        sqlite3_finalize(cache.remove_entry_statement);
+        sqlite3_finalize(cache.look_up_entry_query);
+        sqlite3_finalize(cache.cache_size_query);
+        sqlite3_finalize(cache.entry_count_query);
+        sqlite3_finalize(cache.entry_list_query);
+        sqlite3_finalize(cache.lru_entry_list_query);
+        sqlite3_close(cache.db);
+        cache.db = nullptr;
+    }
+}
 
-    cache.dir = config.directory ? *config.directory : get_shared_cache_dir(none, "cradle");
-
-    cache.size_limit = config.size_limit;
-
-    cache.bytes_inserted_since_last_sweep = 0;
+// Open (or create) the database file and verify that the version number is
+// what we expect.
+void static
+open_and_check_db(disk_cache_impl& cache)
+{
+    int const expected_database_version = 1;
 
     open_db(&cache.db, cache.dir / "index.db");
 
-    execute_sql(cache,
-        "create table if not exists entries(\n"
-        "   id integer primary key,\n"
-        "   key text unique not null,\n"
-        "   valid boolean not null,\n"
-        "   last_accessed datetime,\n"
-        "   in_db boolean,\n"
-        "   value blob,\n"
-        "   size integer,\n"
-        "   crc32 integer);");
+    // Get the version number embedded in the database.
+    cache.database_version_query = prepare_statement(cache, "pragma user_version;");
+    int database_version;
+    execute_prepared_statement(
+        cache,
+        cache.database_version_query,
+        expected_column_count{1},
+        single_row_result{true},
+        [&](sqlite_row& row)
+        {
+            database_version = read_int32(row, 0);
+        });
 
+    // A database_version of 0 indicates a fresh database, so initialize it.
+    if (database_version == 0)
+    {
+        execute_sql(cache,
+            "create table entries("
+            " id integer primary key,"
+            " key text unique not null,"
+            " valid boolean not null,"
+            " last_accessed datetime,"
+            " in_db boolean,"
+            " value blob,"
+            " size integer,"
+            " crc32 integer);");
+        execute_sql(cache,
+            "pragma user_version = " + lexical_cast<string>(expected_database_version) + ";");
+    }
+    // If we find a database from a different version, abort.
+    else if (database_version != expected_database_version)
+    {
+        CRADLE_THROW(
+            disk_cache_failure() <<
+                disk_cache_path_info(cache.dir) <<
+                internal_error_message_info("incompatible database"));
+    }
+}
+
+void static
+initialize(disk_cache_impl& cache, disk_cache_config const& config)
+{
+    cache.dir = config.directory ? *config.directory : get_shared_cache_dir(none, "cradle");
+    // Create the directory if it doesn't exist.
+    if (!exists(cache.dir))
+        create_directory(cache.dir);
+
+    cache.size_limit = config.size_limit;
+
+    // Open the database file.
+    try
+    {
+        open_and_check_db(cache);
+    }
+    catch (...)
+    {
+        // If the first attempt fails, we may have an incompatible or corrupt
+        // database, so shut everything down, clear out the directory, and try
+        // again.
+        shut_down(cache);
+        for (boost::filesystem::directory_iterator end, i(cache.dir); i != end; ++i)
+            remove_all(i->path());
+        open_and_check_db(cache);
+    }
+
+    // Set various performance tuning flags.
     execute_sql(cache,
         "pragma synchronous = off;");
     execute_sql(cache,
@@ -567,6 +641,7 @@ initialize(disk_cache_impl& cache, disk_cache_config const& config)
     execute_sql(cache,
         "pragma journal_mode = memory;");
 
+    // Initialize our prepared statements.
     cache.record_usage_statement =
         prepare_statement(cache,
             "update entries set last_accessed=strftime('%Y-%m-%d %H:%M:%f', 'now') where id=?1;");
@@ -607,30 +682,9 @@ initialize(disk_cache_impl& cache, disk_cache_config const& config)
         prepare_statement(cache,
             "select id, size, in_db from entries order by valid, last_accessed;");
 
+    // Do initial housekeeping.
     record_activity(cache);
-
     enforce_cache_size_limit(cache);
-}
-
-void static
-shut_down(disk_cache_impl& cache)
-{
-    if (cache.db)
-    {
-        sqlite3_finalize(cache.record_usage_statement);
-        sqlite3_finalize(cache.update_entry_value_statement);
-        sqlite3_finalize(cache.insert_new_value_statement);
-        sqlite3_finalize(cache.initiate_insert_statement);
-        sqlite3_finalize(cache.finish_insert_statement);
-        sqlite3_finalize(cache.remove_entry_statement);
-        sqlite3_finalize(cache.look_up_entry_query);
-        sqlite3_finalize(cache.cache_size_query);
-        sqlite3_finalize(cache.entry_count_query);
-        sqlite3_finalize(cache.entry_list_query);
-        sqlite3_finalize(cache.lru_entry_list_query);
-        sqlite3_close(cache.db);
-        cache.db = nullptr;
-    }
 }
 
 void static
