@@ -35,7 +35,8 @@ class CradleConan(ConanFile):
         "Boost:without_timer=True", \
         "Boost:without_type_erasure=True", \
         "Boost:without_wave=True", \
-        "FakeIt:integration=catch"
+        "FakeIt:integration=catch", \
+        "*:shared=False"
 
     def imports(self):
         dest = os.getenv("CONAN_IMPORT_PATH", "bin")
