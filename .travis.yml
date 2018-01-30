@@ -1,31 +1,16 @@
-sudo: false
+sudo: required
 dist: trusty
 
-language: python
-python:
-  - 3.6
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-5
-      - gcc-5
-      - lcov
-      - cmake
-      - git
-      - curl
-      - binutils-2.26
-
 before_script:
+  - sudo bash scripts/set-up-system.sh
+  # Ubuntu Trusty has a buggy binutils.
+  - sudo apt-get install -y --upgrade binutils-2.26
   - export PATH=/usr/lib/binutils-2.26/bin:${PATH}
-  - python --version
-  - pip install conan jinja2 gcovr pytest websocket-client
+  - scripts/set-up-python.sh
+  - source .python/bin/activate
   - export CC=`which gcc-5`
   - export CXX=`which g++-5`
-  - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-  - conan remote add conan-community https://api.bintray.com/conan/conan-community/conan
+  - scripts/set-up-conan.sh
   - ./fips set config linux-make-debug
   - ./fips gen
 
