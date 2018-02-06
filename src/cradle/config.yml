@@ -13,11 +13,16 @@ types:
           named:
             app: cradle
             name: disk_cache_config
-    - address:
-        doc: the address on which the server will listen
+    - cacert_file:
+        doc: the path to the cacert.pem file for validating SSL certificates
         omissible: true
         schema:
           string: {}
+    - open:
+        doc: whether or not the server should be open to connections from other machines (defaults to false)
+        omissible: true
+        schema:
+          boolean: {}
     - port:
         doc: the WebSocket port on which the server will listen
         omissible: true

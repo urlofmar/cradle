@@ -690,6 +690,9 @@ initialize(websocket_server_impl& server, server_config const& config)
 {
     server.config = config;
 
+    if (config.cacert_file)
+        server.http_system.set_cacert_path(some(file_path(*config.cacert_file)));
+
     server.cache.reset(
         config.disk_cache ?
             *config.disk_cache :
@@ -729,11 +732,19 @@ void
 websocket_server::listen()
 {
     auto& server = *impl_;
-    server.ws.listen(
-        boost::asio::ip::tcp::endpoint(
-            boost::asio::ip::address::from_string(
-                server.config.address ? *server.config.address : "127.0.0.1"),
-            server.config.port ? *server.config.port : 41071));
+    bool open = server.config.open ? *server.config.open : false;
+    auto port = server.config.port ? *server.config.port : 41071;
+    if (open)
+    {
+        server.ws.listen(port);
+    }
+    else
+    {
+        server.ws.listen(
+            boost::asio::ip::tcp::endpoint(
+                boost::asio::ip::address::from_string("127.0.0.1"),
+                port));
+    }
     server.ws.start_accept();
 }
 
