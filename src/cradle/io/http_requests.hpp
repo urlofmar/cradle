@@ -14,23 +14,30 @@ struct progress_reporter_interface;
 struct check_in_interface;
 
 // HTTP headers are specified as a mapping from field names to values.
-typedef std::map<string,string> http_header_list;
+typedef std::map<string, string> http_header_list;
 
 // The body of an HTTP request is a blob.
 typedef blob http_body;
 
 // Construct a GET request (in a convenient way).
-http_request static inline
+static inline http_request
 make_get_request(string const& url, http_header_list const& headers)
 {
-    return make_http_request(http_request_method::GET, url, headers, http_body());
+    return make_http_request(
+        http_request_method::GET, url, headers, http_body());
 }
 
 // Parse a http_response as a JSON value.
-dynamic parse_json_response(http_response const& response);
+dynamic
+parse_json_response(http_response const& response);
 
 // Parse a http_response as a MessagePack value.
-dynamic parse_msgpack_response(http_response const& response);
+dynamic
+parse_msgpack_response(http_response const& response);
+
+// Make a successful (200) HTTP response with the given body.
+http_response
+make_http_200_response(string const& body);
 
 // This exception indicates a general failure in the HTTP request
 // system (e.g., a failure to initialize).
@@ -98,7 +105,8 @@ struct http_connection_interface
     perform_request(
         check_in_interface& check_in,
         progress_reporter_interface& reporter,
-        http_request const& request) = 0;
+        http_request const& request)
+        = 0;
 };
 
 struct http_connection_impl;
@@ -118,6 +126,6 @@ struct http_connection : http_connection_interface, boost::noncopyable
     http_connection_impl* impl_;
 };
 
-}
+} // namespace cradle
 
 #endif

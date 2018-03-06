@@ -1,5 +1,4 @@
 imports:
-  - 'cradle/core/api_types'
   - 'cradle/thinknode/types'
 
 types:
@@ -117,9 +116,7 @@ types:
     - schema:
         doc: ''
         schema:
-          named:
-            app: cradle
-            name: api_type_info
+          string: {}
     - object:
         doc: ''
         schema:
