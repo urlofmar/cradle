@@ -30,6 +30,10 @@
 #include <cradle/thinknode/utilities.hpp>
 #include <cradle/websocket/messages.hpp>
 
+// Include this again because some #defines snuck in to overwrite some of our
+// enum constants.
+#include <cradle/core/api_types.hpp>
+
 typedef websocketpp::server<websocketpp::config::asio> ws_server_type;
 
 using websocketpp::connection_hdl;
@@ -288,6 +292,61 @@ get_iss_object(
             ignore_upgrades));
 }
 
+static std::map<string, string>
+get_iss_object_metadata(
+    disk_cache& cache,
+    http_connection& connection,
+    thinknode_session const& session,
+    string const& context_id,
+    string const& object_id)
+{
+    // Try the disk cache.
+    auto cache_key = picosha2::hash256_hex_string(
+        value_to_msgpack_string(dynamic({"get_iss_object_metadata",
+                                         session.api_url,
+                                         context_id,
+                                         object_id})));
+    try
+    {
+        auto entry = cache.find(cache_key);
+        // Cached metadata are stored externally in files.
+        if (entry && !entry->value)
+        {
+            auto data = read_file_contents(cache.get_path_for_id(entry->id));
+            if (compute_crc32(data) == entry->crc32)
+            {
+                return from_dynamic<std::map<string, string>>(
+                    parse_msgpack_value(data));
+            }
+        }
+    }
+    catch (...)
+    {
+        // Something went wrong trying to load the cached value, so just
+        // pretend it's not there. (It will be overwritten.)
+    }
+
+    // Query Thinknode.
+    auto metadata
+        = get_iss_object_metadata(connection, session, context_id, object_id);
+
+    // Cache the result.
+    auto cache_id = cache.initiate_insert(cache_key);
+    auto msgpack = value_to_msgpack_string(to_dynamic(metadata));
+    {
+        auto entry_path = cache.get_path_for_id(cache_id);
+        std::ofstream output;
+        open_file(
+            output,
+            entry_path,
+            std::ios::out | std::ios::trunc | std::ios::binary);
+        output << msgpack;
+    }
+    cache.finish_insert(cache_id, compute_crc32(msgpack));
+
+    return metadata;
+}
+
 thinknode_app_version_info
 get_app_version_info(
     disk_cache& cache,
@@ -475,6 +534,236 @@ post_iss_object(
     cache.insert(cache_key, object_id);
 
     return object_id;
+}
+
+static bool
+type_contains_references(
+    std::function<api_type_info(api_named_type_reference const& ref)> const&
+        look_up_named_type,
+    api_type_info const& type)
+{
+    auto recurse = [&look_up_named_type](api_type_info const& type) {
+        return type_contains_references(look_up_named_type, type);
+    };
+
+    switch (get_tag(type))
+    {
+        case api_type_info_tag::ARRAY:
+            return recurse(as_array(type).element_schema);
+        case api_type_info_tag::BLOB:
+            return false;
+        case api_type_info_tag::BOOLEAN:
+            return false;
+        case api_type_info_tag::DATETIME:
+            return false;
+        case api_type_info_tag::DYNAMIC:
+            // Technically, there could be a reference stored within a dynamic
+            // (or in blobs, strings, etc.), but we're only looking for
+            // explicitly typed references.
+            return false;
+        case api_type_info_tag::ENUM:
+            return false;
+        case api_type_info_tag::FLOAT:
+            return false;
+        case api_type_info_tag::INTEGER:
+            return false;
+        case api_type_info_tag::MAP:
+            return recurse(as_map(type).key_schema)
+                   || recurse(as_map(type).value_schema);
+        case api_type_info_tag::NAMED:
+            return recurse(look_up_named_type(as_named(type)));
+        case api_type_info_tag::NIL:
+        default:
+            return false;
+        case api_type_info_tag::OPTIONAL:
+            return recurse(as_optional(type));
+        case api_type_info_tag::REFERENCE:
+            return true;
+        case api_type_info_tag::STRING:
+            return false;
+        case api_type_info_tag::STRUCTURE:
+            return std::any_of(
+                as_structure(type).begin(),
+                as_structure(type).end(),
+                [&](auto const& pair) { return recurse(pair.second.schema); });
+        case api_type_info_tag::UNION:
+            return std::any_of(
+                as_union(type).begin(),
+                as_union(type).end(),
+                [&](auto const& pair) { return recurse(pair.second.schema); });
+    }
+}
+
+void
+visit_references(
+    std::function<api_type_info(api_named_type_reference const& ref)> const&
+        look_up_named_type,
+    api_type_info const& type,
+    dynamic const& value,
+    std::function<void(string const& ref)> const& visitor)
+{
+    auto recurse = [&](api_type_info const& type, dynamic const& value) {
+        visit_references(look_up_named_type, type, value, visitor);
+    };
+
+    switch (get_tag(type))
+    {
+        case api_type_info_tag::ARRAY:
+            for (auto const& item : cast<dynamic_array>(value))
+            {
+                recurse(as_array(type).element_schema, item);
+            }
+            break;
+        case api_type_info_tag::BLOB:
+            break;
+        case api_type_info_tag::BOOLEAN:
+            break;
+        case api_type_info_tag::DATETIME:
+            break;
+        case api_type_info_tag::DYNAMIC:
+            break;
+        case api_type_info_tag::ENUM:
+            break;
+        case api_type_info_tag::FLOAT:
+            break;
+        case api_type_info_tag::INTEGER:
+            break;
+        case api_type_info_tag::MAP:
+        {
+            auto const& map_type = as_map(type);
+            for (auto const& pair : cast<dynamic_map>(value))
+            {
+                recurse(map_type.key_schema, pair.first);
+                recurse(map_type.value_schema, pair.second);
+            }
+            break;
+        }
+        case api_type_info_tag::NAMED:
+            recurse(look_up_named_type(as_named(type)), value);
+            break;
+        case api_type_info_tag::NIL:
+        default:
+            break;
+        case api_type_info_tag::OPTIONAL:
+        {
+            auto const& map = cast<dynamic_map>(value);
+            string tag;
+            from_dynamic(&tag, cradle::get_union_value_type(map));
+            if (tag == "some")
+            {
+                recurse(as_optional(type), get_field(map, "some"));
+            }
+            break;
+        }
+        case api_type_info_tag::REFERENCE:
+            visitor(cast<string>(value));
+        case api_type_info_tag::STRING:
+            break;
+        case api_type_info_tag::STRUCTURE:
+        {
+            auto const& structure_type = as_structure(type);
+            auto const& map = cast<dynamic_map>(value);
+            for (auto const& pair : structure_type)
+            {
+                auto const& field_info = pair.second;
+                dynamic const* field_value;
+                bool field_present = get_field(&field_value, map, pair.first);
+                if (field_present)
+                {
+                    recurse(field_info.schema, *field_value);
+                }
+            }
+            break;
+        }
+        case api_type_info_tag::UNION:
+        {
+            auto const& union_type = as_union(type);
+            auto const& map = cast<dynamic_map>(value);
+            string tag;
+            from_dynamic(&tag, cradle::get_union_value_type(map));
+            for (auto const& pair : union_type)
+            {
+                auto const& member_name = pair.first;
+                auto const& member_info = pair.second;
+                if (tag == member_name)
+                {
+                    recurse(member_info.schema, get_field(map, member_name));
+                }
+            }
+            break;
+        }
+    }
+}
+
+static void
+copy_iss_object(
+    disk_cache& cache,
+    http_connection& connection,
+    thinknode_session const& session,
+    string const& source_bucket,
+    string const& destination_context_id,
+    string const& object_id)
+{
+    // Copying an object requires not just copying the object itself but also
+    // any objects that it references. The brute force approach is to download
+    // the copied object and scan it for references, recursively copying the
+    // referenced objects. We use a slightly less brute force method here by
+    // first checking the type of the object to see if it contains any reference
+    // types. (If not, we skip the whole download/scan/recurse step.)
+
+    // Note that we apply the recursive step whether or not the object already
+    // exists in the destination bucket. It's possible that it was copied
+    // improperly (and references objects that haven't been copied), in which
+    // case we'll fix it by recursing. (And if it was copied properly, then
+    // we'll most likely just hit the cache when we do our redundant recursions,
+    // so we don't lose much.)
+
+    // Since we need to query the metadata for the object either way, we try
+    // doing it without copying the object first. If that works, then we can
+    // skip the copy.
+    std::map<string, string> metadata;
+    try
+    {
+        metadata = get_iss_object_metadata(
+            cache, connection, session, destination_context_id, object_id);
+    }
+    catch (...)
+    {
+        // The object probably actually needs to be copied, so do that and
+        // try getting the metadata again.
+        copy_iss_object(
+            connection,
+            session,
+            source_bucket,
+            destination_context_id,
+            object_id);
+        metadata = get_iss_object_metadata(
+            cache, connection, session, destination_context_id, object_id);
+    }
+
+    auto object_type
+        = as_api_type(parse_url_type_string(metadata["Thinknode-Type"]));
+
+    auto look_up_named_type = [&](api_named_type_reference const& ref) {
+        return resolve_named_type_reference(
+            cache, connection, session, destination_context_id, ref);
+    };
+
+    if (type_contains_references(look_up_named_type, object_type))
+    {
+        auto object = get_iss_object(
+            cache, connection, session, destination_context_id, object_id);
+        visit_references(
+            look_up_named_type, object_type, object, [&](string const& ref) {
+                copy_iss_object(
+                    cache,
+                    connection,
+                    session,
+                    source_bucket,
+                    destination_context_id,
+                    ref);
+            });
+    }
 }
 
 static calculation_request
@@ -685,6 +974,23 @@ process_message(
                                             std::move(object)}));
             break;
         }
+        case websocket_client_message_tag::GET_ISS_OBJECT_METADATA:
+        {
+            auto const& giom = as_get_iss_object_metadata(request.message);
+            auto metadata = get_iss_object_metadata(
+                server.cache,
+                connection,
+                get_client(server.clients, request.client).session,
+                giom.context_id,
+                giom.object_id);
+            send(
+                server,
+                request.client,
+                make_websocket_server_message_with_get_iss_object_metadata_response(
+                    get_iss_object_metadata_response{giom.request_id,
+                                                     std::move(metadata)}));
+            break;
+        }
         case websocket_client_message_tag::POST_ISS_OBJECT:
         {
             auto const& pio = as_post_iss_object(request.message);
@@ -700,6 +1006,23 @@ process_message(
                 request.client,
                 make_websocket_server_message_with_post_iss_object_response(
                     make_post_iss_object_response(pio.request_id, object_id)));
+            break;
+        }
+        case websocket_client_message_tag::COPY_ISS_OBJECT:
+        {
+            auto const& cio = as_copy_iss_object(request.message);
+            copy_iss_object(
+                server.cache,
+                connection,
+                get_client(server.clients, request.client).session,
+                cio.source_bucket,
+                cio.destination_context_id,
+                cio.object_id);
+            send(
+                server,
+                request.client,
+                make_websocket_server_message_with_copy_iss_object_response(
+                    make_copy_iss_object_response(cio.request_id)));
             break;
         }
         case websocket_client_message_tag::GET_CALCULATION_REQUEST:
