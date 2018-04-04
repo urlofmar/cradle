@@ -7,9 +7,11 @@ using namespace cradle;
 TEST_CASE("Thinknode type conversion", "[thinknode][utilities]")
 {
     auto tn_named_type = make_thinknode_type_info_with_named_type(
-        make_thinknode_named_type_reference("my_account", "my_app", "my_type"));
-    auto named_type = make_api_type_info_with_named(
-        make_api_named_type_reference("my_account", "my_app", "my_type"));
+        make_thinknode_named_type_reference(
+            some(string("my_account")), "my_app", "my_type"));
+    auto named_type
+        = make_api_type_info_with_named(make_api_named_type_reference(
+            some(string("my_account")), "my_app", "my_type"));
     REQUIRE(as_api_type(tn_named_type) == named_type);
 
     auto tn_integer_type
@@ -106,4 +108,12 @@ TEST_CASE("Thinknode type conversion", "[thinknode][utilities]")
         = make_thinknode_type_info_with_reference_type(tn_named_type);
     auto ref_type = make_api_type_info_with_reference(named_type);
     REQUIRE(as_api_type(tn_ref_type) == ref_type);
+}
+
+TEST_CASE("Thinknode account name", "[thinknode][utilities]")
+{
+    thinknode_session session;
+    session.api_url = "https://mgh.thinknode.io/api/v1.0";
+    session.access_token = "xyz";
+    REQUIRE(get_account_name(session) == "mgh");
 }
