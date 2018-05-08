@@ -50,6 +50,15 @@ test_yaml_encoding(
         == converted_yaml);
 }
 
+// Test that dynamic value can be translated to the expected diagnostic
+// encoding.
+static void
+test_diagnostic_yaml_encoding(dynamic const& value, string const& expected_yaml)
+{
+    auto yaml = value_to_diagnostic_yaml(value);
+    REQUIRE(strip_whitespace(yaml) == strip_whitespace(expected_yaml));
+}
+
 TEST_CASE("basic YAML encoding", "[encodings][yaml]")
 {
     // Try some basic types.
@@ -241,6 +250,39 @@ TEST_CASE("basic YAML encoding", "[encodings][yaml]")
             type: 12
         )",
         {{"type", integer(12)}, {"blob", "awe"}});
+}
+
+TEST_CASE("diagnostic YAML encoding", "[encodings][yaml]")
+{
+    char small_blob_data[] = "small blob";
+    auto small_blob = blob(
+        ownership_holder(), small_blob_data, sizeof(small_blob_data) - 1);
+    test_diagnostic_yaml_encoding(
+        small_blob,
+        R"( |
+            <blob>
+            small blob
+        )");
+
+    auto large_blob = blob(ownership_holder(), 0, 16384);
+    test_diagnostic_yaml_encoding(large_blob, "\"<blob - size: 16384 bytes>\"");
+
+    char unprintable_blob_data[] = "\01blob";
+    auto unprintable_blob = blob(
+        ownership_holder(),
+        unprintable_blob_data,
+        sizeof(unprintable_blob_data) - 1);
+    test_diagnostic_yaml_encoding(
+        unprintable_blob, "\"<blob - size: 5 bytes>\"");
+
+    test_diagnostic_yaml_encoding(
+        dynamic_map({{false, small_blob}, {0.1, "xyz"}}),
+        R"(
+            false: |
+              <blob>
+              small blob
+            0.1: xyz
+        )");
 }
 
 TEST_CASE("malformed YAML blob", "[encodings][yaml]")

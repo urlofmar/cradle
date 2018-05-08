@@ -7,6 +7,7 @@
 
 #include <curl/curl.h>
 
+#include <cradle/core/logging.hpp>
 #include <cradle/core/monitoring.hpp>
 #include <cradle/encodings/json.hpp>
 #include <cradle/encodings/msgpack.hpp>
@@ -259,6 +260,8 @@ http_connection::perform_request(
     progress_reporter_interface& reporter,
     http_request const& request)
 {
+    CRADLE_LOG_CALL(<< CRADLE_LOG_ARG(request))
+
     CURL* curl = impl_->curl;
     assert(curl);
 
