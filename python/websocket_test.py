@@ -1,7 +1,7 @@
 import sys
 import os
 import subprocess
-import json
+import msgpack
 import time
 import websocket
 import random
@@ -43,18 +43,26 @@ def test_websocket_server():
         print(server_result)
         raise
 
-    ws.send(
-        json.dumps({
-            "registration": {
-                "name": "Channing",
-                "session": {
-                    "api_url": "",
-                    "access_token": "",
+    ws.send_binary(
+        msgpack.packb(
+            {
+                "registration": {
+                    "name": "Channing",
+                    "session": {
+                        "api_url": "",
+                        "access_token": "",
+                    }
                 }
-            }
-        }))
-    ws.send(json.dumps({"test": {"message": "Hello, Tigger!"}}))
-    response = json.loads(ws.recv())["test"]
+            },
+            use_bin_type=True))
+    ws.send_binary(
+        msgpack.packb(
+            {
+                "test": {
+                    "message": "Hello, Tigger!"
+                }
+            }, use_bin_type=True))
+    response = msgpack.unpackb(ws.recv(), use_list=False, raw=False)["test"]
     assert response == {"message": "Hello, Tigger!", "name": "Channing"}
 
     session = thinknode.Session()
@@ -79,11 +87,11 @@ def test_websocket_server():
 
     # Also test a named type so that we know that lookup is working.
     box_iss_id = session.post_iss_object("named/mgh/dosimetry/box_2d", {
-        "corner": [-1, 0],
-        "size": [3, 3]
+        "corner": (-1, 0),
+        "size": (3, 3)
     })
     assert session.get_iss_object(box_iss_id) == \
-        {"corner": [-1, 0], "size": [3, 3]}
+        {"corner": (-1, 0), "size": (3, 3)}
 
     a = random.random()
     b = random.random()
@@ -131,7 +139,7 @@ def test_websocket_server():
 
     assert session.get_iss_object(test_calc_id) == pytest.approx(a + b + c)
 
-    ws.send(json.dumps({"kill": None}))
+    ws.send_binary(msgpack.packb({"kill": None}, use_bin_type=True))
     ws.close()
 
     assert server_process.wait() == 0
