@@ -2,6 +2,7 @@
 
 import sys
 import json
+import msgpack
 import yaml
 import requests
 import websocket
@@ -54,16 +55,18 @@ class Session:
 
         # Connect to the CRADLE server.
         self.ws = websocket.create_connection(self.config["cradle_url"])
-        self.ws.send(
-            json.dumps({
-                "registration": {
-                    "name": "thinknode.python.lib",
-                    "session": {
-                        "api_url": self.config["api_url"],
-                        "access_token": self.config["api_token"]
+        self.ws.send_binary(
+            msgpack.packb(
+                {
+                    "registration": {
+                        "name": "thinknode.python.lib",
+                        "session": {
+                            "api_url": self.config["api_url"],
+                            "access_token": self.config["api_token"]
+                        }
                     }
-                }
-            }))
+                },
+                use_bin_type=True))
 
         self.retrieve_realm_context()
 
@@ -128,16 +131,19 @@ class Session:
         if context is None:
             context = self.realm_context()
         request_id = uuid.uuid4().hex
-        self.ws.send(
-            json.dumps({
-                "get_iss_object": {
-                    "request_id": request_id,
-                    "context_id": context,
-                    "object_id": object_id,
-                    "ignore_upgrades": ignore_upgrades
-                }
-            }))
-        response = json.loads(self.ws.recv())
+        self.ws.send_binary(
+            msgpack.packb(
+                {
+                    "get_iss_object": {
+                        "request_id": request_id,
+                        "context_id": context,
+                        "object_id": object_id,
+                        "encoding": "msgpack",
+                        "ignore_upgrades": ignore_upgrades
+                    }
+                },
+                use_bin_type=True))
+        response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
         if union_tag(response) == "error":
             print(json.dumps(response, indent=4))
             sys.exit(1)
@@ -145,22 +151,24 @@ class Session:
         if gio["request_id"] != request_id:
             print("mismatched request IDs")
             sys.exit(1)
-        return gio["object"]
+        return msgpack.unpackb(gio["object"], use_list=False, raw=False)
 
     def get_iss_object_metadata(self, object_id, context=None):
         """Retrieve an ISS object's metadata."""
         if context is None:
             context = self.realm_context()
         request_id = uuid.uuid4().hex
-        self.ws.send(
-            json.dumps({
-                "get_iss_object_metadata": {
-                    "request_id": request_id,
-                    "context_id": context,
-                    "object_id": object_id
-                }
-            }))
-        response = json.loads(self.ws.recv())
+        self.ws.send_binary(
+            msgpack.packb(
+                {
+                    "get_iss_object_metadata": {
+                        "request_id": request_id,
+                        "context_id": context,
+                        "object_id": object_id
+                    }
+                },
+                use_bin_type=True))
+        response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
         if union_tag(response) == "error":
             print(json.dumps(response, indent=4))
             sys.exit(1)
@@ -176,15 +184,17 @@ class Session:
         if context is None:
             context = self.realm_context()
         request_id = uuid.uuid4().hex
-        self.ws.send(
-            json.dumps({
-                "resolve_meta_chain": {
-                    "request_id": request_id,
-                    "context_id": context,
-                    "generator": generator_calc
-                }
-            }))
-        response = json.loads(self.ws.recv())
+        self.ws.send_binary(
+            msgpack.packb(
+                {
+                    "resolve_meta_chain": {
+                        "request_id": request_id,
+                        "context_id": context,
+                        "generator": generator_calc
+                    }
+                },
+                use_bin_type=True))
+        response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
         if union_tag(response) == "error":
             print(json.dumps(response, indent=4))
             sys.exit(1)
@@ -215,16 +225,19 @@ class Session:
         if context is None:
             context = self.realm_context()
         request_id = uuid.uuid4().hex
-        self.ws.send(
-            json.dumps({
-                "post_iss_object": {
-                    "request_id": request_id,
-                    "context_id": context,
-                    "schema": schema,
-                    "object": obj
-                }
-            }))
-        response = json.loads(self.ws.recv())
+        self.ws.send_binary(
+            msgpack.packb(
+                {
+                    "post_iss_object": {
+                        "request_id": request_id,
+                        "context_id": context,
+                        "schema": schema,
+                        "object": msgpack.packb(obj, use_bin_type=True),
+                        "encoding": "msgpack"
+                    }
+                },
+                use_bin_type=True))
+        response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
         if union_tag(response) == "error":
             print(json.dumps(response, indent=4))
             sys.exit(1)
@@ -240,16 +253,18 @@ class Session:
         if context is None:
             context = self.realm_context()
         request_id = uuid.uuid4().hex
-        self.ws.send(
-            json.dumps({
-                "copy_iss_object": {
-                    "request_id": request_id,
-                    "source_bucket": source_bucket,
-                    "destination_context_id": context,
-                    "object_id": object_id
-                }
-            }))
-        response = json.loads(self.ws.recv())
+        self.ws.send_binary(
+            msgpack.packb(
+                {
+                    "copy_iss_object": {
+                        "request_id": request_id,
+                        "source_bucket": source_bucket,
+                        "destination_context_id": context,
+                        "object_id": object_id
+                    }
+                },
+                use_bin_type=True))
+        response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
         if union_tag(response) == "error":
             print(json.dumps(response, indent=4))
             sys.exit(1)
@@ -264,15 +279,17 @@ class Session:
         if context is None:
             context = self.realm_context()
         request_id = uuid.uuid4().hex
-        self.ws.send(
-            json.dumps({
-                "post_calculation": {
-                    "request_id": request_id,
-                    "context_id": context,
-                    "calculation": calc
-                }
-            }))
-        response = json.loads(self.ws.recv())
+        self.ws.send_binary(
+            msgpack.packb(
+                {
+                    "post_calculation": {
+                        "request_id": request_id,
+                        "context_id": context,
+                        "calculation": calc
+                    }
+                },
+                use_bin_type=True))
+        response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
         if union_tag(response) == "error":
             print(json.dumps(response, indent=4))
             sys.exit(1)
@@ -288,15 +305,17 @@ class Session:
         if context is None:
             context = self.realm_context()
         request_id = uuid.uuid4().hex
-        self.ws.send(
-            json.dumps({
-                "get_calculation_request": {
-                    "request_id": request_id,
-                    "context_id": context,
-                    "calculation_id": calc_id
-                }
-            }))
-        response = json.loads(self.ws.recv())
+        self.ws.send_binary(
+            msgpack.packb(
+                {
+                    "get_calculation_request": {
+                        "request_id": request_id,
+                        "context_id": context,
+                        "calculation_id": calc_id
+                    }
+                },
+                use_bin_type=True))
+        response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
         if union_tag(response) == "error":
             print(json.dumps(response, indent=4))
             sys.exit(1)
