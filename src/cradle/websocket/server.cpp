@@ -1087,6 +1087,23 @@ process_message(
                                             std::move(encoded_object)}));
             break;
         }
+        case websocket_client_message_tag::RESOLVE_ISS_OBJECT:
+        {
+            auto const& rio = as_resolve_iss_object(request.message);
+            auto immutable_id = resolve_iss_object_to_immutable(
+                server.cache,
+                connection,
+                get_client(server.clients, request.client).session,
+                rio.context_id,
+                rio.object_id,
+                rio.ignore_upgrades);
+            send(
+                server,
+                request.client,
+                make_websocket_server_message_with_resolve_iss_object_response(
+                    resolve_iss_object_response{rio.request_id, immutable_id}));
+            break;
+        }
         case websocket_client_message_tag::GET_ISS_OBJECT_METADATA:
         {
             auto const& giom = as_get_iss_object_metadata(request.message);
