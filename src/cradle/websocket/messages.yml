@@ -67,6 +67,17 @@ types:
           optional:
             string: {}
 
+- name: data_encoding
+  doc: ''
+  schema:
+    enum:
+    - yaml:
+        doc: 'YAML'
+    - msgpack:
+        doc: 'MessagePack'
+    - json:
+        doc: 'JSON'
+
 - name: get_iss_object_request
   doc: ''
   schema:
@@ -87,6 +98,12 @@ types:
         doc: ''
         schema:
           boolean: {}
+    - encoding:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: data_encoding
 
 - name: get_iss_object_response
   doc: ''
@@ -99,7 +116,7 @@ types:
     - object:
         doc: ''
         schema:
-          dynamic: {}
+          blob: {}
 
 - name: get_iss_object_metadata_request
   doc: ''
@@ -151,10 +168,16 @@ types:
         doc: ''
         schema:
           string: {}
+    - encoding:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: data_encoding
     - object:
         doc: ''
         schema:
-          dynamic: {}
+          blob: {}
 
 - name: post_iss_object_response
   doc: ''
