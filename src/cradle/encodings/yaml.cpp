@@ -367,12 +367,21 @@ emit_diagnostic_yaml_value(YAML::Emitter& out, dynamic const& v)
             break;
         case value_type::ARRAY:
         {
-            out << YAML::BeginSeq;
-            for (auto const& i : cast<dynamic_array>(v))
+            dynamic_array const& array = cast<dynamic_array>(v);
+            if (array.size() < 64)
             {
-                emit_diagnostic_yaml_value(out, i);
+                out << YAML::BeginSeq;
+                for (auto const& i : array)
+                {
+                    emit_diagnostic_yaml_value(out, i);
+                }
+                out << YAML::EndSeq;
             }
-            out << YAML::EndSeq;
+            else
+            {
+                out << "<array - size: " + lexical_cast<string>(array.size())
+                           + ">";
+            }
             break;
         }
         case value_type::MAP:
@@ -402,6 +411,20 @@ blob
 value_to_yaml_blob(dynamic const& v)
 {
     string yaml = value_to_yaml(v);
+    blob blob;
+    // Don't include the terminating '\0'.
+    std::shared_ptr<char> ptr(new char[yaml.length()], array_deleter<char>());
+    blob.ownership = ptr;
+    blob.data = ptr.get();
+    memcpy(ptr.get(), yaml.c_str(), yaml.length());
+    blob.size = yaml.length();
+    return blob;
+}
+
+blob
+value_to_diagnostic_yaml_blob(dynamic const& v)
+{
+    string yaml = value_to_diagnostic_yaml(v);
     blob blob;
     // Don't include the terminating '\0'.
     std::shared_ptr<char> ptr(new char[yaml.length()], array_deleter<char>());

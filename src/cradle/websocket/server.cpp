@@ -288,15 +288,17 @@ resolve_iss_object_to_immutable(
 }
 
 static blob
-encode_object(data_encoding encoding, dynamic const& object)
+encode_object(output_data_encoding encoding, dynamic const& object)
 {
     switch (encoding)
     {
-        case data_encoding::JSON:
+        case output_data_encoding::JSON:
             return value_to_json_blob(object);
-        case data_encoding::YAML:
+        case output_data_encoding::YAML:
             return value_to_yaml_blob(object);
-        case data_encoding::MSGPACK:
+        case output_data_encoding::DIAGNOSTIC_YAML:
+            return value_to_diagnostic_yaml_blob(object);
+        case output_data_encoding::MSGPACK:
         default:
             return value_to_msgpack_blob(object);
     }
@@ -529,24 +531,24 @@ post_iss_object(
     thinknode_session const& session,
     string const& context_id,
     thinknode_type_info const& schema,
-    data_encoding encoding,
+    input_data_encoding encoding,
     blob const& encoded_object)
 {
     // Decode the object.
     dynamic decoded_object;
     switch (encoding)
     {
-        case data_encoding::JSON:
+        case input_data_encoding::JSON:
             decoded_object = parse_json_value(
                 reinterpret_cast<char const*>(encoded_object.data),
                 encoded_object.size);
             break;
-        case data_encoding::YAML:
+        case input_data_encoding::YAML:
             decoded_object = parse_yaml_value(
                 reinterpret_cast<char const*>(encoded_object.data),
                 encoded_object.size);
             break;
-        case data_encoding::MSGPACK:
+        case input_data_encoding::MSGPACK:
             decoded_object = parse_msgpack_value(
                 reinterpret_cast<uint8_t const*>(encoded_object.data),
                 encoded_object.size);

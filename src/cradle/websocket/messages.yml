@@ -67,7 +67,20 @@ types:
           optional:
             string: {}
 
-- name: data_encoding
+- name: output_data_encoding
+  doc: ''
+  schema:
+    enum:
+    - yaml:
+        doc: 'YAML'
+    - diagnostic_yaml:
+        doc: 'Diagnostic YAML - This is designed to be more human-friendly and will omit large values (like blobs) that seem meaningless to humans.'
+    - msgpack:
+        doc: 'MessagePack'
+    - json:
+        doc: 'JSON'
+
+- name: input_data_encoding
   doc: ''
   schema:
     enum:
@@ -103,7 +116,7 @@ types:
         schema:
           named:
             app: cradle
-            name: data_encoding
+            name: output_data_encoding
 
 - name: get_iss_object_response
   doc: ''
@@ -207,7 +220,7 @@ types:
         schema:
           named:
             app: cradle
-            name: data_encoding
+            name: input_data_encoding
     - object:
         doc: ''
         schema:
