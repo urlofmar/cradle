@@ -3,7 +3,7 @@
 #include <websocketpp/client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 
-#include <cradle/encodings/json.hpp>
+#include <cradle/encodings/msgpack.hpp>
 #include <cradle/websocket/messages.hpp>
 
 namespace cradle {
@@ -55,17 +55,17 @@ websocket_client::set_message_handler(
     impl_->client.set_message_handler(
         [=](websocketpp::connection_hdl hdl, message_ptr message) {
             handler(from_dynamic<websocket_server_message>(
-                parse_json_value(message->get_payload())));
+                parse_msgpack_value(message->get_payload())));
         });
 }
 
 void
 websocket_client::send(websocket_client_message const& message)
 {
-    auto json = value_to_json(to_dynamic(message));
+    auto msgpack = value_to_msgpack_string(to_dynamic(message));
     websocketpp::lib::error_code ec;
     impl_->client.send(
-        impl_->server_handle, json, websocketpp::frame::opcode::text, ec);
+        impl_->server_handle, msgpack, websocketpp::frame::opcode::binary, ec);
     if (ec)
     {
         CRADLE_THROW(
