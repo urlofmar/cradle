@@ -24,7 +24,7 @@ value_to_yaml(dynamic const& v);
 
 // Write a value to a diagnostic string in YAML format.
 // This won't necessarily capture the entire contents of the value. In
-// particular, it will omit blob contents.
+// particular, it will omit contents of large blobs.
 string
 value_to_diagnostic_yaml(dynamic const& v);
 
@@ -32,6 +32,11 @@ value_to_diagnostic_yaml(dynamic const& v);
 // This does NOT include a terminating null character.
 blob
 value_to_yaml_blob(dynamic const& v);
+
+// Write a value to a blob in 'diagnostic' YAML format.
+// This does NOT include a terminating null character.
+blob
+value_to_diagnostic_yaml_blob(dynamic const& v);
 
 } // namespace cradle
 
