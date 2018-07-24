@@ -24,6 +24,7 @@
 #include <cradle/encodings/base64.hpp>
 #include <cradle/encodings/json.hpp>
 #include <cradle/encodings/msgpack.hpp>
+#include <cradle/encodings/yaml.hpp>
 #include <cradle/fs/app_dirs.hpp>
 #include <cradle/fs/file_io.hpp>
 #include <cradle/io/http_requests.hpp>
@@ -162,9 +163,9 @@ send(
     websocket_server_message const& message)
 {
     auto dynamic = to_dynamic(message);
-    auto json = value_to_json(dynamic);
+    auto msgpack = value_to_msgpack_string(dynamic);
     websocketpp::lib::error_code ec;
-    server.ws.send(hdl, json, websocketpp::frame::opcode::text, ec);
+    server.ws.send(hdl, msgpack, websocketpp::frame::opcode::binary, ec);
     if (ec)
     {
         CRADLE_THROW(
@@ -286,6 +287,21 @@ resolve_iss_object_to_immutable(
     return immutable_id;
 }
 
+static blob
+encode_object(data_encoding encoding, dynamic const& object)
+{
+    switch (encoding)
+    {
+        case data_encoding::JSON:
+            return value_to_json_blob(object);
+        case data_encoding::YAML:
+            return value_to_yaml_blob(object);
+        case data_encoding::MSGPACK:
+        default:
+            return value_to_msgpack_blob(object);
+    }
+}
+
 static dynamic
 get_iss_object(
     disk_cache& cache,
@@ -295,18 +311,13 @@ get_iss_object(
     string const& object_id,
     bool ignore_upgrades = false)
 {
-    return retrieve_immutable(
-        cache,
-        connection,
-        session,
-        context_id,
-        resolve_iss_object_to_immutable(
-            cache,
-            connection,
-            session,
-            context_id,
-            object_id,
-            ignore_upgrades));
+    auto immutable_id = resolve_iss_object_to_immutable(
+        cache, connection, session, context_id, object_id, ignore_upgrades);
+
+    auto object = retrieve_immutable(
+        cache, connection, session, context_id, immutable_id);
+
+    return object;
 }
 
 static std::map<string, string>
@@ -518,8 +529,30 @@ post_iss_object(
     thinknode_session const& session,
     string const& context_id,
     thinknode_type_info const& schema,
-    dynamic const& object)
+    data_encoding encoding,
+    blob const& encoded_object)
 {
+    // Decode the object.
+    dynamic decoded_object;
+    switch (encoding)
+    {
+        case data_encoding::JSON:
+            decoded_object = parse_json_value(
+                reinterpret_cast<char const*>(encoded_object.data),
+                encoded_object.size);
+            break;
+        case data_encoding::YAML:
+            decoded_object = parse_yaml_value(
+                reinterpret_cast<char const*>(encoded_object.data),
+                encoded_object.size);
+            break;
+        case data_encoding::MSGPACK:
+            decoded_object = parse_msgpack_value(
+                reinterpret_cast<uint8_t const*>(encoded_object.data),
+                encoded_object.size);
+            break;
+    }
+
     // Apply type coercion.
     auto coerced_object = coerce_value(
         [&](api_named_type_reference const& ref) {
@@ -527,7 +560,7 @@ post_iss_object(
                 cache, connection, session, context_id, ref);
         },
         as_api_type(schema),
-        object);
+        decoded_object);
 
     // Try the disk cache.
     auto cache_key = picosha2::hash256_hex_string(
@@ -586,9 +619,9 @@ type_contains_references(
         case api_type_info_tag::DATETIME:
             return false;
         case api_type_info_tag::DYNAMIC:
-            // Technically, there could be a reference stored within a dynamic
-            // (or in blobs, strings, etc.), but we're only looking for
-            // explicitly typed references.
+            // Technically, there could be a reference stored within a
+            // dynamic (or in blobs, strings, etc.), but we're only looking
+            // for explicitly typed references.
             return false;
         case api_type_info_tag::ENUM:
             return false;
@@ -814,8 +847,8 @@ get_calculation_request(
     try
     {
         auto entry = cache.find(cache_key);
-        // Cached immutable IDs are stored internally, so if the entry exists,
-        // there should also be a value.
+        // Cached immutable IDs are stored internally, so if the entry
+        // exists, there should also be a value.
         if (entry && entry->value)
         {
             spdlog::get("cradle")->info("cache hit on {}", cache_key);
@@ -866,8 +899,8 @@ struct simple_calculation_retriever : calculation_retrieval_interface
     }
 };
 
-// Search within a calculation request and return a list of subcalculation IDs
-// that match :search_string.
+// Search within a calculation request and return a list of subcalculation
+// IDs that match :search_string.
 static std::vector<string>
 search_calculation(
     disk_cache& cache,
@@ -899,8 +932,8 @@ post_calculation(
     try
     {
         auto entry = cache.find(cache_key);
-        // Cached immutable IDs are stored internally, so if the entry exists,
-        // there should also be a value.
+        // Cached immutable IDs are stored internally, so if the entry
+        // exists, there should also be a value.
         if (entry && entry->value)
         {
             spdlog::get("cradle")->info("cache hit on {}", cache_key);
@@ -1045,12 +1078,13 @@ process_message(
                 gio.context_id,
                 gio.object_id,
                 gio.ignore_upgrades);
+            auto encoded_object = encode_object(gio.encoding, object);
             send(
                 server,
                 request.client,
                 make_websocket_server_message_with_get_iss_object_response(
                     get_iss_object_response{gio.request_id,
-                                            std::move(object)}));
+                                            std::move(encoded_object)}));
             break;
         }
         case websocket_client_message_tag::GET_ISS_OBJECT_METADATA:
@@ -1079,6 +1113,7 @@ process_message(
                 get_client(server.clients, request.client).session,
                 pio.context_id,
                 parse_url_type_string(pio.schema),
+                pio.encoding,
                 pio.object);
             send(
                 server,
@@ -1228,7 +1263,7 @@ on_message(
     websocket_client_message message;
     try
     {
-        from_dynamic(&message, parse_json_value(raw_message->get_payload()));
+        from_dynamic(&message, parse_msgpack_value(raw_message->get_payload()));
         enqueue_job(server.requests, client_request{hdl, message});
         if (is_kill(message))
         {
