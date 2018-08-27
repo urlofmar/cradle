@@ -1094,37 +1094,11 @@ process_message(
                 gio.object_id,
                 gio.ignore_upgrades);
             auto encoded_object = encode_object(gio.encoding, object);
-<<<<<<< HEAD
             send_response(
                 server,
                 request,
                 make_server_message_content_with_iss_object_response(
                     iss_object_response{std::move(encoded_object)}));
-=======
-            send(
-                server,
-                request.client,
-                make_websocket_server_message_with_get_iss_object_response(
-                    get_iss_object_response{gio.request_id,
-                                            std::move(encoded_object)}));
-            break;
-        }
-        case websocket_client_message_tag::RESOLVE_ISS_OBJECT:
-        {
-            auto const& rio = as_resolve_iss_object(request.message);
-            auto immutable_id = resolve_iss_object_to_immutable(
-                server.cache,
-                connection,
-                get_client(server.clients, request.client).session,
-                rio.context_id,
-                rio.object_id,
-                rio.ignore_upgrades);
-            send(
-                server,
-                request.client,
-                make_websocket_server_message_with_resolve_iss_object_response(
-                    resolve_iss_object_response{rio.request_id, immutable_id}));
->>>>>>> origin
             break;
         }
         case client_message_content_tag::RESOLVE_ISS_OBJECT:
@@ -1317,15 +1291,11 @@ on_message(
     string request_id;
     try
     {
-<<<<<<< HEAD
         auto dynamic_message = parse_msgpack_value(raw_message->get_payload());
         request_id = cast<string>(
             get_field(cast<dynamic_map>(dynamic_message), "request_id"));
         websocket_client_message message;
         from_dynamic(&message, dynamic_message);
-=======
-        from_dynamic(&message, parse_msgpack_value(raw_message->get_payload()));
->>>>>>> origin
         enqueue_job(server.requests, client_request{hdl, message});
         if (is_kill(message.content))
         {

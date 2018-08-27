@@ -58,7 +58,6 @@ class Session:
         self.ws.send_binary(
             msgpack.packb(
                 {
-<<<<<<< HEAD
                     "request_id": "no_id",
                     "content": {
                         "registration": {
@@ -67,13 +66,6 @@ class Session:
                                 "api_url": self.config["api_url"],
                                 "access_token": self.config["api_token"]
                             }
-=======
-                    "registration": {
-                        "name": "thinknode.python.lib",
-                        "session": {
-                            "api_url": self.config["api_url"],
-                            "access_token": self.config["api_token"]
->>>>>>> origin
                         }
                     }
                 },
@@ -145,7 +137,6 @@ class Session:
         self.ws.send_binary(
             msgpack.packb(
                 {
-<<<<<<< HEAD
                     "request_id": request_id,
                     "content": {
                         "iss_object": {
@@ -154,19 +145,10 @@ class Session:
                             "encoding": "msgpack",
                             "ignore_upgrades": ignore_upgrades
                         }
-=======
-                    "get_iss_object": {
-                        "request_id": request_id,
-                        "context_id": context,
-                        "object_id": object_id,
-                        "encoding": "msgpack",
-                        "ignore_upgrades": ignore_upgrades
->>>>>>> origin
                     }
                 },
                 use_bin_type=True))
         response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
-<<<<<<< HEAD
         if response["request_id"] != request_id:
             print("mismatched request IDs")
             sys.exit(1)
@@ -174,15 +156,6 @@ class Session:
             print(json.dumps(response, indent=4))
             sys.exit(1)
         gio = response["content"]["iss_object_response"]
-=======
-        if union_tag(response) == "error":
-            print(json.dumps(response, indent=4))
-            sys.exit(1)
-        gio = response["get_iss_object_response"]
-        if gio["request_id"] != request_id:
-            print("mismatched request IDs")
-            sys.exit(1)
->>>>>>> origin
         return msgpack.unpackb(gio["object"], use_list=False, raw=False)
 
     def get_iss_object_metadata(self, object_id, context=None):
@@ -193,7 +166,6 @@ class Session:
         self.ws.send_binary(
             msgpack.packb(
                 {
-<<<<<<< HEAD
                     "request_id": request_id,
                     "content": {
                         "iss_object_metadata": {
@@ -201,25 +173,11 @@ class Session:
                             "context_id": context,
                             "object_id": object_id
                         }
-=======
-                    "get_iss_object_metadata": {
-                        "request_id": request_id,
-                        "context_id": context,
-                        "object_id": object_id
->>>>>>> origin
                     }
                 },
                 use_bin_type=True))
         response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
-<<<<<<< HEAD
         if response["request_id"] != request_id:
-=======
-        if union_tag(response) == "error":
-            print(json.dumps(response, indent=4))
-            sys.exit(1)
-        giom = response["get_iss_object_metadata_response"]
-        if giom["request_id"] != request_id:
->>>>>>> origin
             print("mismatched request IDs")
             sys.exit(1)
         if union_tag(response["content"]) == "error":
@@ -237,32 +195,17 @@ class Session:
         self.ws.send_binary(
             msgpack.packb(
                 {
-<<<<<<< HEAD
                     "request_id": request_id,
                     "content": {
                         "resolve_meta_chain": {
                             "context_id": context,
                             "generator": generator_calc
                         }
-=======
-                    "resolve_meta_chain": {
-                        "request_id": request_id,
-                        "context_id": context,
-                        "generator": generator_calc
->>>>>>> origin
                     }
                 },
                 use_bin_type=True))
         response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
-<<<<<<< HEAD
         if response["request_id"] != request_id:
-=======
-        if union_tag(response) == "error":
-            print(json.dumps(response, indent=4))
-            sys.exit(1)
-        rmc = response["resolve_meta_chain_response"]
-        if rmc["request_id"] != request_id:
->>>>>>> origin
             print("mismatched request IDs")
             sys.exit(1)
         if union_tag(response["content"]) == "error":
@@ -295,7 +238,6 @@ class Session:
         self.ws.send_binary(
             msgpack.packb(
                 {
-<<<<<<< HEAD
                     "request_id": request_id,
                     "content": {
                         "post_iss_object": {
@@ -304,27 +246,11 @@ class Session:
                             "object": msgpack.packb(obj, use_bin_type=True),
                             "encoding": "msgpack"
                         }
-=======
-                    "post_iss_object": {
-                        "request_id": request_id,
-                        "context_id": context,
-                        "schema": schema,
-                        "object": msgpack.packb(obj, use_bin_type=True),
-                        "encoding": "msgpack"
->>>>>>> origin
                     }
                 },
                 use_bin_type=True))
         response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
-<<<<<<< HEAD
         if response["request_id"] != request_id:
-=======
-        if union_tag(response) == "error":
-            print(json.dumps(response, indent=4))
-            sys.exit(1)
-        pio = response["post_iss_object_response"]
-        if pio["request_id"] != request_id:
->>>>>>> origin
             print("mismatched request IDs")
             sys.exit(1)
         if union_tag(response["content"]) == "error":
@@ -342,7 +268,6 @@ class Session:
         self.ws.send_binary(
             msgpack.packb(
                 {
-<<<<<<< HEAD
                     "request_id": request_id,
                     "content": {
                         "copy_iss_object": {
@@ -350,25 +275,14 @@ class Session:
                             "destination_context_id": context,
                             "object_id": object_id
                         }
-=======
-                    "copy_iss_object": {
-                        "request_id": request_id,
-                        "source_bucket": source_bucket,
-                        "destination_context_id": context,
-                        "object_id": object_id
->>>>>>> origin
                     }
                 },
                 use_bin_type=True))
         response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
-<<<<<<< HEAD
         if response["request_id"] != request_id:
             print("mismatched request IDs")
             sys.exit(1)
         if union_tag(response["content"]) == "error":
-=======
-        if union_tag(response) == "error":
->>>>>>> origin
             print(json.dumps(response, indent=4))
             sys.exit(1)
         pio = response["content"]["copy_iss_object_response"]
@@ -385,32 +299,17 @@ class Session:
         self.ws.send_binary(
             msgpack.packb(
                 {
-<<<<<<< HEAD
                     "request_id": request_id,
                     "content": {
                         "post_calculation": {
                             "context_id": context,
                             "calculation": calc
                         }
-=======
-                    "post_calculation": {
-                        "request_id": request_id,
-                        "context_id": context,
-                        "calculation": calc
->>>>>>> origin
                     }
                 },
                 use_bin_type=True))
         response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
-<<<<<<< HEAD
         if response["request_id"] != request_id:
-=======
-        if union_tag(response) == "error":
-            print(json.dumps(response, indent=4))
-            sys.exit(1)
-        pc = response["post_calculation_response"]
-        if pc["request_id"] != request_id:
->>>>>>> origin
             print("mismatched request IDs")
             sys.exit(1)
         if union_tag(response["content"]) == "error":
@@ -428,32 +327,17 @@ class Session:
         self.ws.send_binary(
             msgpack.packb(
                 {
-<<<<<<< HEAD
                     "request_id": request_id,
                     "content": {
                         "calculation_request": {
                             "context_id": context,
                             "calculation_id": calc_id
                         }
-=======
-                    "get_calculation_request": {
-                        "request_id": request_id,
-                        "context_id": context,
-                        "calculation_id": calc_id
->>>>>>> origin
                     }
                 },
                 use_bin_type=True))
         response = msgpack.unpackb(self.ws.recv(), use_list=False, raw=False)
-<<<<<<< HEAD
         if response["request_id"] != request_id:
-=======
-        if union_tag(response) == "error":
-            print(json.dumps(response, indent=4))
-            sys.exit(1)
-        gcr = response["get_calculation_request_response"]
-        if gcr["request_id"] != request_id:
->>>>>>> origin
             print("mismatched request IDs")
             sys.exit(1)
         if union_tag(response["content"]) == "error":

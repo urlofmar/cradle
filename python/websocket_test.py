@@ -37,7 +37,6 @@ def test_websocket_server():
     try:
         ws = create_connection_robustly("ws://localhost:41071")
 
-<<<<<<< HEAD
         ws.send_binary(
             msgpack.packb(
                 {
@@ -128,67 +127,6 @@ def test_websocket_server():
                         }
                     },
                     "in": {
-=======
-    ws.send_binary(
-        msgpack.packb(
-            {
-                "registration": {
-                    "name": "Channing",
-                    "session": {
-                        "api_url": "",
-                        "access_token": "",
-                    }
-                }
-            },
-            use_bin_type=True))
-    ws.send_binary(
-        msgpack.packb(
-            {
-                "test": {
-                    "message": "Hello, Tigger!"
-                }
-            }, use_bin_type=True))
-    response = msgpack.unpackb(ws.recv(), use_list=False, raw=False)["test"]
-    assert response == {"message": "Hello, Tigger!", "name": "Channing"}
-
-    session = thinknode.Session()
-
-    string_object = \
-        ("Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
-         "Nulla sodales lectus cursus lectus tempor, ut accumsan enim ultrices. "
-         "Praesent elit est, lobortis a lacinia at, posuere non lectus.")
-    string_iss_id = session.post_iss_object("string", string_object)
-    assert session.get_iss_object(string_iss_id) == string_object
-
-    integer_iss_id = session.post_iss_object("integer", 4)
-    assert session.get_iss_object(integer_iss_id) == 4
-
-    # Test that an integer is successfully coerced to a float.
-    float_iss_id = session.post_iss_object("float", 4)
-    assert session.get_iss_object(float_iss_id) == 4.0
-
-    # Test the metadata for the float object.
-    float_metadata = session.get_iss_object_metadata(float_iss_id)
-    assert float_metadata["Thinknode-Type"] == "float"
-
-    # Also test a named type so that we know that lookup is working.
-    box_iss_id = session.post_iss_object("named/mgh/dosimetry/box_2d", {
-        "corner": (-1, 0),
-        "size": (3, 3)
-    })
-    assert session.get_iss_object(box_iss_id) == \
-        {"corner": (-1, 0), "size": (3, 3)}
-
-    a = random.random()
-    b = random.random()
-    c = random.random()
-
-    test_calc = \
-        {
-            "let": {
-                "variables": {
-                    "x": {
->>>>>>> origin
                         "function": {
                             "account": "mgh",
                             "app": "dosimetry",
@@ -210,7 +148,6 @@ def test_websocket_server():
 
         assert session.get_iss_object(test_calc_id) == pytest.approx(a + b + c)
 
-<<<<<<< HEAD
         ws.send_binary(
             msgpack.packb(
                 {
@@ -232,9 +169,5 @@ def test_websocket_server():
         eprint("--- server result")
         eprint(server_result)
         raise
-=======
-    ws.send_binary(msgpack.packb({"kill": None}, use_bin_type=True))
-    ws.close()
->>>>>>> origin
 
     assert server_process.wait() == 0
