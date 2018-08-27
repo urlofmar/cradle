@@ -1023,6 +1023,18 @@ resolve_meta_chain(
 }
 
 static void
+send_response(
+    websocket_server_impl& server,
+    client_request const& request,
+    server_message_content const& content)
+{
+    send(
+        server,
+        request.client,
+        make_websocket_server_message(request.message.request_id, content));
+}
+
+static void
 process_message(
     websocket_server_impl& server,
     http_connection& connection,
@@ -1030,49 +1042,50 @@ process_message(
 {
     CRADLE_LOG_CALL(<< CRADLE_LOG_ARG(request.message))
 
-    switch (get_tag(request.message))
+    auto const& content = request.message.content;
+    switch (get_tag(content))
     {
-        case websocket_client_message_tag::REGISTRATION:
+        case client_message_content_tag::REGISTRATION:
         {
-            auto const& registration = as_registration(request.message);
+            auto const& registration = as_registration(content);
             access_client(server.clients, request.client, [&](auto& client) {
                 client.name = registration.name;
                 client.session = registration.session;
             });
             break;
         }
-        case websocket_client_message_tag::TEST:
+        case client_message_content_tag::TEST:
         {
             websocket_test_response response;
             response.name = get_client(server.clients, request.client).name;
-            response.message = as_test(request.message).message;
-            send(
+            response.message = as_test(content).message;
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_test(response));
+                request,
+                make_server_message_content_with_test(response));
             break;
         }
-        case websocket_client_message_tag::CACHE_INSERT:
+        case client_message_content_tag::CACHE_INSERT:
         {
-            auto& insertion = as_cache_insert(request.message);
+            auto& insertion = as_cache_insert(content);
             server.cache.insert(insertion.key, insertion.value);
             break;
         }
-        case websocket_client_message_tag::CACHE_QUERY:
+        case client_message_content_tag::CACHE_QUERY:
         {
-            auto const& key = as_cache_query(request.message);
+            auto const& key = as_cache_query(content);
             auto entry = server.cache.find(key);
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_cache_response(
+                request,
+                make_server_message_content_with_cache_response(
                     make_websocket_cache_response(
                         key, entry ? entry->value : none)));
             break;
         }
-        case websocket_client_message_tag::GET_ISS_OBJECT:
+        case client_message_content_tag::ISS_OBJECT:
         {
-            auto const& gio = as_get_iss_object(request.message);
+            auto const& gio = as_iss_object(content);
             auto object = get_iss_object(
                 server.cache,
                 connection,
@@ -1081,17 +1094,16 @@ process_message(
                 gio.object_id,
                 gio.ignore_upgrades);
             auto encoded_object = encode_object(gio.encoding, object);
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_get_iss_object_response(
-                    get_iss_object_response{gio.request_id,
-                                            std::move(encoded_object)}));
+                request,
+                make_server_message_content_with_iss_object_response(
+                    iss_object_response{std::move(encoded_object)}));
             break;
         }
-        case websocket_client_message_tag::RESOLVE_ISS_OBJECT:
+        case client_message_content_tag::RESOLVE_ISS_OBJECT:
         {
-            auto const& rio = as_resolve_iss_object(request.message);
+            auto const& rio = as_resolve_iss_object(content);
             auto immutable_id = resolve_iss_object_to_immutable(
                 server.cache,
                 connection,
@@ -1099,33 +1111,32 @@ process_message(
                 rio.context_id,
                 rio.object_id,
                 rio.ignore_upgrades);
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_resolve_iss_object_response(
-                    resolve_iss_object_response{rio.request_id, immutable_id}));
+                request,
+                make_server_message_content_with_resolve_iss_object_response(
+                    resolve_iss_object_response{immutable_id}));
             break;
         }
-        case websocket_client_message_tag::GET_ISS_OBJECT_METADATA:
+        case client_message_content_tag::ISS_OBJECT_METADATA:
         {
-            auto const& giom = as_get_iss_object_metadata(request.message);
+            auto const& giom = as_iss_object_metadata(content);
             auto metadata = get_iss_object_metadata(
                 server.cache,
                 connection,
                 get_client(server.clients, request.client).session,
                 giom.context_id,
                 giom.object_id);
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_get_iss_object_metadata_response(
-                    get_iss_object_metadata_response{giom.request_id,
-                                                     std::move(metadata)}));
+                request,
+                make_server_message_content_with_iss_object_metadata_response(
+                    iss_object_metadata_response{std::move(metadata)}));
             break;
         }
-        case websocket_client_message_tag::POST_ISS_OBJECT:
+        case client_message_content_tag::POST_ISS_OBJECT:
         {
-            auto const& pio = as_post_iss_object(request.message);
+            auto const& pio = as_post_iss_object(content);
             auto object_id = post_iss_object(
                 server.cache,
                 connection,
@@ -1134,16 +1145,16 @@ process_message(
                 parse_url_type_string(pio.schema),
                 pio.encoding,
                 pio.object);
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_post_iss_object_response(
-                    make_post_iss_object_response(pio.request_id, object_id)));
+                request,
+                make_server_message_content_with_post_iss_object_response(
+                    make_post_iss_object_response(object_id)));
             break;
         }
-        case websocket_client_message_tag::COPY_ISS_OBJECT:
+        case client_message_content_tag::COPY_ISS_OBJECT:
         {
-            auto const& cio = as_copy_iss_object(request.message);
+            auto const& cio = as_copy_iss_object(content);
             copy_iss_object(
                 server.cache,
                 connection,
@@ -1151,33 +1162,31 @@ process_message(
                 cio.source_bucket,
                 cio.destination_context_id,
                 cio.object_id);
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_copy_iss_object_response(
-                    make_copy_iss_object_response(cio.request_id)));
+                request,
+                make_server_message_content_with_copy_iss_object_response(nil));
             break;
         }
-        case websocket_client_message_tag::GET_CALCULATION_REQUEST:
+        case client_message_content_tag::CALCULATION_REQUEST:
         {
-            auto const& gcr = as_get_calculation_request(request.message);
+            auto const& gcr = as_calculation_request(content);
             auto calc = get_calculation_request(
                 server.cache,
                 connection,
                 get_client(server.clients, request.client).session,
                 gcr.context_id,
                 gcr.calculation_id);
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_get_calculation_request_response(
-                    make_get_calculation_request_response(
-                        gcr.request_id, calc)));
+                request,
+                make_server_message_content_with_calculation_request_response(
+                    make_calculation_request_response(calc)));
             break;
         }
-        case websocket_client_message_tag::CALCULATION_SEARCH:
+        case client_message_content_tag::CALCULATION_SEARCH:
         {
-            auto const& csr = as_calculation_search(request.message);
+            auto const& csr = as_calculation_search(content);
             auto matches = search_calculation(
                 server.cache,
                 connection,
@@ -1185,32 +1194,32 @@ process_message(
                 csr.context_id,
                 csr.calculation_id,
                 csr.search_string);
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_calculation_search_response(
-                    make_calculation_search_response(csr.request_id, matches)));
+                request,
+                make_server_message_content_with_calculation_search_response(
+                    make_calculation_search_response(matches)));
             break;
         }
-        case websocket_client_message_tag::POST_CALCULATION:
+        case client_message_content_tag::POST_CALCULATION:
         {
-            auto const& pc = as_post_calculation(request.message);
+            auto const& pc = as_post_calculation(content);
             auto calc_id = post_calculation(
                 server.cache,
                 connection,
                 get_client(server.clients, request.client).session,
                 pc.context_id,
                 pc.calculation);
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_post_calculation_response(
-                    make_post_calculation_response(pc.request_id, calc_id)));
+                request,
+                make_server_message_content_with_post_calculation_response(
+                    make_post_calculation_response(calc_id)));
             break;
         }
-        case websocket_client_message_tag::RESOLVE_META_CHAIN:
+        case client_message_content_tag::RESOLVE_META_CHAIN:
         {
-            auto const& rmc = as_resolve_meta_chain(request.message);
+            auto const& rmc = as_resolve_meta_chain(content);
             auto calc_id = resolve_meta_chain(
                 server.cache,
                 connection,
@@ -1221,14 +1230,14 @@ process_message(
                     // This isn't used.
                     make_thinknode_type_info_with_dynamic_type(
                         thinknode_dynamic_type())}));
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_resolve_meta_chain_response(
-                    make_resolve_meta_chain_response(rmc.request_id, calc_id)));
+                request,
+                make_server_message_content_with_resolve_meta_chain_response(
+                    make_resolve_meta_chain_response(calc_id)));
             break;
         }
-        case websocket_client_message_tag::KILL:
+        case client_message_content_tag::KILL:
         {
             break;
         }
@@ -1242,7 +1251,7 @@ process_messages(websocket_server_impl& server)
     while (1)
     {
         auto request = wait_for_job(server.requests);
-        if (is_kill(request.message))
+        if (is_kill(request.message.content))
         {
             break;
         }
@@ -1253,10 +1262,10 @@ process_messages(websocket_server_impl& server)
         catch (std::exception& e)
         {
             spdlog::get("cradle")->error(e.what());
-            send(
+            send_response(
                 server,
-                request.client,
-                make_websocket_server_message_with_error(e.what()));
+                request,
+                make_server_message_content_with_error(e.what()));
         }
     }
 }
@@ -1279,12 +1288,16 @@ on_message(
     connection_hdl hdl,
     ws_server_type::message_ptr raw_message)
 {
-    websocket_client_message message;
+    string request_id;
     try
     {
-        from_dynamic(&message, parse_msgpack_value(raw_message->get_payload()));
+        auto dynamic_message = parse_msgpack_value(raw_message->get_payload());
+        request_id = cast<string>(
+            get_field(cast<dynamic_map>(dynamic_message), "request_id"));
+        websocket_client_message message;
+        from_dynamic(&message, dynamic_message);
         enqueue_job(server.requests, client_request{hdl, message});
-        if (is_kill(message))
+        if (is_kill(message.content))
         {
             for_each_client(
                 server.clients,
@@ -1297,8 +1310,12 @@ on_message(
     }
     catch (std::exception& e)
     {
-        auto logger = spdlog::get("cradle");
-        logger->error("error processing message: {}", e.what());
+        spdlog::get("cradle")->error("error processing message: {}", e.what());
+        send(
+            server,
+            hdl,
+            make_websocket_server_message(
+                request_id, make_server_message_content_with_error(e.what())));
     }
 }
 
