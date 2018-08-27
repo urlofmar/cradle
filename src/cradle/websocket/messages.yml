@@ -91,11 +91,7 @@ types:
     - json:
         doc: 'JSON'
 
-<<<<<<< HEAD
 - name: iss_object_request
-=======
-- name: get_iss_object_request
->>>>>>> origin
   doc: ''
   schema:
     structure:
@@ -138,47 +134,11 @@ types:
     - object_id:
         doc: ''
         schema:
-<<<<<<< HEAD
-=======
-          blob: {}
-
-- name: resolve_iss_object_request
-  doc: ''
-  schema:
-    structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
-    - context_id:
-        doc: ''
-        schema:
-          string: {}
-    - object_id:
-        doc: ''
-        schema:
->>>>>>> origin
           string: {}
     - ignore_upgrades:
         doc: ''
         schema:
           boolean: {}
-<<<<<<< HEAD
-=======
-
-- name: resolve_iss_object_response
-  doc: ''
-  schema:
-    structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
-    - immutable_id:
-        doc: ''
-        schema:
-          string: {}
->>>>>>> origin
 
 - name: resolve_iss_object_response
   doc: ''
@@ -405,19 +365,8 @@ types:
         schema:
           named:
             app: cradle
-<<<<<<< HEAD
             name: resolve_iss_object_request
     - iss_object_metadata:
-=======
-            name: get_iss_object_request
-    - resolve_iss_object:
-        doc: ''
-        schema:
-          named:
-            app: cradle
-            name: resolve_iss_object_request
-    - get_iss_object_metadata:
->>>>>>> origin
         doc: ''
         schema:
           named:
@@ -506,19 +455,8 @@ types:
         schema:
           named:
             app: cradle
-<<<<<<< HEAD
             name: resolve_iss_object_response
     - iss_object_metadata_response:
-=======
-            name: get_iss_object_response
-    - resolve_iss_object_response:
-        doc: ''
-        schema:
-          named:
-            app: cradle
-            name: resolve_iss_object_response
-    - get_iss_object_metadata_response:
->>>>>>> origin
         doc: ''
         schema:
           named:
