@@ -91,14 +91,14 @@ types:
     - json:
         doc: 'JSON'
 
+<<<<<<< HEAD
+- name: iss_object_request
+=======
 - name: get_iss_object_request
+>>>>>>> origin
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - context_id:
         doc: ''
         schema:
@@ -118,17 +118,28 @@ types:
             app: cradle
             name: output_data_encoding
 
-- name: get_iss_object_response
+- name: iss_object_response
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - object:
         doc: ''
         schema:
+          blob: {}
+
+- name: resolve_iss_object_request
+  doc: ''
+  schema:
+    structure:
+    - context_id:
+        doc: ''
+        schema:
+          string: {}
+    - object_id:
+        doc: ''
+        schema:
+<<<<<<< HEAD
+=======
           blob: {}
 
 - name: resolve_iss_object_request
@@ -146,11 +157,14 @@ types:
     - object_id:
         doc: ''
         schema:
+>>>>>>> origin
           string: {}
     - ignore_upgrades:
         doc: ''
         schema:
           boolean: {}
+<<<<<<< HEAD
+=======
 
 - name: resolve_iss_object_response
   doc: ''
@@ -164,15 +178,21 @@ types:
         doc: ''
         schema:
           string: {}
+>>>>>>> origin
 
-- name: get_iss_object_metadata_request
+- name: resolve_iss_object_response
   doc: ''
   schema:
     structure:
-    - request_id:
+    - immutable_id:
         doc: ''
         schema:
           string: {}
+
+- name: iss_object_metadata_request
+  doc: ''
+  schema:
+    structure:
     - context_id:
         doc: ''
         schema:
@@ -182,14 +202,10 @@ types:
         schema:
           string: {}
 
-- name: get_iss_object_metadata_response
+- name: iss_object_metadata_response
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - metadata:
         doc: ''
         schema:
@@ -203,10 +219,6 @@ types:
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - context_id:
         doc: ''
         schema:
@@ -230,10 +242,6 @@ types:
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - object_id:
         doc: ''
         schema:
@@ -243,10 +251,6 @@ types:
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - source_bucket:
         doc: ''
         schema:
@@ -260,23 +264,10 @@ types:
         schema:
           string: {}
 
-- name: copy_iss_object_response
-  doc: ''
-  schema:
-    structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
-
 - name: post_calculation_request
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - context_id:
         doc: ''
         schema:
@@ -292,10 +283,6 @@ types:
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - calculation_id:
         doc: ''
         schema:
@@ -305,10 +292,6 @@ types:
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - context_id:
         doc: ''
         schema:
@@ -326,10 +309,6 @@ types:
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - matches:
         doc: ''
         schema:
@@ -341,10 +320,6 @@ types:
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - context_id:
         doc: ''
         schema:
@@ -360,23 +335,15 @@ types:
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - calculation_id:
         doc: ''
         schema:
           string: {}
 
-- name: get_calculation_request_message
+- name: calculation_request_message
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - context_id:
         doc: ''
         schema:
@@ -386,14 +353,10 @@ types:
         schema:
           string: {}
 
-- name: get_calculation_request_response
+- name: calculation_request_response
   doc: ''
   schema:
     structure:
-    - request_id:
-        doc: ''
-        schema:
-          string: {}
     - calculation:
         doc: ''
         schema:
@@ -401,7 +364,7 @@ types:
             app: cradle
             name: calculation_request
 
-- name: websocket_client_message
+- name: client_message_content
   doc: ''
   schema:
     union:
@@ -431,11 +394,21 @@ types:
         doc: ''
         schema:
           string: {}
-    - get_iss_object:
+    - iss_object:
         doc: ''
         schema:
           named:
             app: cradle
+            name: iss_object_request
+    - resolve_iss_object:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+<<<<<<< HEAD
+            name: resolve_iss_object_request
+    - iss_object_metadata:
+=======
             name: get_iss_object_request
     - resolve_iss_object:
         doc: ''
@@ -444,11 +417,12 @@ types:
             app: cradle
             name: resolve_iss_object_request
     - get_iss_object_metadata:
+>>>>>>> origin
         doc: ''
         schema:
           named:
             app: cradle
-            name: get_iss_object_metadata_request
+            name: iss_object_metadata_request
     - post_iss_object:
         doc: ''
         schema:
@@ -473,12 +447,12 @@ types:
           named:
             app: cradle
             name: resolve_meta_chain_request
-    - get_calculation_request:
+    - calculation_request:
         doc: ''
         schema:
           named:
             app: cradle
-            name: get_calculation_request_message
+            name: calculation_request_message
     - calculation_search:
         doc: ''
         schema:
@@ -486,7 +460,22 @@ types:
             app: cradle
             name: calculation_search_request
 
-- name: websocket_server_message
+- name: websocket_client_message
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - content:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: client_message_content
+
+- name: server_message_content
   doc: ''
   schema:
     union:
@@ -506,11 +495,21 @@ types:
         doc: ''
         schema:
           string: {}
-    - get_iss_object_response:
+    - iss_object_response:
         doc: ''
         schema:
           named:
             app: cradle
+            name: iss_object_response
+    - resolve_iss_object_response:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+<<<<<<< HEAD
+            name: resolve_iss_object_response
+    - iss_object_metadata_response:
+=======
             name: get_iss_object_response
     - resolve_iss_object_response:
         doc: ''
@@ -519,11 +518,12 @@ types:
             app: cradle
             name: resolve_iss_object_response
     - get_iss_object_metadata_response:
+>>>>>>> origin
         doc: ''
         schema:
           named:
             app: cradle
-            name: get_iss_object_metadata_response
+            name: iss_object_metadata_response
     - post_iss_object_response:
         doc: ''
         schema:
@@ -533,9 +533,7 @@ types:
     - copy_iss_object_response:
         doc: ''
         schema:
-          named:
-            app: cradle
-            name: copy_iss_object_response
+          nil: {}
     - post_calculation_response:
         doc: ''
         schema:
@@ -548,15 +546,30 @@ types:
           named:
             app: cradle
             name: resolve_meta_chain_response
-    - get_calculation_request_response:
+    - calculation_request_response:
         doc: ''
         schema:
           named:
             app: cradle
-            name: get_calculation_request_response
+            name: calculation_request_response
     - calculation_search_response:
         doc: ''
         schema:
           named:
             app: cradle
             name: calculation_search_response
+
+- name: websocket_server_message
+  doc: ''
+  schema:
+    structure:
+    - request_id:
+        doc: ''
+        schema:
+          string: {}
+    - content:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: server_message_content

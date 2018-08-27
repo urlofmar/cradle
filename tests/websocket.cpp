@@ -24,22 +24,26 @@ TEST_CASE("websocket client/server", "[ws]")
         websocket_client client;
         client.set_message_handler(
             [&](websocket_server_message const& message) {
-                switch (get_tag(message))
+                switch (get_tag(message.content))
                 {
-                    case websocket_server_message_tag::CACHE_RESPONSE:
+                    case server_message_content_tag::CACHE_RESPONSE:
                     {
-                        auto response = as_cache_response(message);
+                        REQUIRE(message.request_id == "id0");
+                        auto response = as_cache_response(message.content);
                         REQUIRE(response.key == "test_key");
                         REQUIRE(response.value == some(string("test_value")));
-                        client.send(make_websocket_client_message_with_test(
-                            websocket_test_query{"Hello, Patches!"}));
+                        client.send(make_websocket_client_message(
+                            "id1",
+                            make_client_message_content_with_test(
+                                websocket_test_query{"Hello, Patches!"})));
                         break;
                     }
-                    case websocket_server_message_tag::TEST:
+                    case server_message_content_tag::TEST:
                     {
-                        test_response = as_test(message);
-                        client.send(
-                            make_websocket_client_message_with_kill(nil));
+                        REQUIRE(message.request_id == "id1");
+                        test_response = as_test(message.content);
+                        client.send(make_websocket_client_message(
+                            "id2", make_client_message_content_with_kill(nil)));
                         client.close();
                         break;
                     }
@@ -48,13 +52,18 @@ TEST_CASE("websocket client/server", "[ws]")
                 }
             });
         client.set_open_handler([&]() {
-            client.send(make_websocket_client_message_with_registration(
-                make_websocket_registration_message(
-                    "Kasey", make_thinknode_session("", ""))));
-            client.send(make_websocket_client_message_with_cache_insert(
-                make_websocket_cache_insert("test_key", "test_value")));
-            client.send(
-                make_websocket_client_message_with_cache_query("test_key"));
+            client.send(make_websocket_client_message(
+                "no_id",
+                make_client_message_content_with_registration(
+                    make_websocket_registration_message(
+                        "Kasey", make_thinknode_session("", "")))));
+            client.send(make_websocket_client_message(
+                "no_id",
+                make_client_message_content_with_cache_insert(
+                    make_websocket_cache_insert("test_key", "test_value"))));
+            client.send(make_websocket_client_message(
+                "id0",
+                make_client_message_content_with_cache_query("test_key")));
         });
         client.connect("ws://localhost:41072");
         client.run();
