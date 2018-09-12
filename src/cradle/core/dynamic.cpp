@@ -181,6 +181,13 @@ operator<<(std::ostream& os, dynamic const& v)
     return os;
 }
 
+std::ostream&
+operator<<(std::ostream& os, std::list<dynamic> const& v)
+{
+    os << dynamic(std::vector<dynamic>{std::begin(v), std::end(v)});
+    return os;
+}
+
 size_t
 deep_sizeof(dynamic const& v)
 {

@@ -5,7 +5,7 @@ import os
 class CradleConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     requires = \
-        "Boost/1.64.0@conan/stable", \
+        "boost/1.68.0@tmadden/stable", \
         "catch/1.5.0@TyRoXx/stable", \
         "json/2.0.10@jjones646/stable", \
         "msgpack/2.1.5@bincrafters/stable", \
@@ -21,23 +21,22 @@ class CradleConan(ConanFile):
         "spdlog/0.16.3@bincrafters/stable"
     generators = "cmake"
     default_options = \
-        "Boost:without_atomic=True", \
-        "Boost:without_chrono=True", \
-        "Boost:without_container=True", \
-        "Boost:without_context=True", \
-        "Boost:without_coroutine=True", \
-        "Boost:without_coroutine2=True", \
-        "Boost:without_graph=True", \
-        "Boost:without_graph_parallel=True", \
-        "Boost:without_log=True", \
-        "Boost:without_math=True", \
-        "Boost:without_mpi=True", \
-        "Boost:without_serialization=True", \
-        "Boost:without_signals=True", \
-        "Boost:without_test=True", \
-        "Boost:without_timer=True", \
-        "Boost:without_type_erasure=True", \
-        "Boost:without_wave=True", \
+        "boost:without_atomic=True", \
+        "boost:without_chrono=True", \
+        "boost:without_container=True", \
+        "boost:without_context=True", \
+        "boost:without_coroutine=True", \
+        "boost:without_graph=True", \
+        "boost:without_graph_parallel=True", \
+        "boost:without_log=True", \
+        "boost:without_math=True", \
+        "boost:without_mpi=True", \
+        "boost:without_serialization=True", \
+        "boost:without_signals=True", \
+        "boost:without_test=True", \
+        "boost:without_timer=True", \
+        "boost:without_type_erasure=True", \
+        "boost:without_wave=True", \
         "FakeIt:integration=catch", \
         "*:shared=False"
 

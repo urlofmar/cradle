@@ -130,6 +130,9 @@ cast(dynamic&& v)
 std::ostream&
 operator<<(std::ostream& os, dynamic const& v);
 
+std::ostream&
+operator<<(std::ostream& os, std::list<dynamic> const& v);
+
 // The following implements the CRADLE Regular type interface, plus some
 // additional comparison operators.
 

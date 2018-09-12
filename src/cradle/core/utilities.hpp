@@ -12,6 +12,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
+#include <boost/stacktrace.hpp>
 
 namespace cradle {
 
@@ -80,7 +81,11 @@ invoke_hash(T const& x)
 #define CRADLE_DEFINE_ERROR_INFO(T, id)                                        \
     typedef boost::error_info<struct id##_info_tag, T> id##_info;
 
-#define CRADLE_THROW(x) BOOST_THROW_EXCEPTION(x)
+CRADLE_DEFINE_ERROR_INFO(boost::stacktrace::stacktrace, stacktrace)
+
+#define CRADLE_THROW(x)                                                        \
+    BOOST_THROW_EXCEPTION(                                                     \
+        (x) << stacktrace_info(boost::stacktrace::stacktrace()))
 
 using boost::get_error_info;
 

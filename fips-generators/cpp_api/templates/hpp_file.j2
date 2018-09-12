@@ -6,6 +6,12 @@
 {% import 'structures.j2' as structures with context %}
 {% import 'unions.j2' as unions with context %}
 
+#include <cradle/core/type_definitions.hpp>
+
+{% for import in api.imports %}
+#include <{{import}}.hpp>
+{% endfor %}
+
 // If this file is included multiple times, this code is processed each time
 // to clean out preprocessor definitions.
 
@@ -23,14 +29,8 @@
     {% endwith %}
 {% endfor %}
 
-{% for import in api.imports %}
-#include <{{import}}.hpp>
-{% endfor %}
-
 #ifndef {{header_file_path | upper | replace(':', '') | replace('/', '_') | replace('\\', '_') | replace('.', '_') | replace('-', '_')}}
 #define {{header_file_path | upper | replace(':', '') | replace('/', '_') | replace('\\', '_') | replace('.', '_') | replace('-', '_')}}
-
-#include <cradle/core/type_definitions.hpp>
 
 namespace {{app_name}} {
 
