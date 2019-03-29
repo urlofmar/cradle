@@ -313,6 +313,10 @@ get_iss_object(
     string const& object_id,
     bool ignore_upgrades = false)
 {
+    CRADLE_LOG_CALL(
+        << CRADLE_LOG_ARG(context_id) << CRADLE_LOG_ARG(object_id)
+        << CRADLE_LOG_ARG(ignore_upgrades));
+
     auto immutable_id = resolve_iss_object_to_immutable(
         cache, connection, session, context_id, object_id, ignore_upgrades);
 
@@ -389,10 +393,16 @@ get_app_version_info(
     string const& app,
     string const& version)
 {
-    // Try the disk cache.
     auto cache_key
         = picosha2::hash256_hex_string(value_to_msgpack_string(dynamic(
             {"get_app_version_info", session.api_url, account, app, version})));
+
+    static std::unordered_map<string, thinknode_app_version_info> memory_cache;
+    auto cache_entry = memory_cache.find(cache_key);
+    if (cache_entry != memory_cache.end())
+        return cache_entry->second;
+
+    // Try the disk cache.
     try
     {
         auto entry = cache.find(cache_key);
@@ -402,9 +412,11 @@ get_app_version_info(
             auto data = read_file_contents(cache.get_path_for_id(entry->id));
             if (compute_crc32(data) == entry->crc32)
             {
-                spdlog::get("cradle")->info("cache hit on {}", cache_key);
-                return from_dynamic<thinknode_app_version_info>(
+                spdlog::get("cradle")->info("disk cache hit on {}", cache_key);
+                auto result = from_dynamic<thinknode_app_version_info>(
                     parse_msgpack_value(data));
+                memory_cache[cache_key] = result;
+                return result;
             }
         }
     }
@@ -434,6 +446,8 @@ get_app_version_info(
     }
     cache.finish_insert(cache_id, compute_crc32(msgpack));
 
+    memory_cache[cache_key] = version_info;
+
     return version_info;
 }
 
@@ -444,9 +458,15 @@ get_context_contents(
     thinknode_session const& session,
     string const& context_id)
 {
-    // Try the disk cache.
     auto cache_key = picosha2::hash256_hex_string(value_to_msgpack_string(
         dynamic({"get_context_contents", session.api_url, context_id})));
+
+    static std::unordered_map<string, thinknode_context_contents> memory_cache;
+    auto cache_entry = memory_cache.find(cache_key);
+    if (cache_entry != memory_cache.end())
+        return cache_entry->second;
+
+    // Try the disk cache.
     try
     {
         auto entry = cache.find(cache_key);
@@ -455,8 +475,11 @@ get_context_contents(
         if (entry && entry->value)
         {
             spdlog::get("cradle")->info("cache hit on {}", cache_key);
-            return from_dynamic<thinknode_context_contents>(parse_msgpack_value(
-                base64_decode(*entry->value, get_mime_base64_character_set())));
+            auto result = from_dynamic<thinknode_context_contents>(
+                parse_msgpack_value(base64_decode(
+                    *entry->value, get_mime_base64_character_set())));
+            memory_cache[cache_key] = result;
+            return result;
         }
     }
     catch (...)
@@ -477,6 +500,8 @@ get_context_contents(
         base64_encode(
             value_to_msgpack_string(to_dynamic(context_contents)),
             get_mime_base64_character_set()));
+
+    memory_cache[cache_key] = context_contents;
 
     return context_contents;
 }
@@ -556,6 +581,10 @@ post_iss_object(
     }
 
     // Apply type coercion.
+    spdlog::get("cradle")->info(
+        "coercing " + boost::lexical_cast<string>(decoded_object));
+    spdlog::get("cradle")->info(
+        "to " + boost::lexical_cast<string>(as_api_type(schema)));
     auto coerced_object = coerce_value(
         [&](api_named_type_reference const& ref) {
             return resolve_named_type_reference(
@@ -765,12 +794,21 @@ copy_iss_object(
     http_connection& connection,
     thinknode_session const& session,
     string const& source_bucket,
+    string const& source_context_id,
     string const& destination_context_id,
     string const& object_id)
 {
     CRADLE_LOG_CALL(
-        << CRADLE_LOG_ARG(source_bucket)
+        << CRADLE_LOG_ARG(source_context_id)
         << CRADLE_LOG_ARG(destination_context_id) << CRADLE_LOG_ARG(object_id))
+
+    // Maintain a cache of already-copied objects and don't repeat copies.
+    auto cache_key
+        = source_context_id + "/" + destination_context_id + "/" + object_id;
+    static std::unordered_map<string, bool> memory_cache;
+    auto cache_entry = memory_cache.find(cache_key);
+    if (cache_entry != memory_cache.end())
+        return;
 
     // Copying an object requires not just copying the object itself but
     // also any objects that it references. The brute force approach is to
@@ -780,48 +818,24 @@ copy_iss_object(
     // contains any reference types. (If not, we skip the whole
     // download/scan/recurse step.)
 
-    // Note that we apply the recursive step whether or not the object
-    // already exists in the destination bucket. It's possible that it was
-    // copied improperly (and references objects that haven't been copied),
-    // in which case we'll fix it by recursing. (And if it was copied
-    // properly, then we'll most likely just hit the cache when we do our
-    // redundant recursions, so we don't lose much.)
-
-    // Since we need to query the metadata for the object either way, we try
-    // doing it without copying the object first. If that works, then we can
-    // skip the copy.
-    std::map<string, string> metadata;
-    try
-    {
-        metadata = get_iss_object_metadata(
-            cache, connection, session, destination_context_id, object_id);
-    }
-    catch (...)
-    {
-        // The object probably actually needs to be copied, so do that and
-        // try getting the metadata again.
-        copy_iss_object(
-            connection,
-            session,
-            source_bucket,
-            destination_context_id,
-            object_id);
-        metadata = get_iss_object_metadata(
-            cache, connection, session, destination_context_id, object_id);
-    }
+    // Copy the object.
+    copy_iss_object(
+        connection, session, source_bucket, destination_context_id, object_id);
+    auto metadata = get_iss_object_metadata(
+        cache, connection, session, source_context_id, object_id);
 
     auto object_type
         = as_api_type(parse_url_type_string(metadata["Thinknode-Type"]));
 
     auto look_up_named_type = [&](api_named_type_reference const& ref) {
         return resolve_named_type_reference(
-            cache, connection, session, destination_context_id, ref);
+            cache, connection, session, source_context_id, ref);
     };
 
     if (type_contains_references(look_up_named_type, object_type))
     {
         auto object = get_iss_object(
-            cache, connection, session, destination_context_id, object_id);
+            cache, connection, session, source_context_id, object_id);
         visit_references(
             look_up_named_type, object_type, object, [&](string const& ref) {
                 copy_iss_object(
@@ -829,10 +843,13 @@ copy_iss_object(
                     connection,
                     session,
                     source_bucket,
+                    source_context_id,
                     destination_context_id,
                     ref);
             });
     }
+
+    memory_cache[cache_key] = true;
 }
 
 static calculation_request
@@ -918,13 +935,16 @@ search_calculation(
 }
 
 static string
-post_calculation(
+post_shallow_calculation(
     disk_cache& cache,
     http_connection& connection,
     thinknode_session const& session,
     string const& context_id,
     calculation_request const& calculation)
 {
+    if (is_reference(calculation))
+        return as_reference(calculation);
+
     // Try the disk cache.
     auto cache_key = picosha2::hash256_hex_string(
         value_to_msgpack_string(dynamic({"post_calculation",
@@ -958,6 +978,103 @@ post_calculation(
     cache.insert(cache_key, calculation_id);
 
     return calculation_id;
+}
+
+static calculation_request
+shallowly_post_calculation(
+    disk_cache& cache,
+    http_connection& connection,
+    thinknode_session const& session,
+    string const& context_id,
+    calculation_request const& request)
+{
+    auto recursive_call = [&](calculation_request const& calc) {
+        return shallowly_post_calculation(
+            cache, connection, session, context_id, calc);
+    };
+    calculation_request shallow_calc;
+    switch (get_tag(request))
+    {
+        case calculation_request_tag::REFERENCE:
+        case calculation_request_tag::VALUE:
+            return request;
+        case calculation_request_tag::FUNCTION:
+            shallow_calc = make_calculation_request_with_function(
+                make_function_application(
+                    as_function(request).account,
+                    as_function(request).app,
+                    as_function(request).name,
+                    as_function(request).level,
+                    map(recursive_call, as_function(request).args)));
+            break;
+        case calculation_request_tag::ARRAY:
+            shallow_calc = make_calculation_request_with_array(
+                make_calculation_array_request(
+                    map(recursive_call, as_array(request).items),
+                    as_array(request).item_schema));
+            break;
+        case calculation_request_tag::ITEM:
+            shallow_calc = make_calculation_request_with_item(
+                make_calculation_item_request(
+                    recursive_call(as_item(request).array),
+                    as_item(request).index,
+                    as_item(request).schema));
+            break;
+        case calculation_request_tag::OBJECT:
+            shallow_calc = make_calculation_request_with_object(
+                make_calculation_object_request(
+                    map(recursive_call, as_object(request).properties),
+                    as_object(request).schema));
+            break;
+        case calculation_request_tag::PROPERTY:
+            shallow_calc = make_calculation_request_with_property(
+                make_calculation_property_request(
+                    recursive_call(as_property(request).object),
+                    as_property(request).field,
+                    as_property(request).schema));
+            break;
+        case calculation_request_tag::LET:
+            shallow_calc = make_calculation_request_with_let(
+                make_let_calculation_request(
+                    map(recursive_call, as_let(request).variables),
+                    as_let(request).in));
+            break;
+        case calculation_request_tag::VARIABLE:
+            return request;
+        case calculation_request_tag::META:
+            shallow_calc = make_calculation_request_with_meta(
+                make_meta_calculation_request(
+                    recursive_call(as_meta(request).generator),
+                    as_meta(request).schema));
+            break;
+        case calculation_request_tag::CAST:
+            shallow_calc = make_calculation_request_with_cast(
+                make_calculation_cast_request(
+                    as_cast(request).schema,
+                    recursive_call(as_cast(request).object)));
+            break;
+        default:
+            CRADLE_THROW(
+                invalid_enum_value()
+                << enum_id_info("calculation_request_tag")
+                << enum_value_info(static_cast<int>(get_tag(request))));
+    }
+
+    return make_calculation_request_with_reference(post_shallow_calculation(
+        cache, connection, session, context_id, shallow_calc));
+}
+
+static string
+post_calculation(
+    disk_cache& cache,
+    http_connection& connection,
+    thinknode_session const& session,
+    string const& context_id,
+    calculation_request const& calculation)
+{
+    auto posted = shallowly_post_calculation(
+        cache, connection, session, context_id, calculation);
+    return as_reference(posted);
 }
 
 struct simple_calculation_submitter : calculation_submission_interface
@@ -1155,11 +1272,19 @@ process_message(
         case client_message_content_tag::COPY_ISS_OBJECT:
         {
             auto const& cio = as_copy_iss_object(content);
+            auto source_bucket
+                = get_context_contents(
+                      server.cache,
+                      connection,
+                      get_client(server.clients, request.client).session,
+                      cio.source_context_id)
+                      .bucket;
             copy_iss_object(
                 server.cache,
                 connection,
                 get_client(server.clients, request.client).session,
-                cio.source_bucket,
+                source_bucket,
+                cio.source_context_id,
                 cio.destination_context_id,
                 cio.object_id);
             send_response(

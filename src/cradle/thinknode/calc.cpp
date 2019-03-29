@@ -11,6 +11,72 @@
 
 namespace cradle {
 
+calculation_request static sanitize_request(calculation_request const& request)
+{
+    auto recursive_call = [](calculation_request const& request) {
+        return sanitize_request(request);
+    };
+    switch (get_tag(request))
+    {
+        case calculation_request_tag::REFERENCE:
+        case calculation_request_tag::VALUE:
+            return request;
+        case calculation_request_tag::FUNCTION:
+            return make_calculation_request_with_function(
+                make_function_application(
+                    as_function(request).account,
+                    as_function(request).app,
+                    as_function(request).name,
+                    as_function(request).level ? as_function(request).level
+                                               : some(integer(4)),
+                    map(recursive_call, as_function(request).args)));
+        case calculation_request_tag::ARRAY:
+            return make_calculation_request_with_array(
+                make_calculation_array_request(
+                    map(recursive_call, as_array(request).items),
+                    as_array(request).item_schema));
+        case calculation_request_tag::ITEM:
+            return make_calculation_request_with_item(
+                make_calculation_item_request(
+                    recursive_call(as_item(request).array),
+                    as_item(request).index,
+                    as_item(request).schema));
+        case calculation_request_tag::OBJECT:
+            return make_calculation_request_with_object(
+                make_calculation_object_request(
+                    map(recursive_call, as_object(request).properties),
+                    as_object(request).schema));
+        case calculation_request_tag::PROPERTY:
+            return make_calculation_request_with_property(
+                make_calculation_property_request(
+                    recursive_call(as_property(request).object),
+                    as_property(request).field,
+                    as_property(request).schema));
+        case calculation_request_tag::LET:
+            return make_calculation_request_with_let(
+                make_let_calculation_request(
+                    map(recursive_call, as_let(request).variables),
+                    recursive_call(as_let(request).in)));
+        case calculation_request_tag::VARIABLE:
+            return request;
+        case calculation_request_tag::META:
+            return make_calculation_request_with_meta(
+                make_meta_calculation_request(
+                    recursive_call(as_meta(request).generator),
+                    as_meta(request).schema));
+        case calculation_request_tag::CAST:
+            return make_calculation_request_with_cast(
+                make_calculation_cast_request(
+                    as_cast(request).schema,
+                    recursive_call(as_cast(request).object)));
+        default:
+            CRADLE_THROW(
+                invalid_enum_value()
+                << enum_id_info("calculation_request_tag")
+                << enum_value_info(static_cast<int>(get_tag(request))));
+    }
+}
+
 string
 post_calculation(
     http_connection_interface& connection,
@@ -23,7 +89,7 @@ post_calculation(
         session,
         context_id,
         make_thinknode_type_info_with_dynamic_type(thinknode_dynamic_type()),
-        to_dynamic(request));
+        to_dynamic(sanitize_request(request)));
     auto query = make_http_request(
         http_request_method::POST,
         session.api_url + "/calc/" + request_iss_id + "?context=" + context_id,

@@ -211,7 +211,7 @@ types:
   doc: ''
   schema:
     structure:
-    - source_bucket:
+    - source_context_id:
         doc: ''
         schema:
           string: {}
