@@ -301,26 +301,38 @@ coerce_value_impl(
     switch (get_tag(type))
     {
         case api_type_info_tag::ARRAY:
+        {
+            integer index = 0;
             return map(
                 [&](auto&& item) {
-                    return recurse(
-                        as_array(type).element_schema,
-                        std::forward<decltype(item)>(item));
+                    auto this_index = index++;
+                    try
+                    {
+                        return recurse(
+                            as_array(type).element_schema,
+                            std::forward<decltype(item)>(item));
+                    }
+                    catch (boost::exception& e)
+                    {
+                        cradle::add_dynamic_path_element(e, this_index);
+                        throw;
+                    }
                 },
                 cast<dynamic_array>(std::forward<Dynamic>(value)));
+        }
         case api_type_info_tag::BLOB:
-            check_type(value.type(), value_type::BLOB);
+            check_type(value_type::BLOB, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::BOOLEAN:
-            check_type(value.type(), value_type::BOOLEAN);
+            check_type(value_type::BOOLEAN, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::DATETIME:
-            check_type(value.type(), value_type::DATETIME);
+            check_type(value_type::DATETIME, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::DYNAMIC:
             return std::forward<Dynamic>(value);
         case api_type_info_tag::ENUM:
-            check_type(value.type(), value_type::STRING);
+            check_type(value_type::STRING, value.type());
             if (as_enum(type).find(cast<string>(value)) == as_enum(type).end())
             {
                 CRADLE_THROW(
@@ -332,7 +344,7 @@ coerce_value_impl(
             if (value.type() == value_type::INTEGER)
                 return dynamic(
                     boost::numeric_cast<double>(cast<integer>(value)));
-            check_type(value.type(), value_type::FLOAT);
+            check_type(value_type::FLOAT, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::INTEGER:
             if (value.type() == value_type::FLOAT)
@@ -343,7 +355,7 @@ coerce_value_impl(
                 if (boost::numeric_cast<double>(i) == d)
                     return dynamic(i);
             }
-            check_type(value.type(), value_type::INTEGER);
+            check_type(value_type::INTEGER, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::MAP:
         {
@@ -352,8 +364,16 @@ coerce_value_impl(
             dynamic_map coerced;
             for (auto const& pair : cast<dynamic_map>(value))
             {
-                coerced[recurse(map_type.key_schema, pair.first)]
-                    = recurse(map_type.value_schema, pair.second);
+                try
+                {
+                    coerced[recurse(map_type.key_schema, pair.first)]
+                        = recurse(map_type.value_schema, pair.second);
+                }
+                catch (boost::exception& e)
+                {
+                    cradle::add_dynamic_path_element(e, pair.first);
+                    throw;
+                }
             }
             return coerced;
         }
@@ -361,7 +381,7 @@ coerce_value_impl(
             return recurse(look_up_named_type(as_named(type)), value);
         case api_type_info_tag::NIL:
         default:
-            check_type(value.type(), value_type::NIL);
+            check_type(value_type::NIL, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::OPTIONAL:
         {
@@ -395,10 +415,10 @@ coerce_value_impl(
             return coerced;
         }
         case api_type_info_tag::REFERENCE:
-            check_type(value.type(), value_type::STRING);
+            check_type(value_type::STRING, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::STRING:
-            check_type(value.type(), value_type::STRING);
+            check_type(value_type::STRING, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::STRUCTURE:
         {
@@ -446,10 +466,18 @@ coerce_value_impl(
                 auto const& member_info = pair.second;
                 if (tag == member_name)
                 {
-                    dynamic_map coerced;
-                    coerced[member_name] = recurse(
-                        member_info.schema, get_field(map, member_name));
-                    return coerced;
+                    try
+                    {
+                        dynamic_map coerced;
+                        coerced[member_name] = recurse(
+                            member_info.schema, get_field(map, member_name));
+                        return coerced;
+                    }
+                    catch (boost::exception& e)
+                    {
+                        cradle::add_dynamic_path_element(e, member_name);
+                        throw;
+                    }
                 }
             }
             CRADLE_THROW(

@@ -564,9 +564,17 @@ from_dynamic(optional<T>* x, cradle::dynamic const& v)
     from_dynamic(&type, cradle::get_union_value_type(map));
     if (type == "some")
     {
-        T t;
-        from_dynamic(&t, cradle::get_field(map, "some"));
-        *x = t;
+        try
+        {
+            T t;
+            from_dynamic(&t, cradle::get_field(map, "some"));
+            *x = t;
+        }
+        catch (boost::exception& e)
+        {
+            cradle::add_dynamic_path_element(e, "some");
+            throw;
+        }
     }
     else if (type == "none")
     {
