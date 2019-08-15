@@ -71,6 +71,7 @@ types:
             app: cradle
             name: api_nil_type
     - optional:
+        cpp_id: optional_
         doc: ''
         schema:
           named:

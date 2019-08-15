@@ -16,6 +16,8 @@ from cpp_api.utilities import ordered_object_items
 from cpp_api.utilities import ordered_object_keys
 from cpp_api.utilities import type_schemas_definition_order
 from cpp_api.utilities import unique_field_names
+from cpp_api.utilities import cpp_id_for_item
+
 
 def tag_schema_for_union(union):
     """Generate the enum type to represent the tag for a union type."""
@@ -25,5 +27,5 @@ def tag_schema_for_union(union):
             name=union.name + "_tag",
             schema=_types.SimpleNamespace(
                 enum=[
-                    _types.SimpleNamespace(**{name: _types.SimpleNamespace(doc=info.doc)})
+                    _types.SimpleNamespace(**{name: _types.SimpleNamespace(doc=info.doc, cpp_id=getattr(info, 'cpp_id', None))})
                     for name, info in ordered_object_items(union.schema.union)]))

@@ -3,17 +3,17 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <AccCtrl.h>
-#include <Aclapi.h>
-#include <Shlobj.h>
+#include <AclAPI.h>
+#include <shlobj.h>
 
 #endif
 
 namespace cradle {
 
-#ifdef WIN32
+#ifdef _WIN32
 
 static bool
 create_directory_with_user_full_control_acl(string const& path)

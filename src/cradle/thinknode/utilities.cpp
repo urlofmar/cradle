@@ -42,7 +42,7 @@ as_api_type(thinknode_type_info const& tn)
         default:
             return make_api_type_info_with_nil(api_nil_type());
         case thinknode_type_info_tag::OPTIONAL_TYPE:
-            return make_api_type_info_with_optional(
+            return make_api_type_info_with_optional_(
                 as_api_type(as_optional_type(tn)));
         case thinknode_type_info_tag::REFERENCE_TYPE:
             return make_api_type_info_with_reference(

@@ -2,11 +2,13 @@
 
 from collections import OrderedDict
 
+
 def union_tag(obj):
     """Get the tag of a union object."""
     fields = list(obj.__dict__)
     assert len(fields) == 1, "unions should only have one field"
     return fields[0]
+
 
 # Add some helper functions for working with our YAML objects.
 object_items = lambda obj: obj.__dict__.items()
@@ -14,11 +16,19 @@ object_keys = lambda obj: obj.__dict__.keys()
 object_empty = lambda obj: not obj.__dict__
 
 # Add additional helpers for working with our YAML 'ordered object'.
-# These are lists where each item is an object with a single field (likely a name or identifier).
-# They are functionally equivalent to objects except that they preserve order.
+# These are lists where each item is an object with a single field (likely a
+# name or identifier). They are functionally equivalent to objects except that
+# they preserve order.
 ordered_object_items = lambda obj: [(union_tag(i), getattr(i, union_tag(i))) for i in obj]
 ordered_object_keys = lambda obj: [union_tag(i) for i in obj]
 ordered_object_empty = lambda obj: not obj
+
+
+# Get the C++ identifier for an item (enum value, structure field, etc.).
+def cpp_id_for_item(item):
+    name, info = item
+    return getattr(info, 'cpp_id', None) or name
+
 
 def type_schemas_definition_order(type_dict):
     """Given a type schema dictionary, generate a working definition order for C++."""
@@ -53,7 +63,8 @@ def type_schemas_definition_order(type_dict):
             "map": add_referenced_types_in_map,
             "reference": lambda _: None,
             "named": add_referenced_types_in_named,
-            "union": lambda _: None, # Unions can be defined before the types they reference.
+            "union":
+            lambda _: None,  # Unions can be defined before the types they reference.
             "structure": add_referenced_types_in_structure,
             "enum": lambda _: None,
             "dynamic": lambda t: None
@@ -71,6 +82,7 @@ def type_schemas_definition_order(type_dict):
         add_type_tree(type_info)
 
     return type_order
+
 
 def unique_field_names(types):
     """Given a dictionary of types from an API, generate a list of unique

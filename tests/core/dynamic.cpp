@@ -352,7 +352,7 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
     REQUIRE(coerce_value(enum_type, dynamic("abc")) == dynamic("abc"));
     REQUIRE_THROWS(coerce_value(enum_type, dynamic("ijk")));
 
-    auto optional_type = make_api_type_info_with_optional(integer_type);
+    auto optional_type = make_api_type_info_with_optional_(integer_type);
     // Test that the double <-> integer coercions work within optionals.
     REQUIRE(
         coerce_value(optional_type, dynamic({{"some", integer(0)}}))

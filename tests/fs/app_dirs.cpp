@@ -13,7 +13,7 @@ reset_directory(file_path const& dir)
     create_directory(dir);
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 
 TEST_CASE("Windows app directories", "[fs][app_dirs]")
 {

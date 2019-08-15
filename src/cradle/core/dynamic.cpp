@@ -383,7 +383,7 @@ coerce_value_impl(
         default:
             check_type(value_type::NIL, value.type());
             return std::forward<Dynamic>(value);
-        case api_type_info_tag::OPTIONAL:
+        case api_type_info_tag::OPTIONAL_:
         {
             // This doesn't forward perfectly.
             dynamic_map coerced;
@@ -395,7 +395,7 @@ coerce_value_impl(
                 try
                 {
                     coerced["some"]
-                        = recurse(as_optional(type), get_field(map, "some"));
+                        = recurse(as_optional_(type), get_field(map, "some"));
                 }
                 catch (boost::exception& e)
                 {

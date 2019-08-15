@@ -704,8 +704,8 @@ type_contains_references(
         case api_type_info_tag::NIL:
         default:
             return false;
-        case api_type_info_tag::OPTIONAL:
-            return recurse(as_optional(type));
+        case api_type_info_tag::OPTIONAL_:
+            return recurse(as_optional_(type));
         case api_type_info_tag::REFERENCE:
             return true;
         case api_type_info_tag::STRING:
@@ -773,14 +773,14 @@ visit_references(
         case api_type_info_tag::NIL:
         default:
             break;
-        case api_type_info_tag::OPTIONAL:
+        case api_type_info_tag::OPTIONAL_:
         {
             auto const& map = cast<dynamic_map>(value);
             string tag;
             from_dynamic(&tag, cradle::get_union_value_type(map));
             if (tag == "some")
             {
-                recurse(as_optional(type), get_field(map, "some"));
+                recurse(as_optional_(type), get_field(map, "some"));
             }
             break;
         }

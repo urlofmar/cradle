@@ -49,7 +49,7 @@ get_optional_environment_variable(string const& name)
 void
 set_environment_variable(string const& name, string const& value)
 {
-#ifdef WIN32
+#ifdef _WIN32
     auto assignment = name + "=" + value;
     _putenv(assignment.c_str());
 #else

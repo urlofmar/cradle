@@ -8,9 +8,9 @@
     {% with enum_info = type_info.schema.enum %}
 
 // Ensure that no enum constants have been #defined by external libraries.
-    {% for name, info in ordered_object_items(enum_info) %}
-#ifdef {{name | upper}}
-    #undef {{name | upper}}
+    {% for item in ordered_object_items(enum_info) %}
+#ifdef {{cpp_id_for_item(item) | upper}}
+    #undef {{cpp_id_for_item(item) | upper}}
 #endif
     {% endfor %}
 
@@ -27,7 +27,7 @@ enum class {{type_info.name}}
         {% if info.doc %}
     {{info.doc | format_comment(width=75) | indent(4)}}
         {% endif %}
-    {{name | upper}}
+    {{cpp_id_for_item((name, info)) | upper}}
         {%- if not loop.last %},{% endif %}
 
     {% endfor %}
@@ -85,7 +85,7 @@ get_value_id({{type_info.name}} x)
     switch (x)
     {
     {% for name, info in ordered_object_items(enum_info) %}
-     case {{type_info.name}}::{{name | upper}}:
+     case {{type_info.name}}::{{cpp_id_for_item((name, info)) | upper}}:
         return "{{name | lower}}";
     {% endfor %}
     }
@@ -108,7 +108,7 @@ from_dynamic({{type_info.name}}* x, cradle::dynamic const& v)
     {% for name, info in ordered_object_items(enum_info) %}
     if (s == "{{name | lower}}")
     {
-        *x = {{type_info.name}}::{{name | upper}};
+        *x = {{type_info.name}}::{{cpp_id_for_item((name, info)) | upper}};
         return;
     }
     {% endfor %}

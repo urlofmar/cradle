@@ -35,12 +35,14 @@ struct type_info_query<{{type_info.name}}>
 
 // constructors
 {% for case_name, case_info in ordered_object_items(union_info) %}
+    {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
 {{type_info.name}}
-make_{{type_info.name}}_with_{{case_name}}(
+make_{{type_info.name}}_with_{{cpp_case_name}}(
     {{case_info.schema | cpp_type_for_schema}} const& x);
 {{type_info.name}}
-make_{{type_info.name}}_with_{{case_name}}(
+make_{{type_info.name}}_with_{{cpp_case_name}}(
     {{case_info.schema | cpp_type_for_schema}}&& x);
+    {% endwith %}
 {% endfor %}
 
 // tag access
@@ -52,23 +54,29 @@ get_tag({{type_info.name}} const& x)
 
 // case testing
 {% for case_name, case_info in ordered_object_items(union_info) %}
+    {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
 static inline bool
-is_{{case_name}}({{type_info.name}} const& x)
+is_{{cpp_case_name}}({{type_info.name}} const& x)
 {
-    return get_tag(x) == {{cpp_enum_value_of_union_member(type_info, case_name)}};
+    return get_tag(x) == {{cpp_enum_value_of_union_member(type_info, cpp_case_name)}};
 }
+    {% endwith %}
 {% endfor %}
 
 // const content access
 {% for case_name, case_info in ordered_object_items(union_info) %}
+    {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
 {{case_info.schema | cpp_type_for_schema}} const&
-as_{{case_name}}({{type_info.name}} const& x);
+as_{{cpp_case_name}}({{type_info.name}} const& x);
+    {% endwith %}
 {% endfor %}
 
 // non-const content access
 {% for case_name, case_info in ordered_object_items(union_info) %}
+    {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
 {{case_info.schema | cpp_type_for_schema}}&
-as_{{case_name}}({{type_info.name}}& x);
+as_{{cpp_case_name}}({{type_info.name}}& x);
+    {% endwith %}
 {% endfor %}
 
 bool
@@ -127,39 +135,43 @@ type_info_query<{{type_info.name}}>::get(api_type_info* info)
 }
 
 {% for case_name, case_info in ordered_object_items(union_info) %}
+    {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
 {{type_info.name}}
-make_{{type_info.name}}_with_{{case_name}}(
+make_{{type_info.name}}_with_{{cpp_case_name}}(
     {{case_info.schema | cpp_type_for_schema}} const& x)
 {
     {{type_info.name}} u;
-    u.tag_ = {{cpp_enum_value_of_union_member(type_info, case_name)}};
+    u.tag_ = {{cpp_enum_value_of_union_member(type_info, cpp_case_name)}};
     u.contents_ = x;
     return u;
 }
 {{type_info.name}}
-make_{{type_info.name}}_with_{{case_name}}(
+make_{{type_info.name}}_with_{{cpp_case_name}}(
     {{case_info.schema | cpp_type_for_schema}}&& x)
 {
     {{type_info.name}} u;
-    u.tag_ = {{cpp_enum_value_of_union_member(type_info, case_name)}};
+    u.tag_ = {{cpp_enum_value_of_union_member(type_info, cpp_case_name)}};
     u.contents_ = std::move(x);
     return u;
 }
+    {% endwith %}
 {% endfor %}
 
 {% for case_name, case_info in ordered_object_items(union_info) %}
+    {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
 {{case_info.schema | cpp_type_for_schema}} const&
-as_{{case_name}}({{type_info.name}} const& x)
+as_{{cpp_case_name}}({{type_info.name}} const& x)
 {
-    assert(is_{{case_name}}(x));
+    assert(is_{{cpp_case_name}}(x));
     return boost::any_cast<{{case_info.schema | cpp_type_for_schema}} const&>(x.contents_);
 }
 {{case_info.schema | cpp_type_for_schema}}&
-as_{{case_name}}({{type_info.name}}& x)
+as_{{cpp_case_name}}({{type_info.name}}& x)
 {
-    assert(is_{{case_name}}(x));
+    assert(is_{{cpp_case_name}}(x));
     return boost::any_cast<{{case_info.schema | cpp_type_for_schema}}&>(x.contents_);
 }
+    {% endwith %}
 {% endfor %}
 
 bool
@@ -170,8 +182,10 @@ operator==({{type_info.name}} const& a, {{type_info.name}} const& b)
     switch (get_tag(a))
     {
     {% for case_name, case_info in ordered_object_items(union_info) %}
-     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
-        return as_{{case_name}}(a) == as_{{case_name}}(b);
+        {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
+     case {{cpp_enum_value_of_union_member(type_info, cpp_case_name)}}:
+        return as_{{cpp_case_name}}(a) == as_{{cpp_case_name}}(b);
+        {% endwith %}
     {% endfor %}
     }
     return true;
@@ -187,8 +201,10 @@ operator<({{type_info.name}} const& a, {{type_info.name}} const& b)
     switch (get_tag(a))
     {
     {% for case_name, case_info in ordered_object_items(union_info) %}
-     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
-        return as_{{case_name}}(a) < as_{{case_name}}(b);
+        {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
+     case {{cpp_enum_value_of_union_member(type_info, cpp_case_name)}}:
+        return as_{{cpp_case_name}}(a) < as_{{cpp_case_name}}(b);
+        {% endwith %}
     {% endfor %}
     }
     return false;
@@ -208,9 +224,11 @@ deep_sizeof({{type_info.name}} const& x)
     switch (get_tag(x))
     {
     {% for case_name, case_info in ordered_object_items(union_info) %}
-     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
-        size += deep_sizeof(as_{{case_name}}(x));
+        {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
+     case {{cpp_enum_value_of_union_member(type_info, cpp_case_name)}}:
+        size += deep_sizeof(as_{{cpp_case_name}}(x));
         break;
+        {% endwith %}
     {% endfor %}
     }
     return size;
@@ -223,9 +241,11 @@ hash_value({{type_info.name}} const& x)
     switch (get_tag(x))
     {
     {% for case_name, case_info in ordered_object_items(union_info) %}
-     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
-        boost::hash_combine(hash, cradle::invoke_hash(as_{{case_name}}(x)));
+        {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
+     case {{cpp_enum_value_of_union_member(type_info, cpp_case_name)}}:
+        boost::hash_combine(hash, cradle::invoke_hash(as_{{cpp_case_name}}(x)));
         break;
+        {% endwith %}
     {% endfor %}
     }
     return hash;
@@ -238,9 +258,11 @@ to_dynamic(cradle::dynamic* v, {{type_info.name}} const& x)
     switch (get_tag(x))
     {
     {% for case_name, case_info in ordered_object_items(union_info) %}
-     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
-        to_dynamic(&fields["{{case_name}}"], as_{{case_name}}(x));
+        {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
+     case {{cpp_enum_value_of_union_member(type_info, cpp_case_name)}}:
+        to_dynamic(&fields["{{cpp_case_name}}"], as_{{cpp_case_name}}(x));
         break;
+        {% endwith %}
     {% endfor %}
     }
     *v = std::move(fields);
@@ -254,7 +276,8 @@ from_dynamic({{type_info.name}}* x, cradle::dynamic const& v)
     switch (x->tag_)
     {
     {% for case_name, case_info in ordered_object_items(union_info) %}
-     case {{cpp_enum_value_of_union_member(type_info, case_name)}}:
+        {% with cpp_case_name = cpp_id_for_item((case_name, case_info)) %}
+     case {{cpp_enum_value_of_union_member(type_info, cpp_case_name)}}:
       {
         try
         {
@@ -269,6 +292,7 @@ from_dynamic({{type_info.name}}* x, cradle::dynamic const& v)
         }
         break;
       }
+        {% endwith %}
     {% endfor %}
     }
 }

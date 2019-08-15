@@ -92,7 +92,7 @@ TEST_CASE("Thinknode type conversion", "[thinknode][utilities]")
 
     auto tn_optional_type
         = make_thinknode_type_info_with_optional_type(tn_map_type);
-    auto optional_type = make_api_type_info_with_optional(map_type);
+    auto optional_type = make_api_type_info_with_optional_(map_type);
     REQUIRE(as_api_type(tn_optional_type) == optional_type);
 
     auto tn_enum_type

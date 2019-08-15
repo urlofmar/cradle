@@ -1,5 +1,5 @@
 # fips uses this to version the generator.
-version = 31
+version = 32
 
 # Import the fips generator utilities.
 import genutil
@@ -18,9 +18,10 @@ def initialize_jinja_env():
     from cpp_api import jinja_filters
     from cpp_api import jinja_globals
 
-    # Templates are stored in a subdirectory of the directory where this script lives.
-    template_dir = \
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "cpp_api/templates")
+    # Templates are stored in a subdirectory of the directory where this script
+    # lives.
+    template_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "cpp_api/templates")
 
     jinja_env = \
         jinja2.Environment(

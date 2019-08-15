@@ -524,7 +524,7 @@ struct type_info_query<optional<T>>
     static void
     get(api_type_info* info)
     {
-        *info = make_api_type_info_with_optional(get_type_info<T>());
+        *info = make_api_type_info_with_optional_(get_type_info<T>());
     }
 };
 
