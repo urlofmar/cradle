@@ -1,4 +1,5 @@
 imports:
+  - 'cradle/core/diff_types'
   - 'cradle/thinknode/types'
 
 types:
@@ -74,7 +75,8 @@ types:
     - yaml:
         doc: 'YAML'
     - diagnostic_yaml:
-        doc: 'Diagnostic YAML - This is designed to be more human-friendly and will omit large values (like blobs) that seem meaningless to humans.'
+        doc: 'Diagnostic YAML - This is designed to be more human-friendly and
+        will omit large values (like blobs) that seem meaningless to humans.'
     - msgpack:
         doc: 'MessagePack'
     - json:
@@ -324,6 +326,68 @@ types:
             app: cradle
             name: calculation_request
 
+- name: calculation_diff_request
+  doc: ''
+  schema:
+    structure:
+    - id_a:
+        doc: ''
+        schema:
+          string: {}
+    - context_a:
+        doc: ''
+        schema:
+          string: {}
+    - id_b:
+        doc: ''
+        schema:
+          string: {}
+    - context_b:
+        doc: ''
+        schema:
+          string: {}
+
+- name: calc_node_diff
+  doc: ''
+  schema:
+    structure:
+    - path_from_root:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: value_diff_path
+    - id_in_a:
+        doc: ''
+        schema:
+          string: {}
+    - id_in_b:
+        doc: ''
+        schema:
+          string: {}
+    - diff:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: value_diff
+
+- name: calc_tree_diff
+  doc: ''
+  schema:
+    array:
+      element_schema:
+        named:
+          app: cradle
+          name: calc_node_diff
+
+- name: calculation_diff_response
+  doc: ''
+  schema:
+    named:
+      app: cradle
+      name: calc_tree_diff
+
 - name: client_message_content
   doc: ''
   schema:
@@ -402,6 +466,12 @@ types:
           named:
             app: cradle
             name: calculation_request_message
+    - calculation_diff:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_diff_request
     - calculation_search:
         doc: ''
         schema:
@@ -490,6 +560,12 @@ types:
           named:
             app: cradle
             name: calculation_request_response
+    - calculation_diff_response:
+        doc: ''
+        schema:
+          named:
+            app: cradle
+            name: calculation_diff_response
     - calculation_search_response:
         doc: ''
         schema:
