@@ -165,6 +165,27 @@ to_value_string(ptime const& t)
     return os.str();
 }
 
+ptime
+parse_ptime(std::string const& s)
+{
+    namespace bt = boost::posix_time;
+    std::istringstream is(s);
+    is.imbue(std::locale(
+        std::cout.getloc(), new bt::time_input_facet("%Y-%m-%dT%H:%M:%s")));
+    ptime t;
+    is >> t;
+    char z;
+    is.get(z);
+    if (t != ptime() && z == 'Z'
+        && is.peek() == std::istringstream::traits_type::eof())
+    {
+        return t;
+    }
+    CRADLE_THROW(
+        parsing_error() << expected_format_info("datetime")
+                        << parsed_text_info(s));
+}
+
 void
 to_dynamic(dynamic* v, ptime const& x)
 {

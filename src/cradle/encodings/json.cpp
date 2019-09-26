@@ -29,27 +29,6 @@ array_resembles_map(nlohmann::json const& json)
     return true;
 }
 
-static ptime
-parse_time(std::string const& s)
-{
-    namespace bt = boost::posix_time;
-    std::istringstream is(s);
-    is.imbue(std::locale(
-        std::cout.getloc(), new bt::time_input_facet("%Y-%m-%dT%H:%M:%s")));
-    ptime t;
-    is >> t;
-    char z;
-    is.get(z);
-    if (t != ptime() && z == 'Z'
-        && is.peek() == std::istringstream::traits_type::eof())
-    {
-        return t;
-    }
-    CRADLE_THROW(
-        parsing_error() << expected_format_info("datetime")
-                        << parsed_text_info(s));
-}
-
 // Read a JSON value into a CRADLE dynamic.
 static dynamic
 read_json_value(nlohmann::json const& json)
@@ -79,7 +58,7 @@ read_json_value(nlohmann::json const& json)
             {
                 try
                 {
-                    auto t = parse_time(s);
+                    auto t = parse_ptime(s);
                     // Check that it can be converted back without changing its
                     // value. This could be necessary if we actually expected a
                     // string here.

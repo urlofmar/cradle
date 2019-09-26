@@ -327,6 +327,17 @@ coerce_value_impl(
             check_type(value_type::BOOLEAN, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::DATETIME:
+            // Be forgiving of clients that leave their datetimes as strings.
+            if (value.type() == value_type::STRING)
+            {
+                try
+                {
+                    return dynamic(parse_ptime(cast<string>(value)));
+                }
+                catch (...)
+                {
+                }
+            }
             check_type(value_type::DATETIME, value.type());
             return std::forward<Dynamic>(value);
         case api_type_info_tag::DYNAMIC:

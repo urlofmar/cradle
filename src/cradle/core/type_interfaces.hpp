@@ -230,6 +230,10 @@ to_string(ptime const& t);
 string
 to_value_string(ptime const& t);
 
+// Parse a ptime from a value string.
+ptime
+parse_ptime(std::string const& s);
+
 void
 to_dynamic(dynamic* v, ptime const& x);
 
