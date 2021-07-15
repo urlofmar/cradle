@@ -36,6 +36,9 @@ struct id_interface
     less_than(id_interface const& other) const = 0;
 
     // Write a textual representation of the ID to the given ostream.
+    // The textual representation is intended for informational purposes only.
+    // It's not required to guarantee uniqueness. (In particular, it doesn't
+    // need to capture type information about the ID.)
     virtual void
     stream(std::ostream& o) const = 0;
 
@@ -65,6 +68,9 @@ operator!=(id_interface const& a, id_interface const& b)
 bool
 operator<(id_interface const& a, id_interface const& b);
 
+// The textual representation is intended for informational purposes only.
+// It's not required to guarantee uniqueness. (In particular, it doesn't
+// need to capture type information about the ID.)
 inline std::ostream&
 operator<<(std::ostream& o, id_interface const& id)
 {

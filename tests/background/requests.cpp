@@ -22,3 +22,25 @@ TEST_CASE("value requests", "[background]")
     });
     REQUIRE(was_dispatched);
 }
+
+TEST_CASE("function requests", "[background]")
+{
+    auto four = rq::value(4);
+    auto two = rq::value(2);
+    auto f = [](auto x, auto y) { return x + y; };
+    auto sum = rq::apply(f, four, two);
+
+    REQUIRE(!sum.is_resolved());
+
+    auto same_sum = rq::apply(f, four, two);
+    auto commuted_sum = rq::apply(f, two, four);
+    REQUIRE(sum.value_id() == same_sum.value_id());
+    REQUIRE(sum.value_id() != commuted_sum.value_id());
+
+    bool was_dispatched = false;
+    sum.dispatch([&](int value) {
+        was_dispatched = true;
+        REQUIRE(value == 6);
+    });
+    REQUIRE(was_dispatched);
+}

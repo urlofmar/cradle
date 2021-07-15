@@ -6,6 +6,8 @@ namespace cradle {
 inline bool
 types_match(id_interface const& a, id_interface const& b)
 {
+    // This is equivalent to `typeid(a) == typeid(b)` but is supposed to be
+    // faster in cases where the result is often true.
     return typeid(a).name() == typeid(b).name() || typeid(a) == typeid(b);
 }
 
