@@ -2,6 +2,7 @@
 
 [![MSVC](https://github.com/mghro/cradle/actions/workflows/msvc.yml/badge.svg)](https://github.com/mghro/cradle/actions/workflows/msvc.yml)
 [![GCC](https://github.com/mghro/cradle/actions/workflows/gcc.yml/badge.svg)](https://github.com/mghro/cradle/actions/workflows/gcc.yml)
+[![Clang](https://github.com/mghro/cradle/actions/workflows/clang.yml/badge.svg)](https://github.com/mghro/cradle/actions/workflows/clang.yml)
 [![Docker](https://github.com/mghro/cradle/actions/workflows/docker.yml/badge.svg)](https://github.com/mghro/cradle/actions/workflows/docker.yml)
 
 CRADLE acts as a local proxy for Thinknode
