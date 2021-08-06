@@ -45,12 +45,16 @@ jobs:
         source .venv/bin/activate
         cmake -Bbuild -DCMAKE_BUILD_TYPE=${{matrix.config}} .
 
-    - name: Build & Test
+    - name: Build
       run: >
-        python python/generate_config.py $CRADLE_THINKNODE_API_TOKEN
-
         cmake --build build --config ${{matrix.config}}
-        --target unit_test_coverage -j4
+        --target unit_test_runner -j4
+
+    - name: Test
+      run: |
+        python python/generate_config.py $CRADLE_THINKNODE_API_TOKEN
+        cd build
+        ctest --build-config ${{matrix.config}}
 
     - name: Upload coverage report
       run: bash <(curl -s https://codecov.io/bash) -X gcov
