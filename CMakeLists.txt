@@ -270,7 +270,7 @@ string(REGEX REPLACE "\n" "" API_TOKEN "${API_TOKEN}")
 
 # Add the unit testing target.
 add_custom_target(
-    unit_tests_target
+    unit_tests
     # Create a fresh 'testing' directory within the build dir and run the
     # tests with that. (Some of them perform file I/O.)
     COMMAND ${CMAKE_COMMAND} -E remove_directory testing
@@ -282,12 +282,12 @@ add_test(
     NAME unit_tests
     COMMAND ${CMAKE_COMMAND}
         --build ${CMAKE_BINARY_DIR}
-        --target unit_tests_target)
+        --target unit_tests)
 
 # Add the unit test coverage target.
-if(IS_GCC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-    string(REPLACE clang llvm-profdata LLVM_PROFDATA $ENV{CC})
-    string(REPLACE clang llvm-cov LLVM_COV $ENV{CC})
+if(IS_CLANG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    string(REPLACE clang llvm-profdata LLVM_PROFDATA ${CMAKE_CXX_COMPILER})
+    string(REPLACE clang llvm-cov LLVM_COV ${CMAKE_CXX_COMPILER})
     add_custom_target(
         unit_test_coverage
         COMMAND ${CMAKE_COMMAND} --build . --target unit_tests
@@ -305,7 +305,7 @@ endif()
 
 # Add the integration testing target.
 add_custom_target(
-    integration_tests_target
+    integration_tests
     COMMAND ${CMAKE_COMMAND} -E env CRADLE_DEPLOY_DIR=${CMAKE_CURRENT_BINARY_DIR}/deploy CRADLE_THINKNODE_API_TOKEN=${API_TOKEN} pytest
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python
     DEPENDS server)
@@ -313,4 +313,4 @@ add_test(
     NAME integration_tests
     COMMAND ${CMAKE_COMMAND}
         --build ${CMAKE_BINARY_DIR}
-        --target integration_tests_target)
+        --target integration_tests)
