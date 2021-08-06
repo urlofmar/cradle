@@ -289,7 +289,7 @@ struct immutable_cache_ptr
     // Everything below here should only be called if the pointer is
     // initialized...
 
-    immutable_cache_entry_status const&
+    immutable_cache_entry_status
     status() const
     {
         return untyped_.status();

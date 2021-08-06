@@ -23,7 +23,7 @@ TEST_CASE("value requests", "[background]")
     REQUIRE(was_dispatched);
 }
 
-TEST_CASE("function requests", "[background]")
+TEST_CASE("apply requests", "[background]")
 {
     auto four = rq::value(4);
     auto two = rq::value(2);

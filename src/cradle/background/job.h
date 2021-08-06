@@ -56,7 +56,7 @@ CRADLE_DEFINE_FLAG_TYPE(background_job)
 // in the system.
 CRADLE_DEFINE_FLAG(background_job, 0b01, BACKGROUND_JOB_HIDDEN)
 // Ensure that an idle thread exists to pick up the job.
-CRADLE_DEFINE_FLAG(background_job, 0b01, BACKGROUND_JOB_SKIP_QUEUE)
+CRADLE_DEFINE_FLAG(background_job, 0b10, BACKGROUND_JOB_SKIP_QUEUE)
 
 namespace detail {
 

@@ -152,7 +152,6 @@ detect_insertion(dynamic_array const& a, dynamic_array const& b)
     assert(b_size > a_size);
 
     // Look for a mistmatch between the items in a and b.
-    optional<size_t> removal_point;
     for (size_t i = 0; i != a_size; ++i)
     {
         if (a[i] != b[i])

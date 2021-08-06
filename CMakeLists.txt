@@ -113,7 +113,7 @@ macro(add_exe_link_options )
 endmacro()
 
 # Enable a high level of compiler warnings and treat them as errors.
-if(IS_GCC)
+if(IS_GCC OR IS_CLANG)
     add_compile_options(-Wall -Werror)
     # Disable warnings that are too strict.
     # unused function parameters
@@ -138,12 +138,10 @@ elseif(IS_MSVC)
     add_link_options(/ignore:4099)
 endif()
 
-if(IS_MSVC)
-    # Enable "big objects" for Visual C++.
-    add_compile_options(/bigobj)
-    # Set some other compiler and linker flags to speed up builds.
-    add_exe_link_options(/Debug:FASTLINK)
-    # Use absolute paths for error messages.
+# Use absolute paths for error messages.
+if (IS_CLANG)
+    add_compile_options(-fdiagnostics-absolute-paths)
+elseif(IS_MSVC)
     add_compile_options(/FC)
 endif()
 
@@ -156,10 +154,12 @@ endif()
 
 # Set build options for instrumenting test coverage.
 enable_testing()
-if(IS_GCC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(IS_CLANG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Enabling gcov support")
-    add_compile_options(--coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fprofile-arcs -ftest-coverage)
-    add_exe_link_options(--coverage)
+    add_compile_options(-DLLVM_USE_LINKER=gold -fprofile-instr-generate
+                        -fcoverage-mapping)
+    string(APPEND CMAKE_EXE_LINKER_FLAGS
+           " -fprofile-instr-generate -fcoverage-mapping")
 endif()
 
 # Only generate tagged constructors on supported compilers.
@@ -233,9 +233,6 @@ target_include_directories(cradle PUBLIC
     ${generated_include_dir}/src
     src
     src/third-party)
-if(IS_GCC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_link_options(cradle PUBLIC --coverage)
-endif()
 
 # Set up the deployment directory.
 set(deploy_dir "${CMAKE_CURRENT_BINARY_DIR}/deploy")
@@ -289,19 +286,21 @@ add_test(
 
 # Add the unit test coverage target.
 if(IS_GCC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    string(REPLACE clang llvm-profdata LLVM_PROFDATA $ENV{CC})
+    string(REPLACE clang llvm-cov LLVM_COV $ENV{CC})
     add_custom_target(
-        unit_test_coverage_target
-        COMMAND lcov --directory . --zerocounters
+        unit_test_coverage
         COMMAND ${CMAKE_COMMAND} --build . --target unit_tests
-        COMMAND lcov --directory . --capture --output-file raw.info
-        COMMAND lcov --extract raw.info '${CMAKE_CURRENT_SOURCE_DIR}/src/cradle/*' --output-file filtered.info
-        COMMAND ${CMAKE_COMMAND} -E copy filtered.info ${CMAKE_CURRENT_SOURCE_DIR}/.lcov.info
+        COMMAND ${LLVM_PROFDATA} merge -sparse unit-testing/default.profraw
+                -o default.profdata
+        COMMAND ${LLVM_COV} show -instr-profile=default.profdata
+                $<TARGET_FILE:unit_test_runner>
+                >${PROJECT_SOURCE_DIR}/coverage.txt
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
     add_test(
         NAME unit_test_coverage
-        COMMAND ${CMAKE_COMMAND}
-            --build ${CMAKE_BINARY_DIR}
-            --target unit_test_coverage_target)
+        COMMAND ${CMAKE_COMMAND} --build . --target unit_test_coverage
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 endif()
 
 # Add the integration testing target.

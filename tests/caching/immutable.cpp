@@ -281,7 +281,7 @@ TEST_CASE("immutable cache entry watching", "[immutable_cache]")
 {
     immutable_cache cache(immutable_cache_config(1024));
 
-    struct test_watcher : immutable_cache_entry_watcher
+    struct test_watcher final : immutable_cache_entry_watcher
     {
         std::string label;
         std::ostringstream& log;

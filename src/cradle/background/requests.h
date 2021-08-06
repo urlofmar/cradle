@@ -3,8 +3,10 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <tuple>
 
+#include <cradle/core/flags.h>
 #include <cradle/core/id.h>
 #include <cradle/utilities/functional.h>
 
@@ -93,7 +95,8 @@ value(Value value)
 
 } // namespace rq
 
-// TODO: better name
+namespace detail {
+
 template<class Request>
 struct arg_storage
 {
@@ -105,16 +108,27 @@ struct arg_storage
     }
 };
 
-template<class Function, class... Args>
-struct function_request : request_interface<std::invoke_result_t<
-                              Function,
-                              typename request_value_type<Args>::type...>>
+} // namespace detail
+
+CRADLE_DEFINE_FLAG_TYPE(function)
+CRADLE_DEFINE_FLAG(function, 0b01, FUNCTION_CACHEABLE)
+
+struct function_info
 {
-    typedef typename request_value_type<function_request>::type result_type;
+    std::string name;
+    function_flag_set flags;
+};
+
+template<class Function, class... Args>
+struct apply_request : request_interface<std::invoke_result_t<
+                           Function,
+                           typename request_value_type<Args>::type...>>
+{
+    typedef typename request_value_type<apply_request>::type result_type;
 
     constexpr static std::size_t arg_count = sizeof...(Args);
 
-    function_request(Function&& function, Args&&... args)
+    apply_request(Function&& function, Args&&... args)
         : function_(std::forward<Function>(function)),
           args_(std::forward<Args>(args)...)
     {
@@ -154,7 +168,7 @@ struct function_request : request_interface<std::invoke_result_t<
 
     template<class Arg>
     void
-    dispatch_arg(arg_storage<Arg>& arg)
+    dispatch_arg(detail::arg_storage<Arg>& arg)
     {
         arg.request.dispatch([&](auto value) {
             arg.value = value;
@@ -178,9 +192,9 @@ struct function_request : request_interface<std::invoke_result_t<
 
     Function function_;
     std::function<void(result_type)> callback_;
-    std::tuple<arg_storage<Args>...> args_;
+    std::tuple<detail::arg_storage<Args>...> args_;
     int ready_arg_count_ = 0;
-    mutable decltype(std::declval<function_request>().typed_value_id()) id_;
+    mutable decltype(combine_ids(ref(std::declval<Args>().value_id())...)) id_;
 };
 
 namespace rq {
@@ -189,7 +203,7 @@ template<class Function, class... Args>
 auto
 apply(Function function, Args... args)
 {
-    return function_request<Function, Args...>(
+    return apply_request<Function, Args...>(
         std::move(function), std::move(args)...);
 }
 
