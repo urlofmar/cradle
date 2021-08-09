@@ -278,20 +278,15 @@ add_custom_target(
     COMMAND ${CMAKE_COMMAND} -E chdir testing ${CMAKE_COMMAND} -E env CRADLE_DEPLOY_DIR=${CMAKE_CURRENT_BINARY_DIR}/deploy CRADLE_THINKNODE_API_TOKEN=${API_TOKEN} $<TARGET_FILE:unit_test_runner>
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     DEPENDS unit_test_runner)
-add_test(
-    NAME unit_tests
-    COMMAND ${CMAKE_COMMAND}
-        --build ${CMAKE_BINARY_DIR}
-        --target unit_tests)
 
 # Add the unit test coverage target.
 if(IS_CLANG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-    string(REPLACE clang llvm-profdata LLVM_PROFDATA ${CMAKE_CXX_COMPILER})
-    string(REPLACE clang llvm-cov LLVM_COV ${CMAKE_CXX_COMPILER})
+    string(REGEX REPLACE "clang(\\+\\+)?" llvm-profdata LLVM_PROFDATA ${CMAKE_CXX_COMPILER})
+    string(REGEX REPLACE "clang(\\+\\+)?" llvm-cov LLVM_COV ${CMAKE_CXX_COMPILER})
     add_custom_target(
         unit_test_coverage
         COMMAND ${CMAKE_COMMAND} --build . --target unit_tests
-        COMMAND ${LLVM_PROFDATA} merge -sparse unit-testing/default.profraw
+        COMMAND ${LLVM_PROFDATA} merge -sparse testing/default.profraw
                 -o default.profdata
         COMMAND ${LLVM_COV} show -instr-profile=default.profdata
                 $<TARGET_FILE:unit_test_runner>
@@ -301,6 +296,12 @@ if(IS_CLANG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
         NAME unit_test_coverage
         COMMAND ${CMAKE_COMMAND} --build . --target unit_test_coverage
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+else()
+    add_test(
+        NAME unit_tests
+        COMMAND ${CMAKE_COMMAND}
+            --build ${CMAKE_BINARY_DIR}
+            --target unit_tests)
 endif()
 
 # Add the integration testing target.
