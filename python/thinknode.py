@@ -45,7 +45,7 @@ class Session:
 
     def __init__(self):
         with open('config.yml') as config_file:
-            self.config = yaml.load(config_file)
+            self.config = yaml.full_load(config_file)
         self.headers = {
             'Authorization': 'Bearer ' + self.config["api_token"],
             'Content-Type': 'application/json',
