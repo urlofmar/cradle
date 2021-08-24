@@ -54,7 +54,7 @@ jobs:
       run: |
         python python/generate_config.py $CRADLE_THINKNODE_API_TOKEN
         cd build
-        ctest --build-config ${{matrix.config}}
+        ctest --output-on-failure --build-config ${{matrix.config}} -R unit_test_coverage
 
     - name: Upload coverage report
       run: bash <(curl -s https://codecov.io/bash) -X gcov
