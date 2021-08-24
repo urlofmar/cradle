@@ -1,0 +1,9 @@
+ignore:
+  - tests
+  - build
+  - src/third-party
+coverage:
+  status:
+    patch: off
+    project: off
+comment: off
