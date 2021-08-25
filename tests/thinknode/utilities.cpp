@@ -120,3 +120,31 @@ TEST_CASE("Thinknode account name", "[thinknode][utilities]")
     session.access_token = "xyz";
     REQUIRE(get_account_name(session) == "mgh");
 }
+
+TEST_CASE("Thinknode service IDs", "[thinknode][utilities]")
+{
+    REQUIRE(
+        get_thinknode_service_id("60f05e2600807eb869469379babbc007")
+        == thinknode_service_id::APM);
+    REQUIRE(
+        get_thinknode_service_id("59b9788901403f39977637ad34dc0de2")
+        == thinknode_service_id::CAS);
+    REQUIRE(
+        get_thinknode_service_id("5fd3b99b0100aedb241426c352e08536")
+        == thinknode_service_id::CALC);
+    REQUIRE(
+        get_thinknode_service_id("60da19f700402465d29f3d9684ed648b")
+        == thinknode_service_id::IAM);
+    REQUIRE(
+        get_thinknode_service_id("5d07f08e01c059be2454b3a6b97711ec")
+        == thinknode_service_id::IMMUTABLE);
+    REQUIRE(
+        get_thinknode_service_id("5d07f0c300c0a5c2df5c428c7a9124bf")
+        == thinknode_service_id::ISS);
+    REQUIRE(
+        get_thinknode_service_id("5d07f0c30180d14293b15a6018d8cd8c")
+        == thinknode_service_id::RKS);
+    REQUIRE_THROWS(get_thinknode_service_id(""));
+    REQUIRE_THROWS(
+        get_thinknode_service_id("5d07f0c30240d14293b15a6018d8cd8c"));
+}
