@@ -228,22 +228,6 @@ namespace detail {
 //     return failures;
 // }
 
-size_t
-canceled_job_count(background_job_queue& queue)
-{
-    std::scoped_lock<std::mutex> lock(queue.mutex);
-    job_priority_queue copy = queue.jobs;
-    size_t count = 0;
-    while (!copy.empty())
-    {
-        auto top = copy.top();
-        if (top->cancel)
-            ++count;
-        copy.pop();
-    }
-    return count;
-}
-
 void
 clear_pending_jobs(background_execution_pool& pool)
 {
@@ -271,34 +255,6 @@ clear_all_jobs(background_execution_pool& pool)
         ++queue.version;
         queue.failed_jobs.clear();
     }
-}
-
-void
-clear_canceled_jobs(background_job_queue& queue, job_priority_queue& pqueue)
-{
-    job_priority_queue filtered;
-    while (!pqueue.empty())
-    {
-        auto job = pqueue.top();
-        if (job->cancel)
-        {
-            if (!(job->flags & BACKGROUND_JOB_HIDDEN))
-                --queue.reported_size;
-            queue.job_info.erase(&*job);
-        }
-        else
-            filtered.push(job);
-        pqueue.pop();
-    }
-    pqueue = filtered;
-}
-
-void
-clear_canceled_jobs(background_execution_pool& pool)
-{
-    auto& queue = *pool.queue;
-    std::scoped_lock<std::mutex> lock(queue.mutex);
-    clear_canceled_jobs(queue, queue.jobs);
 }
 
 void
