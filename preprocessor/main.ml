@@ -112,11 +112,11 @@ let main () =
   let namespace = Sys.argv.(7) in
 
   (* Check if '#line' statements have been disabled. *)
-  let disable_line_directives =
-    Sys.getenv_opt "CRADLE_PREPROCESSOR_DISABLE_LINE_DIRECTIVES"
-  in
   let use_line_directives =
-    match disable_line_directives with Some option -> false | None -> true
+    try
+      ignore (Sys.getenv "CRADLE_PREPROCESSOR_DISABLE_LINE_DIRECTIVES");
+      false
+    with Not_found -> true
   in
 
   (* Parse the input file. *)
