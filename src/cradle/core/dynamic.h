@@ -291,6 +291,17 @@ coerce_value(
     api_type_info const& type,
     dynamic value);
 
+namespace detail {
+
+bool
+value_requires_coercion(
+    std::function<api_type_info(api_named_type_reference const& ref)> const&
+        look_up_named_type,
+    api_type_info const& type,
+    dynamic const& value);
+
+}
+
 // This is a generic function for reading a field from a dynamic_map.
 // It exists primarily so that omissible types can override it.
 template<class Field>

@@ -312,6 +312,8 @@ add_dynamic_path_element(boost::exception& e, dynamic const& path_element)
     }
 }
 
+namespace detail {
+
 bool
 value_requires_coercion(
     std::function<api_type_info(api_named_type_reference const& ref)> const&
@@ -408,7 +410,7 @@ value_requires_coercion(
                 try
                 {
                     if (recurse(map_type.key_schema, key_value.first)
-                        || recurse(map_type.key_schema, key_value.second))
+                        || recurse(map_type.value_schema, key_value.second))
                     {
                         return true;
                     }
@@ -521,6 +523,8 @@ value_requires_coercion(
     }
 }
 
+} // namespace detail
+
 void
 coerce_value_impl(
     std::function<api_type_info(api_named_type_reference const& ref)> const&
@@ -623,7 +627,7 @@ coerce_value_impl(
             bool key_coercion_required = false;
             for (auto const& key_value : cast<dynamic_map>(value))
             {
-                if (value_requires_coercion(
+                if (detail::value_requires_coercion(
                         look_up_named_type,
                         map_type.key_schema,
                         key_value.first))
