@@ -253,29 +253,44 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
             type,
             value);
     };
+    auto value_requires_coercion
+        = [&](api_type_info const& type, auto const& value) -> bool {
+        return cradle::detail::value_requires_coercion(
+            [&](api_named_type_reference const& ref) {
+                return type_dictionary[ref];
+            },
+            type,
+            value);
+    };
 
     auto nil_type = make_api_type_info_with_nil_type(api_nil_type());
+    REQUIRE(!value_requires_coercion(nil_type, dynamic(nil)));
     REQUIRE(coerce_value(nil_type, dynamic(nil)) == dynamic(nil));
     REQUIRE_THROWS(coerce_value(nil_type, dynamic(false)));
 
     auto boolean_type
         = make_api_type_info_with_boolean_type(api_boolean_type());
+    REQUIRE(!value_requires_coercion(boolean_type, dynamic(false)));
     REQUIRE(coerce_value(boolean_type, dynamic(false)) == dynamic(false));
     REQUIRE_THROWS(coerce_value(boolean_type, dynamic(nil)));
 
     auto integer_type
         = make_api_type_info_with_integer_type(api_integer_type());
+    REQUIRE(!value_requires_coercion(integer_type, dynamic(integer(0))));
     REQUIRE(
         coerce_value(integer_type, dynamic(integer(0)))
         == dynamic(integer(0)));
     // Test that doubles can be coerced to integers iff they're actually
     // integers.
+    REQUIRE(value_requires_coercion(integer_type, dynamic(double(0))));
     REQUIRE(
         coerce_value(integer_type, dynamic(double(0))) == dynamic(integer(0)));
     REQUIRE_THROWS(coerce_value(integer_type, dynamic(double(0.5))));
     REQUIRE_THROWS(coerce_value(integer_type, dynamic(false)));
 
     auto float_type = make_api_type_info_with_float_type(api_float_type());
+    REQUIRE(!value_requires_coercion(float_type, dynamic(double(0))));
+    REQUIRE(value_requires_coercion(float_type, dynamic(integer(0))));
     REQUIRE(
         coerce_value(float_type, dynamic(double(0))) == dynamic(double(0)));
     REQUIRE(
@@ -302,15 +317,19 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
     REQUIRE(
         coerce_value(named_float_type, dynamic(double(0.5)))
         == dynamic(double(0.5)));
+    REQUIRE(!value_requires_coercion(named_integer_type, dynamic(integer(0))));
+    REQUIRE(value_requires_coercion(named_integer_type, dynamic(double(0))));
 
     auto string_type = make_api_type_info_with_string_type(api_string_type());
     REQUIRE(
         coerce_value(string_type, dynamic(string("xyz")))
         == dynamic(string("xyz")));
+    REQUIRE(!value_requires_coercion(string_type, dynamic(string("xyz"))));
     REQUIRE_THROWS(coerce_value(string_type, dynamic(false)));
 
     auto blob_type = make_api_type_info_with_blob_type(api_blob_type());
     auto test_blob = blob{ownership_holder(), "abc", 3};
+    REQUIRE(!value_requires_coercion(blob_type, dynamic(test_blob)));
     REQUIRE(coerce_value(blob_type, dynamic(test_blob)) == dynamic(test_blob));
     REQUIRE_THROWS(coerce_value(blob_type, dynamic(false)));
 
@@ -319,6 +338,7 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
     auto test_datetime = ptime(
         date(2017, boost::gregorian::Apr, 26),
         boost::posix_time::time_duration(1, 2, 3));
+    REQUIRE(!value_requires_coercion(datetime_type, dynamic(test_datetime)));
     REQUIRE(
         coerce_value(datetime_type, dynamic(test_datetime))
         == dynamic(test_datetime));
@@ -334,15 +354,23 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
         {dynamic(double(2)), dynamic(double(0)), dynamic(double(3))});
     auto test_boolean_array = dynamic_array({dynamic(false), dynamic(true)});
     // Test that the double <-> integer coercions work within arrays.
+    REQUIRE(!value_requires_coercion(
+        integer_array_type, dynamic(test_integer_array)));
     REQUIRE(
         coerce_value(integer_array_type, dynamic(test_integer_array))
         == dynamic(test_integer_array));
+    REQUIRE(value_requires_coercion(
+        float_array_type, dynamic(test_integer_array)));
     REQUIRE(
         coerce_value(float_array_type, dynamic(test_integer_array))
         == dynamic(test_float_array));
+    REQUIRE(value_requires_coercion(
+        integer_array_type, dynamic(test_float_array)));
     REQUIRE(
         coerce_value(integer_array_type, dynamic(test_float_array))
         == dynamic(test_integer_array));
+    REQUIRE(
+        !value_requires_coercion(float_array_type, dynamic(test_float_array)));
     REQUIRE(
         coerce_value(float_array_type, dynamic(test_float_array))
         == dynamic(test_float_array));
@@ -352,18 +380,25 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
     auto enum_type = make_api_type_info_with_enum_type(api_enum_info(
         {{"def", make_api_enum_value_info("xyz")},
          {"abc", make_api_enum_value_info("qrs")}}));
+    REQUIRE(!value_requires_coercion(enum_type, dynamic("def")));
     REQUIRE(coerce_value(enum_type, dynamic("def")) == dynamic("def"));
+    REQUIRE(!value_requires_coercion(enum_type, dynamic("abc")));
     REQUIRE(coerce_value(enum_type, dynamic("abc")) == dynamic("abc"));
     REQUIRE_THROWS(coerce_value(enum_type, dynamic("ijk")));
 
     auto optional_type = make_api_type_info_with_optional_type(integer_type);
     // Test that the double <-> integer coercions work within optionals.
+    REQUIRE(!value_requires_coercion(
+        optional_type, dynamic({{"some", integer(0)}})));
     REQUIRE(
         coerce_value(optional_type, dynamic({{"some", integer(0)}}))
         == dynamic({{"some", integer(0)}}));
+    REQUIRE(value_requires_coercion(
+        optional_type, dynamic({{"some", double(0)}})));
     REQUIRE(
         coerce_value(optional_type, dynamic({{"some", double(0)}}))
         == dynamic({{"some", integer(0)}}));
+    REQUIRE(!value_requires_coercion(optional_type, dynamic({{"none", nil}})));
     REQUIRE(
         coerce_value(optional_type, dynamic({{"none", nil}}))
         == dynamic({{"none", nil}}));
@@ -373,9 +408,17 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
     auto map_type = make_api_type_info_with_map_type(
         make_api_map_info(float_type, integer_type));
     // Test that the double <-> integer coercions work within maps.
+    REQUIRE(!value_requires_coercion(
+        map_type, dynamic_map({{double(0), integer(0)}})));
     REQUIRE(
         coerce_value(map_type, dynamic_map({{double(0), integer(0)}}))
         == dynamic_map({{double(0), integer(0)}}));
+    REQUIRE(value_requires_coercion(
+        map_type, dynamic_map({{integer(1), integer(0)}})));
+    REQUIRE(value_requires_coercion(
+        map_type, dynamic_map({{double(1), double(0)}})));
+    REQUIRE(value_requires_coercion(
+        map_type, dynamic_map({{integer(1), double(0)}})));
     REQUIRE(
         coerce_value(map_type, dynamic_map({{integer(1), double(0)}}))
         == dynamic_map({{double(1), integer(0)}}));
@@ -388,14 +431,20 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
              {"abc",
               make_api_structure_field_info("xyz", integer_type, true)}}));
     // Test that the double <-> integer coercions work within structures.
+    REQUIRE(value_requires_coercion(
+        struct_type, dynamic({{"abc", integer(0)}, {"def", integer(0)}})));
     REQUIRE(
         coerce_value(
             struct_type, dynamic({{"abc", integer(0)}, {"def", integer(0)}}))
         == dynamic({{"def", double(0)}, {"abc", integer(0)}}));
+    REQUIRE(value_requires_coercion(
+        struct_type, dynamic({{"def", double(0.5)}, {"abc", double(1)}})));
     REQUIRE(
         coerce_value(
             struct_type, dynamic({{"def", double(0.5)}, {"abc", double(1)}}))
         == dynamic({{"def", double(0.5)}, {"abc", integer(1)}}));
+    REQUIRE(!value_requires_coercion(
+        struct_type, dynamic({{"def", double(0.5)}, {"abc", integer(1)}})));
     REQUIRE_THROWS(coerce_value(struct_type, dynamic_map({{"abc", "xyz"}})));
     REQUIRE_THROWS(coerce_value(
         struct_type, dynamic({{"def", "xyz"}, {"abc", double(1)}})));
@@ -406,14 +455,22 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
          {"abc", make_api_union_member_info("xyz", integer_type)}}));
     // Test that the double <-> integer coercions work within unions.
     REQUIRE(
+        value_requires_coercion(union_type, dynamic({{"def", integer(0)}})));
+    REQUIRE(
         coerce_value(union_type, dynamic({{"def", integer(0)}}))
         == dynamic({{"def", double(0)}}));
+    REQUIRE(
+        !value_requires_coercion(union_type, dynamic({{"abc", integer(0)}})));
     REQUIRE(
         coerce_value(union_type, dynamic({{"abc", integer(0)}}))
         == dynamic({{"abc", integer(0)}}));
     REQUIRE(
+        !value_requires_coercion(union_type, dynamic({{"def", double(0.5)}})));
+    REQUIRE(
         coerce_value(union_type, dynamic({{"def", double(0.5)}}))
         == dynamic({{"def", double(0.5)}}));
+    REQUIRE(
+        value_requires_coercion(union_type, dynamic({{"abc", double(1)}})));
     REQUIRE(
         coerce_value(union_type, dynamic({{"abc", double(1)}}))
         == dynamic({{"abc", integer(1)}}));
