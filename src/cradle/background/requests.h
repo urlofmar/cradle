@@ -14,12 +14,14 @@ namespace cradle {
 
 struct untyped_request_interface
 {
-    virtual bool
-    is_resolved() const = 0;
-
     virtual id_interface const&
     value_id() const = 0;
 };
+
+struct request_resolution_system;
+
+template<class Value>
+struct request_resolution_context;
 
 template<class Value>
 struct request_interface : untyped_request_interface
@@ -27,9 +29,12 @@ struct request_interface : untyped_request_interface
     typedef Value value_type;
 
     virtual void
-    dispatch(std::function<void(Value)> const& callback)
+    dispatch(request_resolution_context<Value> ctx)
         = 0;
 };
+
+template<class Value>
+using request_ptr = std::unique_ptr<request_interface<Value>>;
 
 template<class Request>
 struct request_value_type
@@ -37,8 +42,8 @@ struct request_value_type
     typedef typename Request::value_type type;
 };
 
-template<class T>
-using request_ptr = std::unique_ptr<request_interface<T>>;
+template<class Value>
+using request_value_type_t = typename request_value_type<Value>::type;
 
 namespace detail {
 
@@ -48,22 +53,50 @@ struct request_resolution_system;
 
 struct request_resolution_system
 {
+    request_resolution_system();
     ~request_resolution_system();
 
     std::unique_ptr<detail::request_resolution_system> impl_;
 };
 
 template<class Value>
+struct request_resolution_context
+{
+    request_resolution_system* system;
+
+    std::function<void(Value)> callback;
+};
+
+template<class Request>
+void
+post_request(
+    request_resolution_system& system,
+    Request& request,
+    std::function<void(request_value_type_t<Request>)> callback)
+{
+    request.dispatch(request_resolution_context<request_value_type_t<Request>>{
+        &system, std::move(callback)});
+}
+
+template<class Value>
+void
+report_value(request_resolution_context<Value>& ctx, Value value)
+{
+    ctx.callback(std::move(value));
+}
+
+template<class Value>
+void
+report_continuation(request_resolution_context<Value>& ctx, Value value)
+{
+    ctx.callback(std::move(value));
+}
+
+template<class Value>
 struct value_request : request_interface<Value>
 {
     value_request(Value value) : value_(std::move(value))
     {
-    }
-
-    bool
-    is_resolved() const override
-    {
-        return true;
     }
 
     id_interface const&
@@ -74,9 +107,9 @@ struct value_request : request_interface<Value>
     }
 
     void
-    dispatch(std::function<void(Value)> const& callback) override
+    dispatch(request_resolution_context<Value> ctx) override
     {
-        callback(value_);
+        report_value(ctx, value_);
     }
 
  private:
@@ -134,12 +167,6 @@ struct apply_request : request_interface<std::invoke_result_t<
     {
     }
 
-    bool
-    is_resolved() const override
-    {
-        return false;
-    }
-
     id_interface const&
     value_id() const override
     {
@@ -148,11 +175,10 @@ struct apply_request : request_interface<std::invoke_result_t<
     }
 
     void
-    dispatch(std::function<void(result_type)> const& callback) override
+    dispatch(request_resolution_context<result_type> ctx) override
     {
-        callback_ = callback;
-        std::apply(
-            [&](auto&... args) { (..., this->dispatch_arg(args)); }, args_);
+        ctx_ = std::move(ctx);
+        std::apply([&](auto&... args) { (..., this->post_arg(args)); }, args_);
     }
 
  private:
@@ -168,9 +194,9 @@ struct apply_request : request_interface<std::invoke_result_t<
 
     template<class Arg>
     void
-    dispatch_arg(detail::arg_storage<Arg>& arg)
+    post_arg(detail::arg_storage<Arg>& arg)
     {
-        arg.request.dispatch([&](auto value) {
+        post_request(*ctx_.system, arg.request, [&](auto value) {
             arg.value = value;
             ++this->ready_arg_count_;
             this->apply_if_ready();
@@ -182,18 +208,20 @@ struct apply_request : request_interface<std::invoke_result_t<
     {
         if (this->ready_arg_count_ == arg_count)
         {
-            callback_(std::apply(
-                function_,
+            report_value(
+                ctx_,
                 std::apply(
-                    [](auto... x) { return std::make_tuple(*x.value...); },
-                    args_)));
+                    function_,
+                    std::apply(
+                        [](auto... x) { return std::make_tuple(*x.value...); },
+                        args_)));
         }
     }
 
     Function function_;
-    std::function<void(result_type)> callback_;
     std::tuple<detail::arg_storage<Args>...> args_;
     int ready_arg_count_ = 0;
+    request_resolution_context<result_type> ctx_;
     mutable decltype(combine_ids(ref(std::declval<Args>().value_id())...)) id_;
 };
 

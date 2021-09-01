@@ -10,4 +10,12 @@ struct request_resolution_system
 
 } // namespace detail
 
+request_resolution_system::request_resolution_system()
+{
+}
+
+request_resolution_system::~request_resolution_system()
+{
+}
+
 } // namespace cradle
