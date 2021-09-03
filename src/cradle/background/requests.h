@@ -12,6 +12,15 @@
 
 namespace cradle {
 
+// CRADLE_DEFINE_FLAG_TYPE(request)
+// CRADLE_DEFINE_FLAG(function, 0b01, REQUEST_CACHEABLE)
+
+// struct function_info
+// {
+//     std::string name;
+//     function_flag_set flags;
+// };
+
 struct untyped_request_interface
 {
     virtual id_interface const&
@@ -85,11 +94,13 @@ report_value(request_resolution_context<Value>& ctx, Value value)
     ctx.callback(std::move(value));
 }
 
-template<class Value>
+template<class Request>
 void
-report_continuation(request_resolution_context<Value>& ctx, Value value)
+report_continuation(
+    request_resolution_context<request_value_type_t<Request>>& ctx,
+    Request request)
 {
-    ctx.callback(std::move(value));
+    request.dispatch(std::move(ctx));
 }
 
 template<class Value>
@@ -141,27 +152,10 @@ struct arg_storage
     }
 };
 
-} // namespace detail
-
-CRADLE_DEFINE_FLAG_TYPE(function)
-CRADLE_DEFINE_FLAG(function, 0b01, FUNCTION_CACHEABLE)
-
-struct function_info
+template<class Derived, class Value, class Function, class... Args>
+struct invoking_request : request_interface<Value>
 {
-    std::string name;
-    function_flag_set flags;
-};
-
-template<class Function, class... Args>
-struct apply_request : request_interface<std::invoke_result_t<
-                           Function,
-                           typename request_value_type<Args>::type...>>
-{
-    typedef typename request_value_type<apply_request>::type result_type;
-
-    constexpr static std::size_t arg_count = sizeof...(Args);
-
-    apply_request(Function&& function, Args&&... args)
+    invoking_request(Function&& function, Args&&... args)
         : function_(std::forward<Function>(function)),
           args_(std::forward<Args>(args)...)
     {
@@ -175,16 +169,19 @@ struct apply_request : request_interface<std::invoke_result_t<
     }
 
     void
-    dispatch(request_resolution_context<result_type> ctx) override
+    dispatch(request_resolution_context<Value> ctx) override
     {
         ctx_ = std::move(ctx);
         std::apply([&](auto&... args) { (..., this->post_arg(args)); }, args_);
     }
 
  private:
+    constexpr static std::size_t arg_count = sizeof...(Args);
+
     auto
     typed_value_id() const
     {
+        // TODO: Factor in function ID.
         return std::apply(
             [](auto&... args) {
                 return combine_ids(ref(args.request.value_id())...);
@@ -208,7 +205,7 @@ struct apply_request : request_interface<std::invoke_result_t<
     {
         if (this->ready_arg_count_ == arg_count)
         {
-            report_value(
+            static_cast<Derived&>(*this).report_result(
                 ctx_,
                 std::apply(
                     function_,
@@ -221,8 +218,34 @@ struct apply_request : request_interface<std::invoke_result_t<
     Function function_;
     std::tuple<detail::arg_storage<Args>...> args_;
     int ready_arg_count_ = 0;
-    request_resolution_context<result_type> ctx_;
+    request_resolution_context<Value> ctx_;
     mutable decltype(combine_ids(ref(std::declval<Args>().value_id())...)) id_;
+};
+
+template<class Function, class... Args>
+using request_application_result_t = std::
+    invoke_result_t<Function, typename request_value_type<Args>::type...>;
+
+} // namespace detail
+
+template<class Function, class... Args>
+struct apply_request
+    : detail::invoking_request<
+          apply_request<Function, Args...>,
+          detail::request_application_result_t<Function, Args...>,
+          Function,
+          Args...>
+{
+    using invoking_request::invoking_request;
+
+    using value_type = detail::request_application_result_t<Function, Args...>;
+
+    void
+    report_result(
+        request_resolution_context<value_type>& ctx, value_type&& result)
+    {
+        report_value(ctx, std::move(result));
+    }
 };
 
 namespace rq {
@@ -232,6 +255,42 @@ auto
 apply(Function function, Args... args)
 {
     return apply_request<Function, Args...>(
+        std::move(function), std::move(args)...);
+}
+
+} // namespace rq
+
+template<class Function, class... Args>
+struct meta_request
+    : detail::invoking_request<
+          meta_request<Function, Args...>,
+          request_value_type_t<
+              detail::request_application_result_t<Function, Args...>>,
+          Function,
+          Args...>
+{
+    using invoking_request::invoking_request;
+
+    using generated_request_type
+        = detail::request_application_result_t<Function, Args...>;
+    using value_type = request_value_type_t<generated_request_type>;
+
+    void
+    report_result(
+        request_resolution_context<value_type>& ctx,
+        generated_request_type&& generated)
+    {
+        report_continuation(ctx, std::move(generated));
+    }
+};
+
+namespace rq {
+
+template<class Function, class... Args>
+auto
+meta(Function function, Args... args)
+{
+    return meta_request<Function, Args...>(
         std::move(function), std::move(args)...);
 }
 
