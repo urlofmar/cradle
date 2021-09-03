@@ -236,7 +236,7 @@ struct apply_request
           Function,
           Args...>
 {
-    using invoking_request::invoking_request;
+    using apply_request::invoking_request::invoking_request;
 
     using value_type = detail::request_application_result_t<Function, Args...>;
 
@@ -269,7 +269,7 @@ struct meta_request
           Function,
           Args...>
 {
-    using invoking_request::invoking_request;
+    using meta_request::invoking_request::invoking_request;
 
     using generated_request_type
         = detail::request_application_result_t<Function, Args...>;
