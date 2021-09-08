@@ -231,7 +231,7 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
     {
         INFO(
             "Resetting q will change the snapshot to reflect that q's value "
-            "is now pending evition.");
+            "is now pending eviction.");
 
         q.reset();
 
