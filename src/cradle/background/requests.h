@@ -57,9 +57,12 @@ using request_value_type_t = typename request_value_type<Value>::type;
 
 namespace detail {
 
-struct request_resolution_system;
+struct request_resolution_system
+{
+    detail::background_execution_pool execution_pool;
+};
 
-}
+} // namespace detail
 
 struct request_resolution_system
 {
