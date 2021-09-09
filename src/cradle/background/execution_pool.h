@@ -157,12 +157,12 @@ struct background_execution_loop
                 // TODO: If this queue is allocating threads on demand and
                 // there are already a lot of idle threads, just end this one.
 
-                while (queue.jobs.empty())
-                {
+                while (!queue.terminating && queue.jobs.empty())
                     queue.cv.wait(lock);
-                    if (queue.terminating)
-                        return;
-                }
+
+                if (queue.terminating)
+                    return;
+
                 job = queue.jobs.top();
                 ++queue.version;
                 queue.jobs.pop();
