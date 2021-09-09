@@ -6,6 +6,7 @@
 #include <optional>
 #include <tuple>
 
+#include <cradle/background/execution_pool.h>
 #include <cradle/core/flags.h>
 #include <cradle/core/id.h>
 #include <cradle/utilities/functional.h>
