@@ -55,10 +55,10 @@ TEST_CASE("meta requests", "[background]")
         return rq::apply(
             [](auto x, auto y) { return x + y; }, rq::value(x), rq::value(y));
     };
-    auto sum = rq::meta(sum_generator, four, two);
+    auto sum = rq::meta(rq::apply(sum_generator, four, two));
 
-    auto same_sum = rq::meta(sum_generator, four, two);
-    auto commuted_sum = rq::meta(sum_generator, two, four);
+    auto same_sum = rq::meta(rq::apply(sum_generator, four, two));
+    auto commuted_sum = rq::meta(rq::apply(sum_generator, two, four));
     REQUIRE(sum.value_id() == same_sum.value_id());
     REQUIRE(sum.value_id() != commuted_sum.value_id());
 

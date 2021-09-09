@@ -97,7 +97,7 @@ report_value(request_resolution_context<Value>& ctx, Value value)
 template<class Request>
 void
 report_continuation(
-    request_resolution_context<request_value_type_t<Request>>& ctx,
+    request_resolution_context<request_value_type_t<Request>> ctx,
     Request request)
 {
     request.dispatch(std::move(ctx));
@@ -260,38 +260,52 @@ apply(Function function, Args... args)
 
 } // namespace rq
 
-template<class Function, class... Args>
-struct meta_request
-    : detail::invoking_request<
-          meta_request<Function, Args...>,
-          request_value_type_t<
-              detail::request_application_result_t<Function, Args...>>,
-          Function,
-          Args...>
+struct meta_id_type
 {
-    using meta_request::invoking_request::invoking_request;
+};
+static simple_id<meta_id_type*> const meta_id(nullptr);
 
-    using generated_request_type
-        = detail::request_application_result_t<Function, Args...>;
-    using value_type = request_value_type_t<generated_request_type>;
+template<class Request>
+struct meta_request
+    : request_interface<request_value_type_t<request_value_type_t<Request>>>
+{
+    typedef request_value_type_t<request_value_type_t<Request>> value_type;
+
+    meta_request(Request&& request) : request_(std::move(request))
+    {
+    }
+
+    id_interface const&
+    value_id() const override
+    {
+        id_ = combine_ids(meta_id, ref(request_.value_id()));
+        return id_;
+    }
 
     void
-    report_result(
-        request_resolution_context<value_type>& ctx,
-        generated_request_type&& generated)
+    dispatch(request_resolution_context<value_type> ctx) override
     {
-        report_continuation(ctx, std::move(generated));
+        auto& system = *ctx.system;
+        post_request(
+            system,
+            request_,
+            [ctx = std::move(ctx)](request_value_type_t<Request> generated) {
+                report_continuation(ctx, std::move(generated));
+            });
     }
+
+ private:
+    Request request_;
+    id_pair<simple_id<meta_id_type*>, id_ref> mutable id_;
 };
 
 namespace rq {
 
-template<class Function, class... Args>
+template<class Request>
 auto
-meta(Function function, Args... args)
+meta(Request request)
 {
-    return meta_request<Function, Args...>(
-        std::move(function), std::move(args)...);
+    return meta_request<Request>(std::move(request));
 }
 
 } // namespace rq
