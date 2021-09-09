@@ -209,13 +209,12 @@ struct invoking_request : request_interface<Value>
     {
         if (this->ready_arg_count_ == arg_count)
         {
-            static_cast<Derived&>(*this).report_result(
+            static_cast<Derived&>(*this).execute(
                 ctx_,
+                function_,
                 std::apply(
-                    function_,
-                    std::apply(
-                        [](auto... x) { return std::make_tuple(*x.value...); },
-                        args_)));
+                    [](auto... x) { return std::make_tuple(*x.value...); },
+                    args_));
         }
     }
 
@@ -244,11 +243,14 @@ struct apply_request
 
     using value_type = detail::request_application_result_t<Function, Args...>;
 
+    template<class ArgTuple>
     void
-    report_result(
-        request_resolution_context<value_type>& ctx, value_type&& result)
+    execute(
+        request_resolution_context<value_type>& ctx,
+        Function& function,
+        ArgTuple&& args)
     {
-        report_value(ctx, std::move(result));
+        report_value(ctx, std::apply(function, std::move(args)));
     }
 };
 
