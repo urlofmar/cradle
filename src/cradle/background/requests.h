@@ -260,6 +260,75 @@ apply(Function function, Args... args)
 
 } // namespace rq
 
+template<class Result, class Function, class ArgTuple>
+struct async_request_job : background_job_interface
+{
+    request_resolution_context<Result> ctx;
+    Function function;
+    ArgTuple arg_tuple;
+
+    async_request_job(
+        request_resolution_context<Result> ctx,
+        Function function,
+        ArgTuple arg_tuple)
+        : ctx(std::move(ctx)),
+          function(std::move(function)),
+          arg_tuple(std::move(arg_tuple))
+    {
+    }
+
+    void
+    execute(
+        check_in_interface& check_in,
+        progress_reporter_interface& reporter) override
+    {
+        report_value(ctx, std::apply(function, std::move(arg_tuple)));
+    }
+};
+
+template<class Function, class... Args>
+struct async_request
+    : detail::invoking_request<
+          async_request<Function, Args...>,
+          detail::request_application_result_t<Function, Args...>,
+          Function,
+          Args...>
+{
+    using async_request::invoking_request::invoking_request;
+
+    using value_type = detail::request_application_result_t<Function, Args...>;
+
+    template<class ArgTuple>
+    void
+    execute(
+        request_resolution_context<value_type>& ctx,
+        Function& function,
+        ArgTuple&& args)
+    {
+        using job_type = async_request_job<value_type, Function, ArgTuple>;
+        auto job_ptr = std::unique_ptr<job_type>(new job_type(
+            std::move(ctx), std::move(function), std::move(args)));
+        controller_ = detail::add_background_job(
+            ctx.system->impl_->execution_pool, std::move(job_ptr));
+    }
+
+ private:
+    background_job_controller controller_;
+};
+
+namespace rq {
+
+template<class Function, class... Args>
+auto
+async(Function function, Args... args)
+{
+    return async_request<Function, Args...>(
+        std::move(function), std::move(args)...);
+}
+
+} // namespace rq
+
+// TODO: Do this properly.
 struct meta_id_type
 {
 };
