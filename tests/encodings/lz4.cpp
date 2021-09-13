@@ -33,3 +33,15 @@ TEST_CASE("simple lz4 compression", "[encodings][lz4]")
             original_data.get(), decompressed_data.get(), original_data_size)
         == 0);
 }
+
+TEST_CASE("lz4 compression error", "[encodings][lz4]")
+{
+    char const* text = "text";
+    REQUIRE_THROWS(lz4::compress(nullptr, 0, text, 4));
+}
+
+TEST_CASE("lz4 decompression error", "[encodings][lz4]")
+{
+    char const* bad_lz4_data = "whatever";
+    REQUIRE_THROWS(lz4::decompress(nullptr, 0, bad_lz4_data, 8));
+}
