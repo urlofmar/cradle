@@ -70,6 +70,7 @@ conan_cmake_run(
         yaml-cpp/0.6.3
         spdlog/1.8.2
         simdjson/0.9.1
+        lz4/1.9.3
     BASIC_SETUP
     BUILD missing
     OPTIONS
