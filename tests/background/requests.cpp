@@ -41,7 +41,7 @@ TEST_CASE("value requests", "[background]")
     REQUIRE(was_evaluated);
 }
 
-TEST_CASE("pure apply requests", "[background]")
+TEST_CASE("pure function object apply requests", "[background]")
 {
     request_resolution_system sys;
 
@@ -63,7 +63,31 @@ TEST_CASE("pure apply requests", "[background]")
     REQUIRE(was_evaluated);
 }
 
-TEST_CASE("impure apply requests", "[background]")
+static int add(int x, int y) { return x + y; }
+
+TEST_CASE("pure function pointer apply requests", "[background]")
+{
+    request_resolution_system sys;
+
+    auto four = rq::value(4);
+    auto two = rq::value(2);
+    auto f = rq::pure(add);
+    auto sum = rq::apply(f, four, two);
+
+    auto same_sum = rq::apply(f, four, two);
+    auto commuted_sum = rq::apply(f, two, four);
+    REQUIRE(sum.value_id() == same_sum.value_id());
+    REQUIRE(sum.value_id() != commuted_sum.value_id());
+
+    bool was_evaluated = false;
+    post_request(sys, sum, [&](int value) {
+        was_evaluated = true;
+        REQUIRE(value == 6);
+    });
+    REQUIRE(was_evaluated);
+}
+
+TEST_CASE("impure function object apply requests", "[background]")
 {
     request_resolution_system sys;
 
@@ -72,6 +96,24 @@ TEST_CASE("impure apply requests", "[background]")
     auto f = rq::impure([](auto x, auto y) { return x + y; });
 
     auto sum = rq::apply(f, four, two);
+    REQUIRE(sum.value_id() == null_id);
+
+    bool was_evaluated = false;
+    post_request(sys, sum, [&](int value) {
+        was_evaluated = true;
+        REQUIRE(value == 6);
+    });
+    REQUIRE(was_evaluated);
+}
+
+TEST_CASE("impure function pointer apply requests", "[background]")
+{
+    request_resolution_system sys;
+
+    auto four = rq::value(4);
+    auto two = rq::value(2);
+
+    auto sum = rq::apply(rq::impure(add), four, two);
     REQUIRE(sum.value_id() == null_id);
 
     bool was_evaluated = false;

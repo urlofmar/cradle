@@ -134,36 +134,6 @@ value(Value value)
 
 } // namespace rq
 
-namespace detail {
-
-template<class Object>
-struct function_object_id_proxy
-{
-    bool operator==(function_object_id_proxy) const
-    {
-        return true;
-    }
-    bool operator<(function_object_id_proxy) const
-    {
-        return false;
-    }
-};
-
-template<class Object>
-size_t hash_value(function_object_id_proxy<Object>)
-{
-    return 0;
-}
-
-template<class Object>
-std::ostream&
-operator<<(std::ostream& o, function_object_id_proxy<Object>)
-{
-    return o << "()";
-}
-
-} // namespace detail
-
 template<class Pointer>
 struct pure_function_pointer_interface
 {
@@ -188,10 +158,10 @@ struct pure_function_object_interface
 {
     Object object;
 
-    simple_id<detail::function_object_id_proxy<Object>>
+    simple_id<Object*>
     id() const
     {
-        return make_id(detail::function_object_id_proxy<Object>());
+        return simple_id<Object*>(nullptr);
     }
 
     template<class... Args>
