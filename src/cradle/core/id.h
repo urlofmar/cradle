@@ -5,6 +5,8 @@
 #include <memory>
 #include <sstream>
 
+#include <cradle/core/hash.h>
+
 // This file implements the concept of IDs in CRADLE.
 
 namespace cradle {
@@ -322,7 +324,7 @@ struct simple_id : id_interface
     size_t
     hash() const override
     {
-        return std::hash<Value>()(value_);
+        return invoke_hash(value_);
     }
 
     Value value_;
@@ -398,7 +400,7 @@ struct simple_id_by_reference : id_interface
     size_t
     hash() const override
     {
-        return std::hash<Value>()(*value_);
+        return invoke_hash(*value_);
     }
 
  private:

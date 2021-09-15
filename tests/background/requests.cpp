@@ -41,13 +41,13 @@ TEST_CASE("value requests", "[background]")
     REQUIRE(was_evaluated);
 }
 
-TEST_CASE("apply requests", "[background]")
+TEST_CASE("pure apply requests", "[background]")
 {
     request_resolution_system sys;
 
     auto four = rq::value(4);
     auto two = rq::value(2);
-    auto f = [](auto x, auto y) { return x + y; };
+    auto f = rq::pure([](auto x, auto y) { return x + y; });
     auto sum = rq::apply(f, four, two);
 
     auto same_sum = rq::apply(f, four, two);
@@ -63,16 +63,37 @@ TEST_CASE("apply requests", "[background]")
     REQUIRE(was_evaluated);
 }
 
+TEST_CASE("impure apply requests", "[background]")
+{
+    request_resolution_system sys;
+
+    auto four = rq::value(4);
+    auto two = rq::value(2);
+    auto f = rq::impure([](auto x, auto y) { return x + y; });
+
+    auto sum = rq::apply(f, four, two);
+    REQUIRE(sum.value_id() == null_id);
+
+    bool was_evaluated = false;
+    post_request(sys, sum, [&](int value) {
+        was_evaluated = true;
+        REQUIRE(value == 6);
+    });
+    REQUIRE(was_evaluated);
+}
+
 TEST_CASE("meta requests", "[background]")
 {
     request_resolution_system sys;
 
     auto four = rq::value(4);
     auto two = rq::value(2);
-    auto sum_generator = [](auto x, auto y) {
+    auto sum_generator = rq::pure([](auto x, auto y) {
         return rq::apply(
-            [](auto x, auto y) { return x + y; }, rq::value(x), rq::value(y));
-    };
+            rq::pure([](auto x, auto y) { return x + y; }),
+            rq::value(x),
+            rq::value(y));
+    });
     auto sum = rq::meta(rq::apply(sum_generator, four, two));
 
     auto same_sum = rq::meta(rq::apply(sum_generator, four, two));
@@ -97,11 +118,11 @@ TEST_CASE("async requests", "[background]")
 
     auto four = rq::value(4);
     auto two = rq::value(2);
-    auto f = [&allowed_to_execute](auto x, auto y) {
+    auto f = rq::pure([&allowed_to_execute](auto x, auto y) {
         while (!allowed_to_execute)
             std::this_thread::yield();
         return x + y;
-    };
+    });
     auto sum = rq::async(f, four, two);
 
     auto same_sum = rq::async(f, four, two);

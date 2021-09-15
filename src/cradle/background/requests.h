@@ -13,15 +13,6 @@
 
 namespace cradle {
 
-// CRADLE_DEFINE_FLAG_TYPE(request)
-// CRADLE_DEFINE_FLAG(function, 0b01, REQUEST_CACHEABLE)
-
-// struct function_info
-// {
-//     std::string name;
-//     function_flag_set flags;
-// };
-
 struct untyped_request_interface
 {
     virtual id_interface const&
@@ -145,11 +136,157 @@ value(Value value)
 
 namespace detail {
 
+template<class Object>
+struct function_object_id_proxy
+{
+    bool operator==(function_object_id_proxy) const
+    {
+        return true;
+    }
+    bool operator<(function_object_id_proxy) const
+    {
+        return false;
+    }
+};
+
+template<class Object>
+size_t hash_value(function_object_id_proxy<Object>)
+{
+    return 0;
+}
+
+template<class Object>
+std::ostream&
+operator<<(std::ostream& o, function_object_id_proxy<Object>)
+{
+    return o << "()";
+}
+
+} // namespace detail
+
+template<class Pointer>
+struct pure_function_pointer_interface
+{
+    Pointer pointer;
+
+    simple_id<Pointer>
+    id() const
+    {
+        return make_id(pointer);
+    }
+
+    template<class... Args>
+    auto
+    operator()(Args&&... args)
+    {
+        return (*pointer)(std::forward<Args>(args)...);
+    }
+};
+
+template<class Object>
+struct pure_function_object_interface
+{
+    Object object;
+
+    simple_id<detail::function_object_id_proxy<Object>>
+    id() const
+    {
+        return make_id(detail::function_object_id_proxy<Object>());
+    }
+
+    template<class... Args>
+    auto
+    operator()(Args&&... args)
+    {
+        return object(std::forward<Args>(args)...);
+    }
+};
+
+namespace rq {
+
+template<class FunctionObject>
+pure_function_object_interface<FunctionObject>
+pure(FunctionObject function_object)
+{
+    return pure_function_object_interface<FunctionObject>{
+        std::move(function_object)};
+}
+
+template<class Result, class... Args>
+pure_function_pointer_interface<Result (*)(Args...)>
+    pure(Result (*function_pointer)(Args...))
+{
+    return pure_function_pointer_interface<Result (*)(Args...)>{
+        function_pointer};
+}
+
+} // namespace rq
+
+template<class Pointer>
+struct impure_function_pointer_interface
+{
+    Pointer pointer;
+
+    auto
+    id() const
+    {
+        return null_id;
+    }
+
+    template<class... Args>
+    auto
+    operator()(Args&&... args)
+    {
+        return (*pointer)(std::forward<Args>(args)...);
+    }
+};
+
+template<class Object>
+struct impure_function_object_interface
+{
+    Object object;
+
+    auto
+    id() const
+    {
+        return null_id;
+    }
+
+    template<class... Args>
+    auto
+    operator()(Args&&... args)
+    {
+        return object(std::forward<Args>(args)...);
+    }
+};
+
+namespace rq {
+
+template<class FunctionObject>
+impure_function_object_interface<FunctionObject>
+impure(FunctionObject function_object)
+{
+    return impure_function_object_interface<FunctionObject>{
+        std::move(function_object)};
+}
+
+template<class Result, class... Args>
+impure_function_pointer_interface<Result (*)(Args...)>
+    impure(Result (*function_pointer)(Args...))
+{
+    return impure_function_pointer_interface<Result (*)(Args...)>{
+        function_pointer};
+}
+
+} // namespace rq
+
+namespace detail {
+
 template<class Request>
 struct arg_storage
 {
     Request request;
-    std::optional<typename request_value_type<Request>::type> value;
+    std::optional<request_value_type_t<Request>> value;
 
     arg_storage(Request request) : request(std::move(request))
     {
@@ -168,8 +305,28 @@ struct invoking_request : request_interface<Value>
     id_interface const&
     value_id() const override
     {
-        id_ = typed_value_id();
-        return id_;
+        bool has_id
+            = function_.id() != null_id
+              && std::apply(
+                  [](auto&... args) {
+                      return (... && (args.request.value_id() != null_id));
+                  },
+                  args_);
+        if (has_id)
+        {
+            id_ = combine_ids(
+                function_.id(),
+                std::apply(
+                    [](auto&... args) {
+                        return combine_ids(ref(args.request.value_id())...);
+                    },
+                    args_));
+            return id_;
+        }
+        else
+        {
+            return null_id;
+        }
     }
 
     void
@@ -181,17 +338,6 @@ struct invoking_request : request_interface<Value>
 
  private:
     constexpr static std::size_t arg_count = sizeof...(Args);
-
-    auto
-    typed_value_id() const
-    {
-        // TODO: Factor in function ID.
-        return std::apply(
-            [](auto&... args) {
-                return combine_ids(ref(args.request.value_id())...);
-            },
-            args_);
-    }
 
     template<class Arg>
     void
@@ -222,7 +368,9 @@ struct invoking_request : request_interface<Value>
     std::tuple<detail::arg_storage<Args>...> args_;
     int ready_arg_count_ = 0;
     request_resolution_context<Value> ctx_;
-    mutable decltype(combine_ids(ref(std::declval<Args>().value_id())...)) id_;
+    mutable decltype(combine_ids(
+        function_.id(),
+        combine_ids(ref(std::declval<Args>().value_id())...))) id_;
 };
 
 template<class Function, class... Args>
