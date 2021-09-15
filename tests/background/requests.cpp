@@ -47,23 +47,51 @@ TEST_CASE("pure function object apply requests", "[background]")
 
     auto four = rq::value(4);
     auto two = rq::value(2);
+
     auto f = rq::pure([](auto x, auto y) { return x + y; });
+    auto g = rq::pure([](auto x, auto y) { return x - y; });
+
     auto sum = rq::apply(f, four, two);
 
     auto same_sum = rq::apply(f, four, two);
-    auto commuted_sum = rq::apply(f, two, four);
     REQUIRE(sum.value_id() == same_sum.value_id());
+
+    auto commuted_sum = rq::apply(f, two, four);
     REQUIRE(sum.value_id() != commuted_sum.value_id());
 
-    bool was_evaluated = false;
-    post_request(sys, sum, [&](int value) {
-        was_evaluated = true;
-        REQUIRE(value == 6);
-    });
-    REQUIRE(was_evaluated);
+    auto difference = rq::apply(g, four, two);
+    REQUIRE(sum.value_id() != difference.value_id());
+
+    {
+        bool was_evaluated = false;
+        post_request(sys, sum, [&](int value) {
+            was_evaluated = true;
+            REQUIRE(value == 6);
+        });
+        REQUIRE(was_evaluated);
+    }
+
+    {
+        bool was_evaluated = false;
+        post_request(sys, difference, [&](int value) {
+            was_evaluated = true;
+            REQUIRE(value == 2);
+        });
+        REQUIRE(was_evaluated);
+    }
 }
 
-static int add(int x, int y) { return x + y; }
+static int
+add(int x, int y)
+{
+    return x + y;
+}
+
+static int
+sub(int x, int y)
+{
+    return x - y;
+}
 
 TEST_CASE("pure function pointer apply requests", "[background]")
 {
@@ -71,20 +99,33 @@ TEST_CASE("pure function pointer apply requests", "[background]")
 
     auto four = rq::value(4);
     auto two = rq::value(2);
-    auto f = rq::pure(add);
-    auto sum = rq::apply(f, four, two);
 
-    auto same_sum = rq::apply(f, four, two);
-    auto commuted_sum = rq::apply(f, two, four);
+    auto sum = rq::apply(rq::pure(add), four, two);
+
+    auto same_sum = rq::apply(rq::pure(add), four, two);
     REQUIRE(sum.value_id() == same_sum.value_id());
+    auto commuted_sum = rq::apply(rq::pure(add), two, four);
     REQUIRE(sum.value_id() != commuted_sum.value_id());
+    auto difference = rq::apply(rq::pure(sub), four, two);
+    REQUIRE(sum.value_id() != difference.value_id());
 
-    bool was_evaluated = false;
-    post_request(sys, sum, [&](int value) {
-        was_evaluated = true;
-        REQUIRE(value == 6);
-    });
-    REQUIRE(was_evaluated);
+    {
+        bool was_evaluated = false;
+        post_request(sys, sum, [&](int value) {
+            was_evaluated = true;
+            REQUIRE(value == 6);
+        });
+        REQUIRE(was_evaluated);
+    }
+
+    {
+        bool was_evaluated = false;
+        post_request(sys, difference, [&](int value) {
+            was_evaluated = true;
+            REQUIRE(value == 2);
+        });
+        REQUIRE(was_evaluated);
+    }
 }
 
 TEST_CASE("impure function object apply requests", "[background]")
