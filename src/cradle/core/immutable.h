@@ -219,7 +219,7 @@ cast_immutable(untyped_immutable const& untyped)
     return typed;
 }
 
-// Cast an untyped_immutable to a typed one.
+// Extract a typed value from an untyped_immutable.
 template<class T>
 void
 from_immutable(T* value, untyped_immutable const& untyped)
