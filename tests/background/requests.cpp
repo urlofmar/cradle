@@ -27,11 +27,6 @@ TEST_CASE("value requests", "[background]")
     request_resolution_system sys;
 
     auto four = rq::value(4);
-    auto two = rq::value(2);
-    auto another_four = rq::value(4);
-
-    REQUIRE(four.value_id() == another_four.value_id());
-    REQUIRE(four.value_id() != two.value_id());
 
     bool was_evaluated = false;
     post_request(sys, four, [&](int value) {
@@ -48,20 +43,7 @@ TEST_CASE("pure function object apply requests", "[background]")
     auto four = rq::value(4);
     auto two = rq::value(2);
 
-    auto f = rq::pure([](auto x, auto y) { return x + y; });
-    auto g = rq::pure([](auto x, auto y) { return x - y; });
-
-    auto sum = rq::apply(f, four, two);
-
-    auto same_sum = rq::apply(f, four, two);
-    REQUIRE(sum.value_id() == same_sum.value_id());
-
-    auto commuted_sum = rq::apply(f, two, four);
-    REQUIRE(sum.value_id() != commuted_sum.value_id());
-
-    auto difference = rq::apply(g, four, two);
-    REQUIRE(sum.value_id() != difference.value_id());
-
+    auto sum = rq::apply([](auto x, auto y) { return x + y; }, four, two);
     {
         bool was_evaluated = false;
         post_request(sys, sum, [&](int value) {
@@ -71,6 +53,8 @@ TEST_CASE("pure function object apply requests", "[background]")
         REQUIRE(was_evaluated);
     }
 
+    auto difference
+        = rq::apply([](auto x, auto y) { return x - y; }, four, two);
     {
         bool was_evaluated = false;
         post_request(sys, difference, [&](int value) {
@@ -79,90 +63,6 @@ TEST_CASE("pure function object apply requests", "[background]")
         });
         REQUIRE(was_evaluated);
     }
-}
-
-static int
-add(int x, int y)
-{
-    return x + y;
-}
-
-static int
-sub(int x, int y)
-{
-    return x - y;
-}
-
-TEST_CASE("pure function pointer apply requests", "[background]")
-{
-    request_resolution_system sys;
-
-    auto four = rq::value(4);
-    auto two = rq::value(2);
-
-    auto sum = rq::apply(rq::pure(add), four, two);
-
-    auto same_sum = rq::apply(rq::pure(add), four, two);
-    REQUIRE(sum.value_id() == same_sum.value_id());
-    auto commuted_sum = rq::apply(rq::pure(add), two, four);
-    REQUIRE(sum.value_id() != commuted_sum.value_id());
-    auto difference = rq::apply(rq::pure(sub), four, two);
-    REQUIRE(sum.value_id() != difference.value_id());
-
-    {
-        bool was_evaluated = false;
-        post_request(sys, sum, [&](int value) {
-            was_evaluated = true;
-            REQUIRE(value == 6);
-        });
-        REQUIRE(was_evaluated);
-    }
-
-    {
-        bool was_evaluated = false;
-        post_request(sys, difference, [&](int value) {
-            was_evaluated = true;
-            REQUIRE(value == 2);
-        });
-        REQUIRE(was_evaluated);
-    }
-}
-
-TEST_CASE("impure function object apply requests", "[background]")
-{
-    request_resolution_system sys;
-
-    auto four = rq::value(4);
-    auto two = rq::value(2);
-    auto f = rq::impure([](auto x, auto y) { return x + y; });
-
-    auto sum = rq::apply(f, four, two);
-    REQUIRE(sum.value_id() == null_id);
-
-    bool was_evaluated = false;
-    post_request(sys, sum, [&](int value) {
-        was_evaluated = true;
-        REQUIRE(value == 6);
-    });
-    REQUIRE(was_evaluated);
-}
-
-TEST_CASE("impure function pointer apply requests", "[background]")
-{
-    request_resolution_system sys;
-
-    auto four = rq::value(4);
-    auto two = rq::value(2);
-
-    auto sum = rq::apply(rq::impure(add), four, two);
-    REQUIRE(sum.value_id() == null_id);
-
-    bool was_evaluated = false;
-    post_request(sys, sum, [&](int value) {
-        was_evaluated = true;
-        REQUIRE(value == 6);
-    });
-    REQUIRE(was_evaluated);
 }
 
 TEST_CASE("meta requests", "[background]")
@@ -171,18 +71,11 @@ TEST_CASE("meta requests", "[background]")
 
     auto four = rq::value(4);
     auto two = rq::value(2);
-    auto sum_generator = rq::pure([](auto x, auto y) {
+    auto sum_generator = [](auto x, auto y) {
         return rq::apply(
-            rq::pure([](auto x, auto y) { return x + y; }),
-            rq::value(x),
-            rq::value(y));
-    });
+            [](auto x, auto y) { return x + y; }, rq::value(x), rq::value(y));
+    };
     auto sum = rq::meta(rq::apply(sum_generator, four, two));
-
-    auto same_sum = rq::meta(rq::apply(sum_generator, four, two));
-    auto commuted_sum = rq::meta(rq::apply(sum_generator, two, four));
-    REQUIRE(sum.value_id() == same_sum.value_id());
-    REQUIRE(sum.value_id() != commuted_sum.value_id());
 
     bool was_evaluated = false;
     post_request(sys, sum, [&](int value) {
@@ -201,17 +94,12 @@ TEST_CASE("async requests", "[background]")
 
     auto four = rq::value(4);
     auto two = rq::value(2);
-    auto f = rq::pure([&allowed_to_execute](auto x, auto y) {
+    auto f = [&allowed_to_execute](auto x, auto y) {
         while (!allowed_to_execute)
             std::this_thread::yield();
         return x + y;
-    });
+    };
     auto sum = rq::async(f, four, two);
-
-    auto same_sum = rq::async(f, four, two);
-    auto commuted_sum = rq::async(f, two, four);
-    REQUIRE(sum.value_id() == same_sum.value_id());
-    REQUIRE(sum.value_id() != commuted_sum.value_id());
 
     post_request(sys, sum, [&executed](int value) {
         executed = true;
@@ -221,3 +109,4 @@ TEST_CASE("async requests", "[background]")
     allowed_to_execute = true;
     REQUIRE(occurs_soon([&]() -> bool { return executed; }));
 }
+

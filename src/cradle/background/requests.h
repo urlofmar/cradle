@@ -13,19 +13,13 @@
 
 namespace cradle {
 
-struct untyped_request_interface
-{
-    virtual id_interface const&
-    value_id() const = 0;
-};
-
 struct request_resolution_system;
 
 template<class Value>
 struct request_resolution_context;
 
 template<class Value>
-struct request_interface : untyped_request_interface
+struct request_interface
 {
     typedef Value value_type;
 
@@ -105,13 +99,6 @@ struct value_request : request_interface<Value>
     {
     }
 
-    id_interface const&
-    value_id() const override
-    {
-        id_ = make_id_by_reference(value_);
-        return id_;
-    }
-
     void
     dispatch(request_resolution_context<Value> ctx) override
     {
@@ -120,7 +107,6 @@ struct value_request : request_interface<Value>
 
  private:
     Value value_;
-    simple_id_by_reference<Value> mutable id_;
 };
 
 namespace rq {
@@ -130,122 +116,6 @@ value_request<Value>
 value(Value value)
 {
     return value_request<Value>(std::move(value));
-}
-
-} // namespace rq
-
-template<class Pointer>
-struct pure_function_pointer_interface
-{
-    Pointer pointer;
-
-    simple_id<Pointer>
-    id() const
-    {
-        return make_id(pointer);
-    }
-
-    template<class... Args>
-    auto
-    operator()(Args&&... args)
-    {
-        return (*pointer)(std::forward<Args>(args)...);
-    }
-};
-
-template<class Object>
-struct pure_function_object_interface
-{
-    Object object;
-
-    simple_id<Object*>
-    id() const
-    {
-        return simple_id<Object*>(nullptr);
-    }
-
-    template<class... Args>
-    auto
-    operator()(Args&&... args)
-    {
-        return object(std::forward<Args>(args)...);
-    }
-};
-
-namespace rq {
-
-template<class FunctionObject>
-pure_function_object_interface<FunctionObject>
-pure(FunctionObject function_object)
-{
-    return pure_function_object_interface<FunctionObject>{
-        std::move(function_object)};
-}
-
-template<class Result, class... Args>
-pure_function_pointer_interface<Result (*)(Args...)>
-    pure(Result (*function_pointer)(Args...))
-{
-    return pure_function_pointer_interface<Result (*)(Args...)>{
-        function_pointer};
-}
-
-} // namespace rq
-
-template<class Pointer>
-struct impure_function_pointer_interface
-{
-    Pointer pointer;
-
-    auto
-    id() const
-    {
-        return null_id;
-    }
-
-    template<class... Args>
-    auto
-    operator()(Args&&... args)
-    {
-        return (*pointer)(std::forward<Args>(args)...);
-    }
-};
-
-template<class Object>
-struct impure_function_object_interface
-{
-    Object object;
-
-    auto
-    id() const
-    {
-        return null_id;
-    }
-
-    template<class... Args>
-    auto
-    operator()(Args&&... args)
-    {
-        return object(std::forward<Args>(args)...);
-    }
-};
-
-namespace rq {
-
-template<class FunctionObject>
-impure_function_object_interface<FunctionObject>
-impure(FunctionObject function_object)
-{
-    return impure_function_object_interface<FunctionObject>{
-        std::move(function_object)};
-}
-
-template<class Result, class... Args>
-impure_function_pointer_interface<Result (*)(Args...)>
-    impure(Result (*function_pointer)(Args...))
-{
-    return impure_function_pointer_interface<Result (*)(Args...)>{
-        function_pointer};
 }
 
 } // namespace rq
@@ -270,33 +140,6 @@ struct invoking_request : request_interface<Value>
         : function_(std::forward<Function>(function)),
           args_(std::forward<Args>(args)...)
     {
-    }
-
-    id_interface const&
-    value_id() const override
-    {
-        bool has_id
-            = function_.id() != null_id
-              && std::apply(
-                  [](auto&... args) {
-                      return (... && (args.request.value_id() != null_id));
-                  },
-                  args_);
-        if (has_id)
-        {
-            id_ = combine_ids(
-                function_.id(),
-                std::apply(
-                    [](auto&... args) {
-                        return combine_ids(ref(args.request.value_id())...);
-                    },
-                    args_));
-            return id_;
-        }
-        else
-        {
-            return null_id;
-        }
     }
 
     void
@@ -338,9 +181,6 @@ struct invoking_request : request_interface<Value>
     std::tuple<detail::arg_storage<Args>...> args_;
     int ready_arg_count_ = 0;
     request_resolution_context<Value> ctx_;
-    mutable decltype(combine_ids(
-        function_.id(),
-        combine_ids(ref(std::declval<Args>().value_id())...))) id_;
 };
 
 template<class Function, class... Args>
@@ -452,12 +292,6 @@ async(Function function, Args... args)
 
 } // namespace rq
 
-// TODO: Do this properly.
-struct meta_id_type
-{
-};
-static simple_id<meta_id_type*> const meta_id(nullptr);
-
 template<class Request>
 struct meta_request
     : request_interface<request_value_type_t<request_value_type_t<Request>>>
@@ -466,13 +300,6 @@ struct meta_request
 
     meta_request(Request&& request) : request_(std::move(request))
     {
-    }
-
-    id_interface const&
-    value_id() const override
-    {
-        id_ = combine_ids(meta_id, ref(request_.value_id()));
-        return id_;
     }
 
     void
@@ -489,7 +316,6 @@ struct meta_request
 
  private:
     Request request_;
-    id_pair<simple_id<meta_id_type*>, id_ref> mutable id_;
 };
 
 namespace rq {
