@@ -12,6 +12,8 @@ request_resolution_system::request_resolution_system()
         impl_->execution_pool,
         std::max(std::thread::hardware_concurrency(), 1u),
         [] { return detail::basic_executor(); });
+
+    impl_->cache.reset(immutable_cache_config(1024));
 }
 
 request_resolution_system::~request_resolution_system()

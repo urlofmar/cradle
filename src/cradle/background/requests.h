@@ -7,6 +7,7 @@
 #include <tuple>
 
 #include <cradle/background/execution_pool.h>
+#include <cradle/caching/immutable.h>
 #include <cradle/core/flags.h>
 #include <cradle/core/id.h>
 #include <cradle/utilities/functional.h>
@@ -45,6 +46,7 @@ namespace detail {
 struct request_resolution_system
 {
     detail::background_execution_pool execution_pool;
+    cradle::immutable_cache cache;
 };
 
 } // namespace detail
@@ -78,7 +80,7 @@ post_request(
 
 template<class Value>
 void
-report_value(request_resolution_context<Value>& ctx, Value value)
+report_value(request_resolution_context<Value> const& ctx, Value value)
 {
     ctx.callback(std::move(value));
 }
@@ -328,6 +330,126 @@ meta(Request request)
 }
 
 } // namespace rq
+
+template<class Value>
+struct cached_request_watcher final : immutable_cache_entry_watcher
+{
+    cached_request_watcher(request_resolution_context<Value> ctx)
+        : ctx_(std::move(ctx))
+    {
+    }
+
+    void
+    on_progress(float progress) override
+    {
+    }
+
+    void
+    on_failure() override
+    {
+    }
+
+    void
+    on_ready(untyped_immutable value) override
+    {
+        report_value(ctx_, *cast_immutable<Value>(value));
+    }
+
+    request_resolution_context<Value> ctx_;
+};
+
+template<class Request>
+struct cached_request_posting_job : background_job_interface
+{
+    cached_request_posting_job(
+        request_resolution_system& system,
+        captured_id cache_id,
+        Request request)
+        : system_(system),
+          request_(std::move(request)),
+          cache_id_(std::move(cache_id))
+    {
+    }
+
+    void
+    execute(
+        check_in_interface& check_in,
+        progress_reporter_interface& reporter) override
+    {
+        post_request(
+            system_,
+            request_,
+            [system = &system_,
+             id = std::move(cache_id_)](request_value_type_t<Request> value) {
+                set_immutable_cache_data(
+                    system->impl_->cache,
+                    *id,
+                    make_immutable(std::move(value)));
+            });
+    }
+
+ private:
+    request_resolution_system& system_;
+    Request request_;
+    captured_id cache_id_;
+};
+
+template<class Request>
+struct cached_request : request_interface<request_value_type_t<Request>>
+{
+    typedef request_value_type_t<Request> value_type;
+
+    cached_request(id_interface const& id, Request&& request)
+        : id_(id), request_(std::move(request))
+    {
+    }
+
+    void
+    dispatch(request_resolution_context<value_type> ctx) override
+    {
+        cache_handle_.reset(
+            ctx.system->impl_->cache,
+            *id_,
+            [&]() {
+                using job_type = cached_request_posting_job<Request>;
+                auto job_ptr = std::unique_ptr<job_type>(new job_type(
+                    *ctx.system, std::move(id_), std::move(request_)));
+                return detail::add_background_job(
+                    ctx.system->impl_->execution_pool, std::move(job_ptr));
+            },
+            std::make_shared<cached_request_watcher<value_type>>(ctx));
+    }
+
+ private:
+    captured_id id_;
+    Request request_;
+    immutable_cache_entry_handle cache_handle_;
+};
+
+namespace rq {
+
+template<class Request>
+auto
+cached(id_interface const& id, Request request)
+{
+    return cached_request<Request>(id, std::move(request));
+}
+
+} // namespace rq
+
+template<class FunctionObject>
+simple_id<FunctionObject*>
+make_function_id(FunctionObject const& function_object)
+{
+    return simple_id<FunctionObject*>(nullptr);
+}
+
+template<class Result, class... Args>
+simple_id<Result (*)(Args...)>
+    make_function_id(Result (*function_pointer)(Args...))
+{
+    return make_id(function_pointer);
+}
 
 } // namespace cradle
 
