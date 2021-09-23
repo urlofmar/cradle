@@ -334,6 +334,7 @@ TEST_CASE("immutable cache entry watching", "[immutable_cache]")
 
     // Duplicating the handle also duplicates the watchers.
     auto r = q;
+    check_log("1: on_progress: 0.25;"); // The new watcher gets caught up.
     report_immutable_cache_loading_progress(cache, make_id(1), 0.375);
     check_log("1: on_progress: 0.375;1: on_progress: 0.375;");
 
@@ -351,6 +352,24 @@ TEST_CASE("immutable cache entry watching", "[immutable_cache]")
     check_log("1: on_ready: 12;");
 
     report_immutable_cache_loading_failure(cache, make_id(0));
+    check_log("0: on_failure;");
+
+    // Creating a new handle for an ID that already has data immediately
+    // invokes the watcher with the data.
+    immutable_cache_entry_handle new_q(
+        cache,
+        make_id(1),
+        [&] { return background_job_controller(); },
+        std::make_shared<test_watcher>("1", log));
+    check_log("1: on_ready: 12;");
+
+    // Creating a new handle for an ID that has already failed immediately
+    // invokes the watcher with the failure.
+    immutable_cache_entry_handle new_p(
+        cache,
+        make_id(0),
+        [&] { return background_job_controller(); },
+        std::make_shared<test_watcher>("0", log));
     check_log("0: on_failure;");
 }
 

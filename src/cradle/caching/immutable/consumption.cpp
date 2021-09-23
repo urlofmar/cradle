@@ -32,7 +32,26 @@ acquire_cache_record_no_lock(
         remove_from_eviction_list(*record->owner_cache, record);
     }
     if (watcher)
+    {
         record->watchers.push_back(watcher);
+        // Let the watcher know what the current state of the record is.
+        switch (record->state.load(std::memory_order_relaxed))
+        {
+            case immutable_cache_entry_state::LOADING: {
+                auto progress = decode_progress(
+                    record->progress.load(std::memory_order_relaxed));
+                if (progress)
+                    watcher->on_progress(*progress);
+                break;
+            }
+            case immutable_cache_entry_state::READY:
+                watcher->on_ready(record->data);
+                break;
+            case immutable_cache_entry_state::FAILED:
+                watcher->on_failure();
+                break;
+        }
+    }
 }
 
 immutable_cache_record*
