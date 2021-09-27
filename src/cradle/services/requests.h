@@ -1,5 +1,5 @@
-#ifndef CRADLE_BACKGROUND_REQUESTS_H
-#define CRADLE_BACKGROUND_REQUESTS_H
+#ifndef CRADLE_SERVICES_REQUESTS_H
+#define CRADLE_SERVICES_REQUESTS_H
 
 #include <functional>
 #include <memory>
