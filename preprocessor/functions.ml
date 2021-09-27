@@ -542,8 +542,8 @@ let declare_request_interface_for_function_instance account_id app_id f
          f.function_parameters)
   ^ "); "
 
-(* Generate the interface necessary to construct typed background calculation
-   requests for this function. *)
+(* Generate the interface necessary to construct typed calculation requests for
+   this function. *)
 let declare_request_interface_for_function account_id app_id f =
   concat_code_for_function_instances
     (declare_request_interface_for_function_instance account_id app_id)
@@ -598,5 +598,5 @@ let hpp_code_for_function account_id app_id namespace f =
   (* Declare all the API instance redirections. *)
   ^ concat_code_for_function_instances hpp_function_redirection_code f
 
-(* Create the background interface. *)
+(* Create the request interface. *)
 (* ^ declare_request_interface_for_function account_id app_id f *)
