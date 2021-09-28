@@ -27,12 +27,12 @@ check_async_request_value(
     request_interface<Value>& request,
     Value const& expected_value)
 {
-    bool was_evaluated = false;
+    std::atomic<bool> was_evaluated(false);
     post_request(sys, request, [&](Value value) {
-        was_evaluated = true;
+        was_evaluated.store(true);
         REQUIRE(value == expected_value);
     });
-    REQUIRE(occurs_soon([&]() -> bool { return was_evaluated; }));
+    REQUIRE(occurs_soon([&]() -> bool { return was_evaluated.load(); }));
 }
 
 TEST_CASE("value requests", "[background]")
@@ -129,4 +129,24 @@ TEST_CASE("cached requests", "[background]")
         rq::apply(counted_add, two, two));
     check_async_request_value(sys, different_sum, 4);
     REQUIRE(call_count == 2);
+}
+
+TEST_CASE("HTTP requests", "[background]")
+{
+    request_resolution_system sys;
+
+    auto request = rq::http(rq::value(make_get_request(
+        "http://postman-echo.com/get?color=navy", http_header_list())));
+
+    std::atomic<bool> was_evaluated(false);
+    post_request(sys, request, [&](http_response response) {
+        REQUIRE(response.status_code == 200);
+        auto body = parse_json_response(response);
+        REQUIRE(
+            get_field(cast<dynamic_map>(body), "args")
+            == dynamic({{"color", "navy"}}));
+        was_evaluated.store(true);
+    });
+    REQUIRE(
+        occurs_soon([&]() -> bool { return was_evaluated.load(); }, 10000));
 }

@@ -10,6 +10,7 @@
 #include <cradle/caching/immutable.h>
 #include <cradle/core/flags.h>
 #include <cradle/core/id.h>
+#include <cradle/io/http_executor.h>
 #include <cradle/utilities/functional.h>
 
 namespace cradle {
@@ -45,8 +46,12 @@ namespace detail {
 
 struct request_resolution_system
 {
-    detail::background_execution_pool execution_pool;
     cradle::immutable_cache cache;
+
+    background_execution_pool execution_pool;
+
+    http_request_system http_system;
+    background_execution_pool http_pool;
 };
 
 } // namespace detail
@@ -450,6 +455,71 @@ simple_id<Result (*)(Args...)>
 {
     return make_id(function_pointer);
 }
+
+namespace detail {
+
+struct http_job : http_request_job
+{
+    http_job(
+        request_resolution_context<http_response> ctx, http_request request)
+        : ctx_(ctx), request_(request)
+    {
+    }
+
+    void
+    execute(
+        check_in_interface& check_in, progress_reporter_interface& reporter)
+    {
+        report_value(
+            ctx_,
+            this->connection->perform_request(check_in, reporter, request_));
+    }
+
+ private:
+    request_resolution_context<http_response> ctx_;
+    http_request request_;
+};
+
+} // namespace detail
+
+template<class Request>
+struct http_request_object : request_interface<http_response>
+{
+    http_request_object(Request&& request) : request_(std::move(request))
+    {
+    }
+
+    void
+    dispatch(request_resolution_context<http_response> ctx) override
+    {
+        post_request(
+            *ctx.system,
+            request_,
+            [ctx = std::move(ctx)](http_request request) {
+                auto& system = *ctx.system;
+                auto job_ptr = std::unique_ptr<detail::http_job>(
+                    new detail::http_job(std::move(ctx), std::move(request)));
+                return detail::add_background_job(
+                    system.impl_->http_pool, std::move(job_ptr));
+            });
+    }
+
+ private:
+    captured_id id_;
+    Request request_;
+    immutable_cache_entry_handle cache_handle_;
+};
+
+namespace rq {
+
+template<class Request>
+auto
+http(Request request)
+{
+    return http_request_object<Request>(std::move(request));
+}
+
+} // namespace rq
 
 } // namespace cradle
 
