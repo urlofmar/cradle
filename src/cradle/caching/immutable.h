@@ -12,11 +12,13 @@
 //
 // - Multiple callers may be interested in the same data.
 //   - These calls may come concurrently from different threads.
-//   - This should not result in duplicated data instances or effort.
+//   - This must not result in duplicated data instances or retrieval/
+//     computation tasks.
 //
 // - Callers will be interested in individual data objects for some period of
 //   time. (The API must allow them to indicate this duration by holding a
-//   handle/pointer to data that they're interested in.)
+//   handle/pointer to data that they're interested in. Ideally, this should
+//   simply be a std::shared_ptr.)
 //
 // - It is useful to retain data that is no longer in use.
 //   - But this must be subject to constraints on total memory used for this
@@ -29,19 +31,16 @@
 //
 // - The cache must provide an inspection interface.
 //
-// Note that the cache is intentionally agnostic to the methods used to
-// retrieve (or generate) data. It does track whether or not such operations
-// are ongoing and provides a small interface for interacting with them, but
-// that interface is intentionally minimalist. It's expected that additional
-// capabilities will be provided externally for the user to interact with those
-// jobs (to investigate failures, retry jobs, etc.).
+// This version of the cache assumes that callers are always cppcoro
+// coroutines. It uses the mechanics of cppcoro to issue tasks to
+// compute/retrieve data and to wait for values to appear.
 //
 // The keys to the cache are CRADLE IDs, which allows for efficient usage of
 // heterogenous keys (without necessarily resorting to string
 // conversion/hashes).
+//
 
 #include <cradle/caching/immutable/cache.hpp>
-#include <cradle/caching/immutable/consumption.h>
-#include <cradle/caching/immutable/production.h>
+#include <cradle/caching/immutable/ptr.h>
 
 #endif

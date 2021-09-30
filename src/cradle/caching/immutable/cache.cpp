@@ -42,13 +42,11 @@ get_cache_snapshot(immutable_cache& cache_object)
     snapshot.in_use.reserve(cache.records.size());
     for (auto const& [key, record] : cache.records)
     {
-        auto const& data = record->data;
         immutable_cache_entry_snapshot entry{
             lexical_cast<string>(*record->key),
-            record->state.load(std::memory_order_relaxed),
-            decode_progress(record->progress.load(std::memory_order_relaxed)),
-            is_initialized(data) ? some(data.ptr->type_info()) : none,
-            is_initialized(data) ? data.ptr->deep_size() : 0};
+            record->is_ready.load(std::memory_order_relaxed),
+            // is_initialized(data) ? some(data.ptr->type_info()) : none,
+            record->size};
         // Put the entry's info the appropriate list depending on whether
         // or not its in the eviction list.
         if (record->eviction_list_iterator

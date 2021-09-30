@@ -5,6 +5,10 @@
 
 #include <cradle/core.h>
 
+// This file provides the top-level interface to the immutable cache.
+// This includes interfaces for instantiating a cache, configuring it, and
+// inspecting its contents.
+
 namespace cradle {
 
 namespace detail {
@@ -83,16 +87,13 @@ struct immutable_cache_entry_snapshot
     // the key associated with this entry
     string key;
 
-    // the state of this entry
-    immutable_cache_entry_state state;
+    // Is this entry ready? (i.e., Is it done being computed/retrieved?)
+    bool is_ready;
 
-    // progress in loading the data - possibly valid iff state is LOADING
-    optional<float> progress;
+    // type info for the cached data - valid iff data is ready
+    // optional<api_type_info> type_info;
 
-    // type info for the cached data - valid iff state is READY
-    optional<api_type_info> type_info;
-
-    // size of the cached data - valid iff state is READY, 0 otherwise
+    // size of the cached data - valid iff data is ready, 0 otherwise
     size_t size;
 };
 

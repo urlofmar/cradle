@@ -1,6 +1,7 @@
 #ifndef CRADLE_CACHING_IMMUTABLE_INTERNALS_H
 #define CRADLE_CACHING_IMMUTABLE_INTERNALS_H
 
+#include <any>
 #include <atomic>
 #include <list>
 #include <mutex>
@@ -8,7 +9,6 @@
 
 #include <cradle/background/job.h>
 #include <cradle/caching/immutable/cache.hpp>
-#include <cradle/caching/immutable/consumption.h>
 
 namespace cradle {
 
@@ -29,33 +29,29 @@ struct immutable_cache_record
     // informational purposes. However, before accessing any other fields based
     // on the value of :state, you should acquire the mutex and recheck state.
 
-    std::atomic<immutable_cache_entry_state> state;
-
-    std::atomic<encoded_optional_progress> progress;
-
     // This is a count of how many active pointers reference this data.
-    // If this is 0, the data is just hanging around because it was recently
-    // used, in which case :eviction_list_iterator points to this record's
+    // If this is 0, the data is no longer actively in use and is queued for
+    // eviction. In this case, :eviction_list_iterator points to this record's
     // entry in the eviction list.
-    unsigned ref_count;
+    unsigned ref_count = 0;
 
     // (See :ref_count comment.)
     std::list<immutable_cache_record*>::iterator eviction_list_iterator;
 
-    // a list of watchers
-    std::list<std::weak_ptr<immutable_cache_entry_watcher>> watchers;
+    // Is the data ready?
+    std::atomic<bool> is_ready = false;
 
-    // If state is LOADING, this is the associated job.
-    background_job_controller job;
+    // the associated cppcoro task - This should probably be stored more
+    // efficiently. It holds a cppcoro::shared_task<T>, where T is the type
+    // of data associated with this record.
+    std::any task;
 
-    // If state is READY, this is the associated data.
-    untyped_immutable data;
+    // the size of the data (if it's ready)
+    std::size_t size = 0;
 };
 
 typedef std::unordered_map<
     id_interface const*,
-    // Atomics unfortunately aren't movable, so for now we just store cache
-    // records by pointer.
     std::unique_ptr<immutable_cache_record>,
     id_interface_pointer_hash,
     id_interface_pointer_equality_test>

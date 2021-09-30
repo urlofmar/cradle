@@ -35,28 +35,25 @@ else()
     set(IS_MSVC false)
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+# CRADLE requires C++20
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 include(cmake/version.cmake)
 
 # Download/include CMake/Conan integration.
 if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake")
     message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-    file(DOWNLOAD "https://github.com/conan-io/cmake-conan/raw/v0.15/conan.cmake"
+    file(DOWNLOAD "https://github.com/conan-io/cmake-conan/raw/v0.16.1/conan.cmake"
                   "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake"
                   TLS_VERIFY ON)
 endif()
 include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
 
 # Invoke Conan.
-conan_add_remote(
-    NAME bincrafters
-    INDEX 1
-    URL https://api.bintray.com/conan/bincrafters/public-conan
-    VERIFY_SSL True)
-conan_cmake_run(
+conan_cmake_configure(
     REQUIRES
-        boost/1.75.0
+        boost/1.77.0
         catch2/2.13.4
         nlohmann_json/3.9.1
         msgpack/3.3.0
@@ -71,8 +68,6 @@ conan_cmake_run(
         spdlog/1.8.2
         simdjson/0.9.1
         lz4/1.9.3
-    BASIC_SETUP
-    BUILD missing
     OPTIONS
         boost:without_chrono=True
         boost:without_container=True
@@ -96,7 +91,41 @@ conan_cmake_run(
         boost:without_type_erasure=True
         boost:without_wave=True
         fakeit:integration=catch
-        *:shared=False)
+        *:shared=False
+    GENERATORS cmake_find_package)
+
+conan_cmake_autodetect(settings)
+
+conan_cmake_install(
+    PATH_OR_REFERENCE .
+    BUILD missing
+    REMOTE conancenter
+    SETTINGS ${settings})
+
+include(FetchContent)
+
+FetchContent_Declare(fetched_cppcoro
+    GIT_REPOSITORY https://github.com/andreasbuhr/cppcoro
+    GIT_TAG master)
+FetchContent_MakeAvailable(fetched_cppcoro)
+
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}")
+
+find_package(Boost REQUIRED)
+find_package(Catch2 REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(msgpack REQUIRED)
+find_package(CURL REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(sqlite3 REQUIRED)
+find_package(fakeit REQUIRED)
+find_package(websocketpp REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(bzip2 REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(simdjson REQUIRED)
+find_package(lz4 REQUIRED)
 
 # Add the given linker options on anything that gets linked.
 macro(add_link_options )
@@ -163,15 +192,6 @@ if(IS_CLANG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
            " -fprofile-instr-generate -fcoverage-mapping")
 endif()
 
-# Only generate tagged constructors on supported compilers.
-if(IS_GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "6.0")
-    message(STATUS "Enabling tagged constructors")
-    add_definitions("-DCRADLE_USING_TAGGED_CONSTRUCTORS")
-    set(GENERATE_TAGGED_CONSTRUCTORS True)
-else()
-    set(GENERATE_TAGGED_CONSTRUCTORS False)
-endif()
-
 # Preprocess the API headers.
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
@@ -224,13 +244,27 @@ if(IS_MSVC)
 endif()
 target_sources(cradle PRIVATE ${generated_headers} ${generated_srcs}
     "${CMAKE_CURRENT_BINARY_DIR}/generated/src/cradle/version_info.hpp")
-target_link_libraries(cradle ${CONAN_LIBS})
-target_link_directories(cradle PUBLIC ${CONAN_LIB_DIRS})
+
+target_link_libraries(cradle PUBLIC
+    Boost::headers
+    Catch2::Catch2
+    nlohmann_json::nlohmann_json
+    msgpack::msgpack
+    CURL::libcurl
+    OpenSSL::OpenSSL
+    SQLite::SQLite3
+    fakeit::fakeit
+    websocketpp::websocketpp
+    ZLIB::ZLIB
+    BZip2::BZip2
+    yaml-cpp::yaml-cpp
+    spdlog::spdlog
+    simdjson::simdjson
+    lz4::lz4
+    cppcoro)
 target_compile_definitions(
     cradle PUBLIC ${CONAN_DEFINES} ${CONAN_COMPILE_DEFINITIONS})
 target_include_directories(cradle PUBLIC
-    ${CONAN_INCLUDE_DIRS}
-    ${CLIPPER_INCLUDE_DIR}
     ${generated_include_dir}/src
     src
     src/third-party)
