@@ -7,7 +7,6 @@
 #include <mutex>
 #include <unordered_map>
 
-#include <cradle/background/job.h>
 #include <cradle/caching/immutable/cache.hpp>
 
 namespace cradle {

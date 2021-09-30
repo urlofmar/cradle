@@ -1,4 +1,4 @@
-#include <cradle/background/encoded_progress.h>
+#include <cradle/utilities/encoded_progress.h>
 
 #include <sstream>
 
@@ -6,7 +6,7 @@
 
 using namespace cradle;
 
-TEST_CASE("encoded_progress", "[background]")
+TEST_CASE("encoded_progress", "[utilities]")
 {
     encoded_optional_progress p;
     REQUIRE(decode_progress(p) == none);
