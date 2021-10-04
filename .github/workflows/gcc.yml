@@ -31,7 +31,7 @@ jobs:
       with:
         path: |
           ~/.conan/data
-        key: ${{runner.os}}-GCC-${{matrix.config}}
+        key: ${{runner.os}}-GCC-10-${{matrix.config}}
 
     - name: Install
       run: |
@@ -40,7 +40,9 @@ jobs:
 
     - name: Configure
       run: |
-        gcc --version
+        export CC=`which gcc-10`
+        export CXX=`which gcc-10`
+        ${CXX} --version
         scripts/set-up-python.sh --python=python3
         source .venv/bin/activate
         cmake -Bbuild -DCMAKE_BUILD_TYPE=${{matrix.config}} .

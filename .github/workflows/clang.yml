@@ -14,7 +14,7 @@ env:
   CRADLE_PREPROCESSOR_DISABLE_LINE_DIRECTIVES: true
 
 jobs:
-  clang-10:
+  clang-12:
     runs-on: ubuntu-20.04
 
     strategy:
@@ -31,7 +31,7 @@ jobs:
       with:
         path: |
           ~/.conan/data
-        key: ${{runner.os}}-CLANG-10-${{matrix.config}}
+        key: ${{runner.os}}-CLANG-12-${{matrix.config}}
 
     - name: Install
       run: |
@@ -40,8 +40,9 @@ jobs:
 
     - name: Configure
       run: |
-        export CC=`which clang-10`
-        export CXX=`which clang++-10`
+        export CC=`which clang-12`
+        export CXX=`which clang++-12`
+        ${CXX} --version
         scripts/set-up-python.sh --python=python3
         source .venv/bin/activate
         cmake -Bbuild -DCMAKE_BUILD_TYPE=${{matrix.config}} .

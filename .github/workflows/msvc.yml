@@ -27,7 +27,7 @@ jobs:
       with:
         path: |
           ~/.conan/data
-        key: ${{runner.os}}-GCC-${{matrix.config}}
+        key: ${{runner.os}}-GCC-10-${{matrix.config}}
 
     - name: Install
       run: |
@@ -36,7 +36,9 @@ jobs:
 
     - name: Preprocess
       run: |
-        gcc --version
+        export CC=`which gcc-10`
+        export CXX=`which gcc-10`
+        ${CXX} --version
         scripts/set-up-python.sh --python=python3
         source .venv/bin/activate
         cmake -Bbuild -DCMAKE_BUILD_TYPE=Debug .
@@ -66,7 +68,7 @@ jobs:
       with:
         path: |
           C:/.conan/data
-        key: ${{runner.os}}-MSVC-${{matrix.config}}
+        key: ${{runner.os}}-MSVC-2019-${{matrix.config}}
 
     - name: Install Conan
       run: |
