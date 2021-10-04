@@ -1,32 +1,23 @@
 #include <cradle/thinknode/apm.h>
 
-#include <fakeit.h>
-
 #include <cradle/core/monitoring.h>
-#include <cradle/io/http_requests.hpp>
+#include <cradle/io/mock_http.h>
 #include <cradle/utilities/testing.h>
 
 using namespace cradle;
-using namespace fakeit;
 
 TEST_CASE("app version info", "[thinknode][apm]")
 {
-    Mock<http_connection_interface> mock_connection;
-
-    When(Method(mock_connection, perform_request))
-        .Do([&](check_in_interface& check_in,
-                progress_reporter_interface& reporter,
-                http_request const& request) {
-            auto expected_request = make_get_request(
-                "https://mgh.thinknode.io/api/v1.0/apm/apps/acme/pets/"
-                "versions/"
-                "2.0.0?include_manifest=true",
-                {{"Authorization", "Bearer xyz"},
-                 {"Accept", "application/json"}});
-            REQUIRE(request == expected_request);
-
-            return make_http_200_response(
-                R"(
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_get_request(
+              "https://mgh.thinknode.io/api/v1.0/apm/apps/acme/pets/"
+              "versions/"
+              "2.0.0?include_manifest=true",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/json"}}),
+          make_http_200_response(
+              R"(
                         {
                             "name": "2.0.0",
                             "manifest": {
@@ -91,8 +82,7 @@ TEST_CASE("app version info", "[thinknode][apm]")
                             "created_by": "tmadden",
                             "created_at": "2017-04-26T01:02:03.000Z"
                         }
-                    )");
-        });
+                    )")}});
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
@@ -142,7 +132,11 @@ TEST_CASE("app version info", "[thinknode][apm]")
         ptime(
             date(2017, boost::gregorian::Apr, 26),
             boost::posix_time::time_duration(1, 2, 3)));
-    auto version_info = get_app_version_info(
-        mock_connection.get(), session, "acme", "pets", "2.0.0");
+    mock_http_connection connection(mock_http);
+    auto version_info
+        = get_app_version_info(connection, session, "acme", "pets", "2.0.0");
     REQUIRE(version_info == expected_version_info);
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
 }

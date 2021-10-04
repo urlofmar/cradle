@@ -7,7 +7,7 @@
 
 #include <cradle/core/monitoring.h>
 #include <cradle/encodings/json.h>
-#include <cradle/io/http_requests.hpp>
+#include <cradle/io/mock_http.h>
 #include <cradle/utilities/testing.h>
 
 using namespace cradle;
@@ -74,98 +74,88 @@ TEST_CASE("calc status utilities", "[thinknode][tn_calc]")
 
 TEST_CASE("calc status query", "[thinknode][tn_calc]")
 {
-    Mock<http_connection_interface> mock_connection;
-
-    When(Method(mock_connection, perform_request))
-        .Do([&](check_in_interface& check_in,
-                progress_reporter_interface& reporter,
-                http_request const& request) {
-            auto expected_request = make_get_request(
-                "https://mgh.thinknode.io/api/v1.0/calc/abc/"
-                "status?context=123",
-                {{"Authorization", "Bearer xyz"},
-                 {"Accept", "application/json"}});
-            REQUIRE(request == expected_request);
-
-            return make_http_200_response("{ \"completed\": null }");
-        });
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_get_request(
+              "https://mgh.thinknode.io/api/v1.0/calc/abc/"
+              "status?context=123",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/json"}}),
+          make_http_200_response("{ \"completed\": null }")}});
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    auto status = query_calculation_status(
-        mock_connection.get(), session, "123", "abc");
+    mock_http_connection connection(mock_http);
+    auto status = query_calculation_status(connection, session, "123", "abc");
     REQUIRE(status == make_calculation_status_with_completed(nil));
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
 }
 
 TEST_CASE("calc request retrieval", "[thinknode][tn_calc]")
 {
-    Mock<http_connection_interface> mock_connection;
-
-    When(Method(mock_connection, perform_request))
-        .Do([&](check_in_interface& check_in,
-                progress_reporter_interface& reporter,
-                http_request const& request) {
-            auto expected_request = make_get_request(
-                "https://mgh.thinknode.io/api/v1.0/calc/abc?context=123",
-                {{"Authorization", "Bearer xyz"},
-                 {"Accept", "application/json"}});
-            REQUIRE(request == expected_request);
-
-            return make_http_200_response("{ \"value\": [2.1, 4.2] }");
-        });
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_get_request(
+              "https://mgh.thinknode.io/api/v1.0/calc/abc?context=123",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/json"}}),
+          make_http_200_response("{ \"value\": [2.1, 4.2] }")}});
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    auto request = retrieve_calculation_request(
-        mock_connection.get(), session, "123", "abc");
+    mock_http_connection connection(mock_http);
+    auto request
+        = retrieve_calculation_request(connection, session, "123", "abc");
     REQUIRE(
         request == make_calculation_request_with_value(dynamic({2.1, 4.2})));
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
 }
 
 TEST_CASE("calc status long polling", "[thinknode][tn_calc]")
 {
-    Mock<http_connection_interface> mock_connection;
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_get_request(
+              "https://mgh.thinknode.io/api/v1.0/calc/abc/status?context=123",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/json"}}),
+          make_http_200_response(value_to_json(
+              to_dynamic(make_calculation_status_with_calculating(
+                  calculation_calculating_status{0.115}))))},
+         {make_get_request(
+              "https://mgh.thinknode.io/api/v1.0/calc/abc/status"
+              "?status=calculating&progress=0.12&timeout=120&context=123",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/json"}}),
+          make_http_200_response(
+              value_to_json(to_dynamic(make_calculation_status_with_uploading(
+                  calculation_uploading_status{0.995}))))},
+         {make_get_request(
+              "https://mgh.thinknode.io/api/v1.0/calc/abc/status"
+              "?status=completed&timeout=120&context=123",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/json"}}),
+          make_http_200_response(value_to_json(
+              to_dynamic(make_calculation_status_with_completed(nil))))}});
 
-    std::vector<http_request> expected_requests = {
-        make_get_request(
-            "https://mgh.thinknode.io/api/v1.0/calc/abc/status?context=123",
-            {{"Authorization", "Bearer xyz"}, {"Accept", "application/json"}}),
-        make_get_request(
-            "https://mgh.thinknode.io/api/v1.0/calc/abc/status"
-            "?status=calculating&progress=0.12&timeout=120&context=123",
-            {{"Authorization", "Bearer xyz"}, {"Accept", "application/json"}}),
-        make_get_request(
-            "https://mgh.thinknode.io/api/v1.0/calc/abc/status"
-            "?status=completed&timeout=120&context=123",
-            {{"Authorization", "Bearer xyz"},
-             {"Accept", "application/json"}})};
-
-    std::vector<calculation_status> mock_responses
+    std::vector<calculation_status> statuses
         = {make_calculation_status_with_calculating(
                calculation_calculating_status{0.115}),
            make_calculation_status_with_uploading(
                calculation_uploading_status{0.995}),
            make_calculation_status_with_completed(nil)};
 
-    size_t request_counter = 0;
-    When(Method(mock_connection, perform_request))
-        .AlwaysDo([&](check_in_interface& check_in,
-                      progress_reporter_interface& reporter,
-                      http_request const& request) {
-            REQUIRE(request == expected_requests.at(request_counter));
-            auto response = make_http_200_response(
-                value_to_json(to_dynamic(mock_responses.at(request_counter))));
-            ++request_counter;
-            return response;
-        });
-
     size_t status_counter = 0;
     auto status_checker = [&](calculation_status const& status) {
-        REQUIRE(status == mock_responses.at(status_counter));
+        REQUIRE(status == statuses.at(status_counter));
         ++status_counter;
     };
 
@@ -173,16 +163,15 @@ TEST_CASE("calc status long polling", "[thinknode][tn_calc]")
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
+    mock_http_connection connection(mock_http);
     null_check_in check_in;
     long_poll_calculation_status(
-        check_in,
-        status_checker,
-        mock_connection.get(),
-        session,
-        "123",
-        "abc");
-    REQUIRE(request_counter == expected_requests.size());
-    REQUIRE(status_counter == mock_responses.size());
+        check_in, status_checker, connection, session, "123", "abc");
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
+
+    REQUIRE(status_counter == statuses.size());
 }
 
 TEST_CASE("calc variable substitution", "[thinknode][tn_calc]")

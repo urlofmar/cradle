@@ -4,105 +4,91 @@
 
 #include <boost/format.hpp>
 
-#include <fakeit.h>
-
 #include <cradle/core/monitoring.h>
 #include <cradle/encodings/msgpack.h>
-#include <cradle/io/http_requests.hpp>
+#include <cradle/io/mock_http.h>
 #include <cradle/utilities/testing.h>
 
 using namespace cradle;
-using namespace fakeit;
 
 TEST_CASE("ISS object resolution", "[thinknode][iss]")
 {
-    Mock<http_connection_interface> mock_connection;
-
-    When(Method(mock_connection, perform_request))
-        .Do([&](check_in_interface& check_in,
-                progress_reporter_interface& reporter,
-                http_request const& request) {
-            auto expected_request = make_get_request(
-                "https://mgh.thinknode.io/api/v1.0/iss/abc/"
-                "immutable?context=123"
-                "&ignore_upgrades=false",
-                {{"Authorization", "Bearer xyz"},
-                 {"Accept", "application/json"}});
-            REQUIRE(request == expected_request);
-
-            return make_http_200_response("{ \"id\": \"def\" }");
-        });
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_get_request(
+              "https://mgh.thinknode.io/api/v1.0/iss/abc/"
+              "immutable?context=123"
+              "&ignore_upgrades=false",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/json"}}),
+          make_http_200_response("{ \"id\": \"def\" }")}});
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
+    mock_http_connection connection(mock_http);
     auto id = resolve_iss_object_to_immutable(
-        mock_connection.get(), session, "123", "abc", false);
+        connection, session, "123", "abc", false);
     REQUIRE(id == "def");
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
 }
 
 TEST_CASE("ISS object metadata", "[thinknode][iss]")
 {
-    Mock<http_connection_interface> mock_connection;
-
-    When(Method(mock_connection, perform_request))
-        .Do([&](check_in_interface& check_in,
-                progress_reporter_interface& reporter,
-                http_request const& request) {
-            auto expected_request = make_http_request(
-                http_request_method::HEAD,
-                "https://mgh.thinknode.io/api/v1.0/iss/abc?context=123",
-                {{"Authorization", "Bearer xyz"}},
-                blob());
-            REQUIRE(request == expected_request);
-
-            return make_http_response(
-                200,
-                {{"Access-Control-Allow-Origin", "*"},
-                 {"Cache-Control", "max-age=60"}},
-                blob());
-        });
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_http_request(
+              http_request_method::HEAD,
+              "https://mgh.thinknode.io/api/v1.0/iss/abc?context=123",
+              {{"Authorization", "Bearer xyz"}},
+              blob()),
+          make_http_response(
+              200,
+              {{"Access-Control-Allow-Origin", "*"},
+               {"Cache-Control", "max-age=60"}},
+              blob())}});
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    auto metadata = get_iss_object_metadata(
-        mock_connection.get(), session, "123", "abc");
+    mock_http_connection connection(mock_http);
+    auto metadata = get_iss_object_metadata(connection, session, "123", "abc");
     REQUIRE(
         metadata
         == (std::map<string, string>(
             {{"Access-Control-Allow-Origin", "*"},
              {"Cache-Control", "max-age=60"}})));
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
 }
 
 TEST_CASE("ISS immutable retrieval", "[thinknode][iss]")
 {
-    Mock<http_connection_interface> mock_connection;
-
-    When(Method(mock_connection, perform_request))
-        .Do([&](check_in_interface& check_in,
-                progress_reporter_interface& reporter,
-                http_request const& request) {
-            auto expected_request = make_get_request(
-                "https://mgh.thinknode.io/api/v1.0/iss/immutable/"
-                "abc?context=123",
-                {{"Authorization", "Bearer xyz"},
-                 {"Accept", "application/octet-stream"}});
-            REQUIRE(request == expected_request);
-
-            return make_http_200_response(
-                value_to_msgpack_string(dynamic("the-data")));
-        });
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_get_request(
+              "https://mgh.thinknode.io/api/v1.0/iss/immutable/"
+              "abc?context=123",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/octet-stream"}}),
+          make_http_200_response(
+              value_to_msgpack_string(dynamic("the-data")))}});
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    auto data
-        = retrieve_immutable(mock_connection.get(), session, "123", "abc");
+    mock_http_connection connection(mock_http);
+    auto data = retrieve_immutable(connection, session, "123", "abc");
     REQUIRE(data == dynamic("the-data"));
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
 }
 
 // Check that both directions of URL type string conversion works for the
@@ -215,59 +201,54 @@ TEST_CASE("URL type string", "[thinknode][iss]")
 
 TEST_CASE("ISS POST", "[thinknode][iss]")
 {
-    Mock<http_connection_interface> mock_connection;
-
-    When(Method(mock_connection, perform_request))
-        .Do([&](check_in_interface& check_in,
-                progress_reporter_interface& reporter,
-                http_request const& request) {
-            auto expected_request = make_http_request(
-                http_request_method::POST,
-                "https://mgh.thinknode.io/api/v1.0/iss/string?context=123",
-                {{"Authorization", "Bearer xyz"},
-                 {"Accept", "application/json"},
-                 {"Content-Type", "application/octet-stream"}},
-                value_to_msgpack_blob(dynamic("payload")));
-            REQUIRE(request == expected_request);
-
-            return make_http_200_response("{ \"id\": \"def\" }");
-        });
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_http_request(
+              http_request_method::POST,
+              "https://mgh.thinknode.io/api/v1.0/iss/string?context=123",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/json"},
+               {"Content-Type", "application/octet-stream"}},
+              value_to_msgpack_blob(dynamic("payload"))),
+          make_http_200_response("{ \"id\": \"def\" }")}});
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
+    mock_http_connection connection(mock_http);
     auto id = post_iss_object(
-        mock_connection.get(),
+        connection,
         session,
         "123",
         make_thinknode_type_info_with_string_type(thinknode_string_type()),
         dynamic("payload"));
     REQUIRE(id == "def");
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
 }
 
 TEST_CASE("ISS object copy", "[thinknode][iss]")
 {
-    Mock<http_connection_interface> mock_connection;
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_http_request(
+              http_request_method::POST,
+              "https://mgh.thinknode.io/api/v1.0/iss/def/buckets/"
+              "abc?context=123",
+              {{"Authorization", "Bearer xyz"}},
+              blob()),
 
-    When(Method(mock_connection, perform_request))
-        .Do([&](check_in_interface& check_in,
-                progress_reporter_interface& reporter,
-                http_request const& request) {
-            auto expected_request = make_http_request(
-                http_request_method::POST,
-                "https://mgh.thinknode.io/api/v1.0/iss/def/buckets/"
-                "abc?context=123",
-                {{"Authorization", "Bearer xyz"}},
-                blob());
-            REQUIRE(request == expected_request);
-
-            return make_http_200_response("");
-        });
+          make_http_200_response("")}});
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    copy_iss_object(mock_connection.get(), session, "abc", "123", "def");
+    mock_http_connection connection(mock_http);
+    copy_iss_object(connection, session, "abc", "123", "def");
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
 }

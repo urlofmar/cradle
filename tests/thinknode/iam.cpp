@@ -1,30 +1,21 @@
 #include <cradle/thinknode/iam.h>
 
-#include <fakeit.h>
-
 #include <cradle/core/monitoring.h>
-#include <cradle/io/http_requests.hpp>
+#include <cradle/io/mock_http.h>
 #include <cradle/utilities/testing.h>
 
 using namespace cradle;
-using namespace fakeit;
 
 TEST_CASE("context contents retrieval", "[thinknode][iam]")
 {
-    Mock<http_connection_interface> mock_connection;
-
-    When(Method(mock_connection, perform_request))
-        .Do([&](check_in_interface& check_in,
-                progress_reporter_interface& reporter,
-                http_request const& request) {
-            auto expected_request = make_get_request(
-                "https://mgh.thinknode.io/api/v1.0/iam/contexts/123",
-                {{"Authorization", "Bearer xyz"},
-                 {"Accept", "application/json"}});
-            REQUIRE(request == expected_request);
-
-            return make_http_200_response(
-                R"(
+    mock_http_session mock_http;
+    mock_http.set_script(
+        {{make_get_request(
+              "https://mgh.thinknode.io/api/v1.0/iam/contexts/123",
+              {{"Authorization", "Bearer xyz"},
+               {"Accept", "application/json"}}),
+          make_http_200_response(
+              R"(
                         {
                             "bucket": "hacks",
                             "contents": [
@@ -51,15 +42,14 @@ TEST_CASE("context contents retrieval", "[thinknode][iam]")
                                 }
                             ]
                         }
-                    )");
-        });
+                    )")}});
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    auto contents
-        = get_context_contents(mock_connection.get(), session, "123");
+    mock_http_connection connection(mock_http);
+    auto contents = get_context_contents(connection, session, "123");
     REQUIRE(
         contents
         == make_thinknode_context_contents(
@@ -77,4 +67,7 @@ TEST_CASE("context contents retrieval", "[thinknode][iam]")
                  "cellsonar",
                  make_thinknode_app_source_info_with_commit(
                      "a7e1d608d6ce0c25dc6aa597492a6f09"))}));
+
+    REQUIRE(mock_http.is_complete());
+    REQUIRE(mock_http.is_in_order());
 }
