@@ -16,7 +16,7 @@ service_core::~service_core()
 {
 }
 
-http_connection&
+http_connection_interface&
 http_connection_for_thread()
 {
     static http_request_system the_system;

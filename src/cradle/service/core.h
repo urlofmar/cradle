@@ -33,6 +33,9 @@ struct service_core
 cppcoro::task<http_response>
 async_http_request(service_core& core, http_request request);
 
+http_connection_interface&
+http_connection_for_thread();
+
 } // namespace cradle
 
 #endif

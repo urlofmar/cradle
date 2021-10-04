@@ -150,7 +150,7 @@ struct http_connection : http_connection_interface
     perform_request(
         check_in_interface& check_in,
         progress_reporter_interface& reporter,
-        http_request const& request);
+        http_request const& request) override;
 
  private:
     std::unique_ptr<http_connection_impl> impl_;
