@@ -85,6 +85,7 @@ conan_cmake_configure(
         boost:without_mpi=True
         boost:without_nowide=True
         boost:without_serialization=True
+        boost:without_stacktrace=True
         boost:without_test=True
         boost:without_thread=True
         boost:without_timer=True
