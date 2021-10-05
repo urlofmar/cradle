@@ -37,7 +37,7 @@ jobs:
     - name: Preprocess
       run: |
         export CC=`which gcc-10`
-        export CXX=`which gcc-10`
+        export CXX=`which g++-10`
         ${CXX} --version
         scripts/set-up-python.sh --python=python3
         source .venv/bin/activate
