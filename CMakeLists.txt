@@ -105,6 +105,17 @@ conan_cmake_install(
 
 include(FetchContent)
 
+# The cppcoro detection logic seems broken for GCC 10.x (at least in CI), so
+# override it.
+if (IS_GCC)
+    add_library(std::coroutines INTERFACE IMPORTED)
+    set(CXX_COROUTINES_HAVE_COROUTINES TRUE CACHE BOOL "TRUE if we have the C++ coroutines feature" FORCE)
+    set(CXX_COROUTINES_HEADER coroutine CACHE STRING "The header that should be included to obtain the coroutines APIs" FORCE)
+    set(CXX_COROUTINES_NAMESPACE std CACHE STRING "The C++ namespace that contains the coroutines APIs" FORCE)
+    set(Coroutines_FOUND TRUE CACHE BOOL "TRUE if we can compile and link a program using std::coroutines" FORCE)
+    add_compile_options(-fcoroutines)
+endif()
+
 FetchContent_Declare(fetched_cppcoro
     GIT_REPOSITORY https://github.com/VaderY/cppcoro
     GIT_TAG master)
