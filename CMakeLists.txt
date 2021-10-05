@@ -105,11 +105,11 @@ conan_cmake_install(
 include(FetchContent)
 
 FetchContent_Declare(fetched_cppcoro
-    GIT_REPOSITORY https://github.com/andreasbuhr/cppcoro
+    GIT_REPOSITORY https://github.com/VaderY/cppcoro
     GIT_TAG master)
 FetchContent_MakeAvailable(fetched_cppcoro)
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}")
 
 find_package(Boost REQUIRED)
 find_package(Catch2 REQUIRED)
