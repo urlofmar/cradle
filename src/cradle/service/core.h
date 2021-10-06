@@ -5,6 +5,7 @@
 
 #include <cppcoro/task.hpp>
 
+#include <cradle/caching/disk_cache.hpp>
 #include <cradle/io/http_requests.hpp>
 
 namespace cradle {
@@ -30,11 +31,14 @@ struct service_core
     std::unique_ptr<detail::service_core_internals> impl_;
 };
 
+http_connection_interface&
+http_connection_for_thread();
+
 cppcoro::task<http_response>
 async_http_request(service_core& core, http_request request);
 
-http_connection_interface&
-http_connection_for_thread();
+cppcoro::task<dynamic>
+disk_cached(service_core& core, std::string key, cppcoro::task<dynamic> task);
 
 } // namespace cradle
 
