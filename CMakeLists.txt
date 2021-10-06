@@ -121,6 +121,11 @@ FetchContent_Declare(fetched_cppcoro
     GIT_TAG master)
 FetchContent_MakeAvailable(fetched_cppcoro)
 
+FetchContent_Declare(fetched_thread_pool
+    GIT_REPOSITORY https://github.com/bshoshany/thread-pool
+    GIT_TAG v2.0.0)
+FetchContent_MakeAvailable(fetched_thread_pool)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}")
 
 find_package(Boost REQUIRED)
@@ -206,7 +211,7 @@ endif()
 
 # Preprocess the API headers.
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/cradle/*.hpp")
 if("${PREPROCESSOR_USAGE}" STREQUAL "Native")
     message(STATUS "Using native preprocessor")
     add_subdirectory(preprocessor)
