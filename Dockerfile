@@ -7,6 +7,7 @@ WORKDIR /cradle
 RUN /scripts/docker-build.sh
 
 FROM ubuntu:focal
+RUN apt-get install -y ca-certificates
 COPY --from=builder /cradle/build/deploy /cradle
 COPY ./docker-config.json /root/.config/cradle/config.json
 WORKDIR /cradle
