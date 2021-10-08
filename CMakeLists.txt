@@ -117,7 +117,7 @@ if (IS_GCC)
 endif()
 
 FetchContent_Declare(fetched_cppcoro
-    GIT_REPOSITORY https://github.com/VaderY/cppcoro
+    GIT_REPOSITORY https://github.com/mghro/cppcoro
     GIT_TAG master)
 FetchContent_MakeAvailable(fetched_cppcoro)
 
