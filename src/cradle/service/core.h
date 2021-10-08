@@ -5,8 +5,8 @@
 
 #include <cppcoro/task.hpp>
 
-#include <cradle/caching/disk_cache.hpp>
 #include <cradle/io/http_requests.hpp>
+#include <cradle/service/types.hpp>
 
 namespace cradle {
 
@@ -18,8 +18,19 @@ struct service_core_internals;
 
 struct service_core
 {
-    service_core();
+    service_core()
+    {
+    }
+    service_core(service_config const& config)
+    {
+        reset(config);
+    }
     ~service_core();
+
+    void
+    reset();
+    void
+    reset(service_config const& config);
 
     detail::service_core_internals&
     internals()

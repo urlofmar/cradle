@@ -22,14 +22,24 @@
 
 namespace cradle {
 
-service_core::service_core()
+void
+service_core::reset()
+{
+    impl_.reset();
+}
+
+void
+service_core::reset(service_config const& config)
 {
     impl_.reset(new detail::service_core_internals{
-        .cache = immutable_cache(immutable_cache_config(0x40000000)),
+        .cache = immutable_cache(
+            config.immutable_cache ? *config.immutable_cache
+                                   : immutable_cache_config(0x40'00'00'00)),
         .compute_pool = cppcoro::static_thread_pool(),
         .http_pool = cppcoro::static_thread_pool(24),
         .disk_cache = disk_cache(
-            disk_cache_config(cradle::none, 100 * size_t(0x40000000))),
+            config.disk_cache ? *config.disk_cache
+                              : disk_cache_config(none, 0x1'00'00'00'00)),
         .disk_read_pool = cppcoro::static_thread_pool(2),
         .disk_write_pool = thread_pool(2)});
 }

@@ -28,6 +28,12 @@
 #include <spdlog/sinks/ansicolor_sink.h>
 #endif
 
+#include <cppcoro/async_scope.hpp>
+#include <cppcoro/schedule_on.hpp>
+#include <cppcoro/static_thread_pool.hpp>
+#include <cppcoro/sync_wait.hpp>
+#include <cppcoro/task.hpp>
+
 #include <cradle/caching/disk_cache.hpp>
 #include <cradle/encodings/base64.h>
 #include <cradle/encodings/json.h>
@@ -97,43 +103,6 @@ using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 
 namespace cradle {
-template<class Job>
-struct synchronized_job_queue
-{
-    // the actual job queue
-    std::queue<Job> jobs;
-    // for controlling access to the job queue
-    std::mutex mutex;
-    // for signalling when new jobs arrive
-    std::condition_variable cv;
-};
-
-// Add a job to :queue and notify a waiting thread.
-template<class Job>
-void
-enqueue_job(synchronized_job_queue<Job>& queue, Job&& job)
-{
-    {
-        std::scoped_lock<std::mutex> lock(queue.mutex);
-        queue.jobs.push(std::forward<Job>(job));
-    }
-    queue.cv.notify_one();
-}
-
-// Wait until there's at least one job in :queue, then pop and return the
-// first job.
-template<class Job>
-Job
-wait_for_job(synchronized_job_queue<Job>& queue)
-{
-    std::unique_lock<std::mutex> lock(queue.mutex);
-    while (queue.jobs.empty())
-        queue.cv.wait(lock);
-    Job first = std::move(queue.jobs.front());
-    queue.jobs.pop();
-    return first;
-}
-
 struct client_connection
 {
     string name;
@@ -204,7 +173,8 @@ struct websocket_server_impl
     ws_server_type ws;
     client_connection_list clients;
     disk_cache cache;
-    synchronized_job_queue<client_request> requests;
+    cppcoro::async_scope async_scope;
+    cppcoro::static_thread_pool pool;
 };
 
 static void
@@ -1736,44 +1706,38 @@ process_message(
     }
 }
 
-static void
-process_messages(websocket_server_impl& server)
+static cppcoro::task<void>
+process_message_with_error_handling(
+    websocket_server_impl& server, client_request request)
 {
     http_connection connection(server.http_system);
-    while (1)
+    try
     {
-        auto request = wait_for_job(server.requests);
-        if (is_kill(request.message.content))
-        {
-            break;
-        }
-        try
-        {
-            process_message(server, connection, request);
-        }
-        catch (bad_http_status_code& e)
-        {
-            spdlog::get("cradle")->error(e.what());
-            send_response(
-                server,
-                request,
-                make_server_message_content_with_error(
-                    make_error_response_with_bad_status_code(
-                        make_http_failure_info(
-                            get_required_error_info<
-                                attempted_http_request_info>(e),
-                            get_required_error_info<http_response_info>(e)))));
-        }
-        catch (std::exception& e)
-        {
-            spdlog::get("cradle")->error(e.what());
-            send_response(
-                server,
-                request,
-                make_server_message_content_with_error(
-                    make_error_response_with_unknown(e.what())));
-        }
+        process_message(server, connection, request);
     }
+    catch (bad_http_status_code& e)
+    {
+        spdlog::get("cradle")->error(e.what());
+        send_response(
+            server,
+            request,
+            make_server_message_content_with_error(
+                make_error_response_with_bad_status_code(
+                    make_http_failure_info(
+                        get_required_error_info<attempted_http_request_info>(
+                            e),
+                        get_required_error_info<http_response_info>(e)))));
+    }
+    catch (std::exception& e)
+    {
+        spdlog::get("cradle")->error(e.what());
+        send_response(
+            server,
+            request,
+            make_server_message_content_with_error(
+                make_error_response_with_unknown(e.what())));
+    }
+    co_return;
 }
 
 static void
@@ -1802,7 +1766,6 @@ on_message(
             get_field(cast<dynamic_map>(dynamic_message), "request_id"));
         websocket_client_message message;
         from_dynamic(&message, dynamic_message);
-        enqueue_job(server.requests, client_request{hdl, message});
         if (is_kill(message.content))
         {
             server.ws.stop_listening();
@@ -1812,6 +1775,13 @@ on_message(
                     server.ws.close(
                         hdl, websocketpp::close::status::going_away, "killed");
                 });
+        }
+        else
+        {
+            server.async_scope.spawn(schedule_on(
+                server.pool,
+                process_message_with_error_handling(
+                    server, client_request{hdl, std::move(message)})));
         }
     }
     catch (std::exception& e)
@@ -1901,12 +1871,9 @@ websocket_server::run()
 {
     auto& server = *impl_;
 
-    // Start a thread to process messages.
-    std::thread processing_thread([&]() { process_messages(server); });
-
     server.ws.run();
 
-    processing_thread.join();
+    cppcoro::sync_wait(server.async_scope.join());
 }
 
 } // namespace cradle

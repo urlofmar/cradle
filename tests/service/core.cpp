@@ -2,6 +2,8 @@
 
 #include <cppcoro/sync_wait.hpp>
 
+#include <filesystem>
+
 #include <cradle/service/internals.h>
 #include <cradle/utilities/concurrency_testing.h>
 
@@ -9,9 +11,34 @@
 
 using namespace cradle;
 
+namespace {
+
+void
+reset_directory(file_path const& dir)
+{
+    if (exists(dir))
+        remove_all(dir);
+    create_directory(dir);
+}
+
+void
+init_test_service(service_core& core)
+{
+    auto cache_dir = file_path("service_disk_cache");
+
+    reset_directory(cache_dir);
+
+    core.reset(service_config(
+        immutable_cache_config(0x40'00'00'00),
+        disk_cache_config(some(cache_dir.string()), 0x40'00'00'00)));
+}
+
+} // namespace
+
 TEST_CASE("HTTP requests", "[service][core]")
 {
     service_core core;
+    init_test_service(core);
 
     auto async_response = async_http_request(
         core,
@@ -29,6 +56,7 @@ TEST_CASE("HTTP requests", "[service][core]")
 TEST_CASE("small value disk caching", "[service][core]")
 {
     service_core core;
+    init_test_service(core);
 
     int execution_count = 0;
     auto counted_task = [&](int answer) -> cppcoro::task<dynamic> {

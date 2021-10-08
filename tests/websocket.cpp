@@ -12,7 +12,7 @@ using namespace cradle;
 
 TEST_CASE("websocket client/server", "[ws]")
 {
-    auto config = make_server_config(none, none, 41072);
+    auto config = make_server_config(service_config{}, false, 41072);
     websocket_server server(config);
     server.listen();
     std::thread server_thread([&]() { server.run(); });

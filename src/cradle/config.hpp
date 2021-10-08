@@ -1,15 +1,13 @@
 #ifndef CRADLE_CONFIG_HPP
 #define CRADLE_CONFIG_HPP
 
-#include <cradle/caching/disk_cache.hpp>
+#include <cradle/service/types.hpp>
 
 namespace cradle {
 
 api(struct)
-struct server_config
+struct server_config : service_config
 {
-    // config for the disk cache
-    omissible<cradle::disk_cache_config> disk_cache;
     // whether or not the server should be open to connections from other
     // machines (defaults to false)
     omissible<bool> open;
