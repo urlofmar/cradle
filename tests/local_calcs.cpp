@@ -13,7 +13,7 @@ using namespace cradle;
 #ifdef LOCAL_DOCKER_TESTING
 TEST_CASE("local calcs", "[local_calcs][ws]")
 {
-    disk_cache cache(disk_cache_config(none, 0x1'00'00'00'00));
+    disk_cache cache(disk_cache_config("local_docker_cache", 0x1'00'00'00'00));
 
     http_request_system http_system;
     http_connection connection(http_system);

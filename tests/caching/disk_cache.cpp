@@ -6,6 +6,7 @@
 
 #include <cradle/encodings/base64.h>
 #include <cradle/fs/file_io.h>
+#include <cradle/fs/utilities.h>
 #include <cradle/utilities/testing.h>
 #include <cradle/utilities/text.h>
 
@@ -13,15 +14,9 @@
 
 using namespace cradle;
 
-static void
-reset_directory(file_path const& dir)
-{
-    if (exists(dir))
-        remove_all(dir);
-    create_directory(dir);
-}
+namespace {
 
-static void
+void
 init_disk_cache(disk_cache& cache, string const& cache_dir = "disk_cache")
 {
     reset_directory(cache_dir);
@@ -43,14 +38,14 @@ init_disk_cache(disk_cache& cache, string const& cache_dir = "disk_cache")
 }
 
 // Generate some (meaningless) key string for the item with the given ID.
-static string
+string
 generate_key_string(int item_id)
 {
     return "meaningless_key_string_" + lexical_cast<string>(item_id);
 }
 
 // Generate some (meaningless) value string for the item with the given ID.
-static string
+string
 generate_value_string(int item_id)
 {
     return "meaningless_value_string_" + lexical_cast<string>(item_id);
@@ -67,7 +62,7 @@ generate_value_string(int item_id)
 //
 // The return value indicates whether or not the item was already cached.
 //
-static bool
+bool
 test_item_access(disk_cache& cache, int item_id)
 {
     auto key = generate_key_string(item_id);
@@ -129,6 +124,8 @@ test_item_access(disk_cache& cache, int item_id)
         }
     }
 }
+
+} // namespace
 
 TEST_CASE("resetting", "[disk_cache]")
 {

@@ -365,7 +365,7 @@ std::vector<disk_cache_entry> static get_entry_list(disk_cache_impl& cache)
     execute_prepared_statement(
         cache,
         cache.entry_list_query,
-        expected_column_count{5},
+        expected_column_count{6},
         single_row_result{false},
         [&](sqlite_row& row) {
             disk_cache_entry e;
@@ -373,7 +373,8 @@ std::vector<disk_cache_entry> static get_entry_list(disk_cache_impl& cache)
             e.id = read_int64(row, 1);
             e.in_db = read_int64(row, 2) && read_bool(row, 2);
             e.size = has_value(row, 3) ? read_int64(row, 3) : 0;
-            e.crc32 = has_value(row, 4) ? read_int32(row, 4) : 0;
+            e.original_size = has_value(row, 4) ? read_int64(row, 4) : 0;
+            e.crc32 = has_value(row, 5) ? read_int32(row, 5) : 0;
             entries.push_back(e);
         });
     return entries;
@@ -406,8 +407,8 @@ get_lru_entries(disk_cache_impl& cache)
 }
 
 // Get the entry associated with a particular key (if any).
-optional<disk_cache_entry> static look_up(
-    disk_cache_impl const& cache, string const& key, bool only_if_valid)
+static optional<disk_cache_entry>
+look_up(disk_cache_impl const& cache, string const& key, bool only_if_valid)
 {
     bool exists = false;
     int64_t id = 0;
@@ -415,13 +416,14 @@ optional<disk_cache_entry> static look_up(
     bool in_db = false;
     optional<string> value;
     int64_t size = 0;
+    int64_t original_size = 0;
     uint32_t crc32 = 0;
 
     bind_string(cache, cache.look_up_entry_query, 1, key);
     execute_prepared_statement(
         cache,
         cache.look_up_entry_query,
-        expected_column_count{6},
+        expected_column_count{7},
         single_row_result{false},
         [&](sqlite_row& row) {
             id = read_int64(row, 0);
@@ -429,12 +431,13 @@ optional<disk_cache_entry> static look_up(
             in_db = has_value(row, 2) && read_bool(row, 2);
             value = has_value(row, 3) ? some(read_string(row, 3)) : none;
             size = has_value(row, 4) ? read_int64(row, 4) : 0;
-            crc32 = has_value(row, 5) ? read_int32(row, 5) : 0;
+            original_size = has_value(row, 5) ? read_int64(row, 5) : 0;
+            crc32 = has_value(row, 6) ? read_int32(row, 6) : 0;
             exists = true;
         });
 
-    return (exists && (!only_if_valid || valid)) ? some(
-               make_disk_cache_entry(key, id, in_db, value, size, crc32))
+    return (exists && (!only_if_valid || valid)) ? some(make_disk_cache_entry(
+               key, id, in_db, value, size, original_size, crc32))
                                                  : none;
 }
 
@@ -548,7 +551,7 @@ shut_down(disk_cache_impl& cache)
 static void
 open_and_check_db(disk_cache_impl& cache)
 {
-    int const expected_database_version = 1;
+    int const expected_database_version = 2;
 
     open_db(&cache.db, cache.dir / "index.db");
 
@@ -576,6 +579,7 @@ open_and_check_db(disk_cache_impl& cache)
             " in_db boolean,"
             " value blob,"
             " size integer,"
+            " original_size integer,"
             " crc32 integer);");
         execute_sql(
             cache,
@@ -632,37 +636,40 @@ initialize(disk_cache_impl& cache, disk_cache_config const& config)
         "where id=?1;");
     cache.update_entry_value_statement = prepare_statement(
         cache,
-        "update entries set valid=1, in_db=1, size=?1, value=?2,"
-        " last_accessed=strftime('%Y-%m-%d %H:%M:%f', 'now')"
-        " where id=?3;");
+        "update entries set valid=1, in_db=1, size=?1, original_size=?2,"
+        " value=?3, last_accessed=strftime('%Y-%m-%d %H:%M:%f', 'now')"
+        " where id=?4;");
     cache.insert_new_value_statement = prepare_statement(
         cache,
-        "insert into entries(key, valid, in_db, size, value, last_accessed)"
-        " values(?1, 1, 1, ?2, ?3, strftime('%Y-%m-%d %H:%M:%f', 'now'));");
+        "insert into entries"
+        " (key, valid, in_db, size, original_size, value, last_accessed)"
+        " values(?1, 1, 1, ?2, ?3, ?4, strftime('%Y-%m-%d %H:%M:%f',"
+        " 'now'));");
     cache.initiate_insert_statement = prepare_statement(
         cache, "insert into entries(key, valid, in_db) values (?1, 0, 0);");
     cache.finish_insert_statement = prepare_statement(
         cache,
-        "update entries set valid=1, in_db=0, size=?1, crc32=?2,"
-        " last_accessed=strftime('%Y-%m-%d %H:%M:%f', 'now')"
-        " where id=?3;");
+        "update entries set valid=1, in_db=0, size=?1, original_size=?2, "
+        " crc32=?3, last_accessed=strftime('%Y-%m-%d %H:%M:%f', 'now')"
+        " where id=?4;");
     cache.remove_entry_statement
         = prepare_statement(cache, "delete from entries where id=?1;");
     cache.look_up_entry_query = prepare_statement(
         cache,
-        "select id, valid, in_db, value, size, crc32 from entries where "
-        "key=?1;");
+        "select id, valid, in_db, value, size, original_size, crc32"
+        " from entries where key=?1;");
     cache.cache_size_query
         = prepare_statement(cache, "select sum(size) from entries;");
     cache.entry_count_query = prepare_statement(
         cache, "select count(id) from entries where valid = 1;");
     cache.entry_list_query = prepare_statement(
         cache,
-        "select key, id, in_db, size, crc32 from entries where valid = 1"
-        " order by last_accessed;");
+        "select key, id, in_db, size, original_size, crc32 from entries"
+        " where valid = 1 order by last_accessed;");
     cache.lru_entry_list_query = prepare_statement(
         cache,
-        "select id, size, in_db from entries order by valid, last_accessed;");
+        "select id, size, in_db from entries"
+        " order by valid, last_accessed;");
 
     // Do initial housekeeping.
     record_activity(cache);
@@ -770,7 +777,8 @@ disk_cache::find(string const& key)
 }
 
 void
-disk_cache::insert(string const& key, string const& value)
+disk_cache::insert(
+    string const& key, string const& value, optional<size_t> original_size)
 {
     auto& cache = *this->impl_;
     std::scoped_lock<std::mutex> lock(cache.mutex);
@@ -781,15 +789,25 @@ disk_cache::insert(string const& key, string const& value)
     if (entry)
     {
         bind_int64(cache, cache.update_entry_value_statement, 1, value.size());
-        bind_blob(cache, cache.update_entry_value_statement, 2, value);
-        bind_string(cache, cache.update_entry_value_statement, 3, key);
+        bind_int64(
+            cache,
+            cache.update_entry_value_statement,
+            2,
+            original_size ? *original_size : value.size());
+        bind_blob(cache, cache.update_entry_value_statement, 3, value);
+        bind_string(cache, cache.update_entry_value_statement, 4, key);
         execute_prepared_statement(cache, cache.update_entry_value_statement);
     }
     else
     {
         bind_string(cache, cache.insert_new_value_statement, 1, key);
         bind_int64(cache, cache.insert_new_value_statement, 2, value.size());
-        bind_blob(cache, cache.insert_new_value_statement, 3, value);
+        bind_int64(
+            cache,
+            cache.insert_new_value_statement,
+            3,
+            original_size ? *original_size : value.size());
+        bind_blob(cache, cache.insert_new_value_statement, 4, value);
         execute_prepared_statement(cache, cache.insert_new_value_statement);
     }
 
@@ -827,7 +845,8 @@ disk_cache::initiate_insert(string const& key)
 }
 
 void
-disk_cache::finish_insert(int64_t id, uint32_t crc32)
+disk_cache::finish_insert(
+    int64_t id, uint32_t crc32, optional<size_t> original_size)
 {
     auto& cache = *this->impl_;
     std::scoped_lock<std::mutex> lock(cache.mutex);
@@ -837,8 +856,13 @@ disk_cache::finish_insert(int64_t id, uint32_t crc32)
     int64_t size = file_size(cradle::get_path_for_id(cache, id));
 
     bind_int64(cache, cache.finish_insert_statement, 1, size);
-    bind_int32(cache, cache.finish_insert_statement, 2, crc32);
-    bind_int64(cache, cache.finish_insert_statement, 3, id);
+    bind_int64(
+        cache,
+        cache.finish_insert_statement,
+        2,
+        original_size ? *original_size : size);
+    bind_int32(cache, cache.finish_insert_statement, 3, crc32);
+    bind_int64(cache, cache.finish_insert_statement, 4, id);
     execute_prepared_statement(cache, cache.finish_insert_statement);
 
     record_cache_growth(cache, size);

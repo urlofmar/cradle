@@ -60,8 +60,11 @@ struct disk_cache_entry
     // queried.
     omissible<std::string> value;
 
-    // the size of the entry (in bytes)
+    // the size of the entry, as stored in the cache (in bytes)
     integer size;
+
+    // the original (decompressed) size of the entry
+    integer original_size;
 
     // a 32-bit CRC of the contents of the entry
     uint32_t crc32;
@@ -134,11 +137,19 @@ struct disk_cache
     find(string const& key);
 
     // Add a small entry to the cache.
+    //
     // This should only be used on entries that are known to be smaller than
     // a few kB. Below this level, it is more efficient (both in time and
     // storage) to store data directly in the SQLite database.
+    //
+    // :original_size is the original size of the data (if it's compressed).
+    // This can be omitted and the data will be understood to be uncompressed.
+    //
     void
-    insert(string const& key, string const& value);
+    insert(
+        string const& key,
+        string const& value,
+        optional<size_t> original_size = none);
 
     // Add an arbitrarily large entry to the cache.
     //
@@ -150,8 +161,11 @@ struct disk_cache
     //
     int64_t
     initiate_insert(string const& key);
+    // :original_size is the original size of the data (if it's compressed).
+    // This can be omitted and the data will be understood to be uncompressed.
     void
-    finish_insert(int64_t id, uint32_t crc32);
+    finish_insert(
+        int64_t id, uint32_t crc32, optional<size_t> original_size = none);
 
     // Given an ID within the cache, this computes the path of the file that
     // would store the data associated with that ID (assuming that entry were

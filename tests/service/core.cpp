@@ -4,6 +4,7 @@
 
 #include <filesystem>
 
+#include <cradle/fs/utilities.h>
 #include <cradle/service/internals.h>
 #include <cradle/utilities/concurrency_testing.h>
 
@@ -12,14 +13,6 @@
 using namespace cradle;
 
 namespace {
-
-void
-reset_directory(file_path const& dir)
-{
-    if (exists(dir))
-        remove_all(dir);
-    create_directory(dir);
-}
 
 void
 init_test_service(service_core& core)

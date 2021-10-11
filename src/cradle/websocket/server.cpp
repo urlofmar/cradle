@@ -1486,6 +1486,11 @@ process_message(
         case client_message_content_tag::CACHE_INSERT: {
             auto& insertion = as_cache_insert(content);
             server.cache.insert(insertion.key, insertion.value);
+            send_response(
+                server,
+                request,
+                make_server_message_content_with_cache_insert_acknowledgement(
+                    nil));
             break;
         }
         case client_message_content_tag::CACHE_QUERY: {

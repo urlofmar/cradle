@@ -5,17 +5,10 @@
 #include <cradle/utilities/testing.h>
 
 #include <cradle/fs/file_io.h>
+#include <cradle/fs/utilities.h>
 #include <cradle/utilities/environment.h>
 
 using namespace cradle;
-
-static void
-reset_directory(file_path const& dir)
-{
-    if (exists(dir))
-        remove_all(dir);
-    create_directory(dir);
-}
 
 #ifdef _WIN32
 

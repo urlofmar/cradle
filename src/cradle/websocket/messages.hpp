@@ -272,6 +272,7 @@ union server_message_content
 {
     cradle::websocket_test_response test;
     cradle::websocket_cache_response cache_response;
+    nil_t cache_insert_acknowledgement;
     cradle::error_response error;
     cradle::iss_object_response iss_object_response;
     cradle::resolve_iss_object_response resolve_iss_object_response;
