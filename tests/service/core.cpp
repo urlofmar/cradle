@@ -23,7 +23,10 @@ init_test_service(service_core& core)
 
     core.reset(service_config(
         immutable_cache_config(0x40'00'00'00),
-        disk_cache_config(some(cache_dir.string()), 0x40'00'00'00)));
+        disk_cache_config(some(cache_dir.string()), 0x40'00'00'00),
+        2,
+        2,
+        2));
 }
 
 } // namespace

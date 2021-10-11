@@ -1,5 +1,7 @@
 #include <cradle/service/core.h>
 
+#include <thread>
+
 // Boost.Crc triggers some warnings on MSVC.
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -36,8 +38,11 @@ service_core::reset(service_config const& config)
         .cache = immutable_cache(
             config.immutable_cache ? *config.immutable_cache
                                    : immutable_cache_config(0x40'00'00'00)),
-        .compute_pool = cppcoro::static_thread_pool(),
-        .http_pool = cppcoro::static_thread_pool(24),
+        .compute_pool = cppcoro::static_thread_pool(
+            config.compute_concurrency ? *config.compute_concurrency
+                                       : std::thread::hardware_concurrency()),
+        .http_pool = cppcoro::static_thread_pool(
+            config.http_concurrency ? *config.http_concurrency : 24),
         .disk_cache = disk_cache(
             config.disk_cache ? *config.disk_cache
                               : disk_cache_config(none, 0x1'00'00'00'00)),

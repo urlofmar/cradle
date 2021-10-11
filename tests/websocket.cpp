@@ -17,7 +17,10 @@ TEST_CASE("websocket client/server", "[ws]")
     auto config = make_server_config(
         service_config(
             immutable_cache_config(0x40'00'00'00),
-            disk_cache_config("websocket_test_cache", 0x40'00'00'00)),
+            disk_cache_config("websocket_test_cache", 0x40'00'00'00),
+            2,
+            2,
+            2),
         false,
         41072);
     websocket_server server(config);
