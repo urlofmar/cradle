@@ -16,6 +16,7 @@
 #include <cppcoro/schedule_on.hpp>
 
 #include <cradle/encodings/base64.h>
+#include <cradle/encodings/lz4.h>
 #include <cradle/encodings/native.h>
 #include <cradle/fs/file_io.h>
 #include <cradle/service/internals.h>
@@ -73,22 +74,6 @@ read_file_contents(service_core& core, file_path const& path)
     co_return read_file_contents(path);
 }
 
-static uint32_t
-compute_crc32(byte_vector const& data)
-{
-    boost::crc_32_type crc;
-    crc.process_bytes(data.data(), data.size());
-    return crc.checksum();
-}
-
-static uint32_t
-compute_crc32(string const& s)
-{
-    boost::crc_32_type crc;
-    crc.process_bytes(s.data(), s.length());
-    return crc.checksum();
-}
-
 cppcoro::task<dynamic>
 disk_cached(service_core& core, std::string key, cppcoro::task<dynamic> task)
 {
@@ -111,12 +96,23 @@ disk_cached(service_core& core, std::string key, cppcoro::task<dynamic> task)
             {
                 auto data = co_await read_file_contents(
                     core, cache.get_path_for_id(entry->id));
-                if (compute_crc32(data) == entry->crc32)
+
+                std::unique_ptr<uint8_t[]> decompressed_data(
+                    new uint8_t[entry->original_size]);
+                lz4::decompress(
+                    decompressed_data.get(),
+                    entry->original_size,
+                    data.data(),
+                    data.size());
+
+                boost::crc_32_type crc;
+                crc.process_bytes(
+                    decompressed_data.get(), entry->original_size);
+                if (crc.checksum() == entry->crc32)
                 {
                     spdlog::get("cradle")->info("disk cache hit on {}", key);
                     co_return read_natively_encoded_value(
-                        reinterpret_cast<uint8_t const*>(data.data()),
-                        data.size());
+                        decompressed_data.get(), entry->original_size);
                 }
             }
         }
@@ -141,6 +137,17 @@ disk_cached(service_core& core, std::string key, cppcoro::task<dynamic> task)
             auto encoded_data = write_natively_encoded_value(result);
             if (encoded_data.size() > 1024)
             {
+                size_t max_compressed_size
+                    = lz4::max_compressed_size(encoded_data.size());
+
+                std::unique_ptr<uint8_t[]> compressed_data(
+                    new uint8_t[max_compressed_size]);
+                size_t actual_compressed_size = lz4::compress(
+                    compressed_data.get(),
+                    max_compressed_size,
+                    encoded_data.data(),
+                    encoded_data.size());
+
                 auto cache_id = cache.initiate_insert(key);
                 {
                     auto entry_path = cache.get_path_for_id(cache_id);
@@ -150,10 +157,13 @@ disk_cached(service_core& core, std::string key, cppcoro::task<dynamic> task)
                         entry_path,
                         std::ios::out | std::ios::trunc | std::ios::binary);
                     output.write(
-                        reinterpret_cast<char const*>(encoded_data.data()),
-                        encoded_data.size());
+                        reinterpret_cast<char const*>(compressed_data.get()),
+                        actual_compressed_size);
                 }
-                cache.finish_insert(cache_id, compute_crc32(encoded_data));
+                boost::crc_32_type crc;
+                crc.process_bytes(encoded_data.data(), encoded_data.size());
+                cache.finish_insert(
+                    cache_id, crc.checksum(), encoded_data.size());
             }
             else
             {

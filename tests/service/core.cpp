@@ -87,12 +87,10 @@ TEST_CASE("large value disk caching", "[service][core]")
 
     auto generate_random_data = [](uint32_t seed) {
         std::vector<integer> result;
-        for (int i = 0; i < 4096; ++i)
-        {
-            std::minstd_rand eng(seed);
-            std::uniform_int_distribution<integer> dist(0, 0x1'0000'0000);
+        std::minstd_rand eng(seed);
+        std::uniform_int_distribution<integer> dist(0, 0x1'0000'0000);
+        for (int i = 0; i < 256; ++i)
             result.push_back(dist(eng));
-        }
         return result;
     };
 
