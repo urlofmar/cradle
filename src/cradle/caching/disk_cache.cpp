@@ -618,7 +618,7 @@ initialize(disk_cache_impl& cache, disk_cache_config const& config)
         // database, so shut everything down, clear out the directory, and try
         // again.
         shut_down(cache);
-        for (auto& p : std::filesystem::directory_iterator("cache.dir"))
+        for (auto& p : std::filesystem::directory_iterator(cache.dir))
             remove_all(p.path());
         open_and_check_db(cache);
     }
