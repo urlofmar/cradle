@@ -30,6 +30,7 @@ show_version_info()
 
 int
 main(int argc, char const* const* argv)
+try
 {
     namespace po = boost::program_options;
 
@@ -73,8 +74,20 @@ main(int argc, char const* const* argv)
         from_dynamic(
             &config, parse_json_value(read_file_contents(*config_path)));
 
+    std::cout << value_to_json(to_dynamic(config)) << std::endl;
+
     websocket_server server(config);
     server.listen();
     server.run();
     return 0;
+}
+catch (std::exception& e)
+{
+    std::cerr << e.what() << "\n";
+    return 1;
+}
+catch (...)
+{
+    std::cerr << "unknown error\n";
+    return 1;
 }
