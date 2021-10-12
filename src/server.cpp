@@ -74,8 +74,6 @@ try
         from_dynamic(
             &config, parse_json_value(read_file_contents(*config_path)));
 
-    std::cout << value_to_json(to_dynamic(config)) << std::endl;
-
     websocket_server server(config);
     server.listen();
     server.run();
