@@ -5,6 +5,8 @@
 #include <memory>
 #include <sstream>
 
+#include <boost/lexical_cast.hpp>
+
 #include <picosha2.h>
 
 #include <cradle/core/hash.h>
