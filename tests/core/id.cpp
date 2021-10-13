@@ -1,5 +1,7 @@
 #include <cradle/core/id.h>
 
+#include <algorithm>
+#include <cctype>
 #include <map>
 #include <unordered_map>
 #include <utility>
@@ -268,4 +270,16 @@ TEST_CASE("unordered_map of IDs", "[id]")
     m[&one] = 1;
     REQUIRE(m.at(&one) == 1);
     REQUIRE(m.at(&another_one) == 1);
+}
+
+TEST_CASE("sha256_hashed_id", "[id]")
+{
+    test_different_ids(
+        make_sha256_hashed_id("token", 0), make_sha256_hashed_id("token", 1));
+    auto as_string
+        = boost::lexical_cast<std::string>(make_sha256_hashed_id("token", 0));
+    REQUIRE(as_string.length() == 64);
+    REQUIRE(std::all_of(as_string.begin(), as_string.end(), [](char c) {
+        return std::isxdigit(c);
+    }));
 }

@@ -5,6 +5,8 @@
 #include <memory>
 #include <sstream>
 
+#include <picosha2.h>
+
 #include <cradle/core/hash.h>
 
 // This file implements the concept of IDs in CRADLE.
@@ -513,6 +515,104 @@ struct unit_id_type
 {
 };
 static simple_id<unit_id_type*> const unit_id(nullptr);
+
+namespace detail {
+
+template<class Value>
+void
+fold_into_sha256(picosha2::hash256_one_by_one& hasher, Value const& value)
+{
+    std::string as_string = boost::lexical_cast<std::string>(value);
+    hasher.process(as_string.begin(), as_string.end());
+}
+
+inline void
+fold_into_sha256(
+    picosha2::hash256_one_by_one& hasher, std::string const& value)
+{
+    hasher.process(value.begin(), value.end());
+}
+
+inline void
+fold_into_sha256(picosha2::hash256_one_by_one& hasher, char const* value)
+{
+    hasher.process(value, value + strlen(value));
+}
+
+} // namespace detail
+
+template<class... Args>
+struct sha256_hashed_id : id_interface
+{
+    sha256_hashed_id()
+    {
+    }
+
+    sha256_hashed_id(std::tuple<Args...> args) : args_(std::move(args))
+    {
+    }
+
+    id_interface*
+    clone() const override
+    {
+        return new sha256_hashed_id(args_);
+    }
+
+    bool
+    equals(id_interface const& other) const override
+    {
+        sha256_hashed_id const& other_id
+            = static_cast<sha256_hashed_id const&>(other);
+        return args_ == other_id.args_;
+    }
+
+    bool
+    less_than(id_interface const& other) const override
+    {
+        sha256_hashed_id const& other_id
+            = static_cast<sha256_hashed_id const&>(other);
+        return args_ < other_id.args_;
+    }
+
+    void
+    deep_copy(id_interface* copy) const override
+    {
+        *static_cast<sha256_hashed_id*>(copy) = *this;
+    }
+
+    void
+    stream(std::ostream& o) const override
+    {
+        picosha2::hash256_one_by_one hasher;
+        std::apply(
+            [&hasher](auto... args) {
+                (detail::fold_into_sha256(hasher, args), ...);
+            },
+            args_);
+        hasher.finish();
+        picosha2::byte_t hashed[32];
+        hasher.get_hash_bytes(hashed, hashed + 32);
+        picosha2::output_hex(hashed, hashed + 32, o);
+    }
+
+    size_t
+    hash() const override
+    {
+        return std::apply(
+            [](auto... args) { return combine_hashes(invoke_hash(args)...); },
+            args_);
+    }
+
+ private:
+    std::tuple<Args...> args_;
+};
+
+template<class... Args>
+sha256_hashed_id<Args...>
+make_sha256_hashed_id(Args... args)
+{
+    return sha256_hashed_id<Args...>(std::make_tuple(std::move(args)...));
+}
 
 } // namespace cradle
 

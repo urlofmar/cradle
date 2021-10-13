@@ -14,6 +14,15 @@ invoke_hash(T const& x)
     return boost::hash<T>()(x);
 }
 
+template<class... Hashes>
+size_t
+combine_hashes(Hashes... hashes)
+{
+    size_t seed = 0;
+    (boost::hash_combine(seed, hashes), ...);
+    return seed;
+}
+
 } // namespace cradle
 
 #endif
