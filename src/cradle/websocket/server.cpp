@@ -105,12 +105,14 @@ using websocketpp::lib::placeholders::_2;
 namespace cradle {
 struct client_connection
 {
+    int id;
     string name;
     thinknode_session session;
 };
 
 struct client_connection_list
 {
+    int next_id = 1;
     std::
         map<connection_hdl, client_connection, std::owner_less<connection_hdl>>
             connections;
@@ -121,10 +123,12 @@ static void
 add_client(
     client_connection_list& list,
     connection_hdl hdl,
-    client_connection const& client = client_connection())
+    client_connection client = client_connection())
 {
     std::scoped_lock<std::mutex> lock(list.mutex);
-    list.connections[hdl] = client;
+    client.id = list.next_id;
+    ++list.next_id;
+    list.connections[hdl] = std::move(client);
 }
 
 static void
@@ -143,7 +147,7 @@ get_client(client_connection_list& list, connection_hdl hdl)
 
 template<class Fn>
 void
-access_client(client_connection_list& list, connection_hdl hdl, Fn const& fn)
+update_client(client_connection_list& list, connection_hdl hdl, Fn const& fn)
 {
     std::scoped_lock<std::mutex> lock(list.mutex);
     fn(list.connections.at(hdl));
@@ -151,12 +155,12 @@ access_client(client_connection_list& list, connection_hdl hdl, Fn const& fn)
 
 template<class Fn>
 void
-for_each_client(client_connection_list& list, Fn const& fn)
+for_each_client(client_connection_list& list, Fn&& fn)
 {
     std::scoped_lock<std::mutex> lock(list.mutex);
     for (auto& client : list.connections)
     {
-        fn(client.first, client.second);
+        std::forward<Fn>(fn)(client.first, client.second);
     }
 }
 
@@ -1463,14 +1467,30 @@ process_message(
     CRADLE_LOG_CALL(<< CRADLE_LOG_ARG(request.message))
 
     auto const& content = request.message.content;
+    if (get_client(server.clients, request.client).session.api_url.empty()
+        && !is_registration(content))
+    {
+        spdlog::get("cradle")->error("unregistered client");
+        send_response(
+            server,
+            request,
+            make_server_message_content_with_error(
+                make_error_response_with_unregistered_client(nil)));
+        return;
+    }
     switch (get_tag(content))
     {
         case client_message_content_tag::REGISTRATION: {
             auto const& registration = as_registration(content);
-            access_client(server.clients, request.client, [&](auto& client) {
+            update_client(server.clients, request.client, [&](auto& client) {
                 client.name = registration.name;
                 client.session = registration.session;
             });
+            send_response(
+                server,
+                request,
+                make_server_message_content_with_registration_acknowledgement(
+                    nil));
             break;
         }
         case client_message_content_tag::TEST: {
@@ -1484,7 +1504,7 @@ process_message(
             break;
         }
         case client_message_content_tag::CACHE_INSERT: {
-            auto& insertion = as_cache_insert(content);
+            auto const& insertion = as_cache_insert(content);
             server.cache.insert(insertion.key, insertion.value);
             send_response(
                 server,

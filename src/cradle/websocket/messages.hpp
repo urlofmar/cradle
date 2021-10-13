@@ -264,12 +264,15 @@ union error_response
 {
     // an HTTP request returned a bad status code
     http_failure_info bad_status_code;
+    // the client hadn't registered yet
+    nil_t unregistered_client;
     std::string unknown;
 };
 
 api(union)
 union server_message_content
 {
+    nil_t registration_acknowledgement;
     cradle::websocket_test_response test;
     cradle::websocket_cache_response cache_response;
     nil_t cache_insert_acknowledgement;
