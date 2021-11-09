@@ -1,7 +1,10 @@
 #ifndef CRADLE_THINKNODE_CALC_H
 #define CRADLE_THINKNODE_CALC_H
 
+#include <cppcoro/async_generator.hpp>
+
 #include <cradle/core.h>
+#include <cradle/service/core.h>
 #include <cradle/thinknode/types.hpp>
 
 namespace cradle {
@@ -10,37 +13,29 @@ struct http_connection_interface;
 struct check_in_interface;
 
 // Post a calculation to Thinknode.
-string
+cppcoro::shared_task<string>
 post_calculation(
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& context_id,
-    calculation_request const& request);
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    calculation_request request);
 
 // Given a calculation status, get the next status that would represent
 // meaningful progress. If the result is none, no further progress is possible.
 optional<calculation_status>
 get_next_calculation_status(calculation_status current);
 
-// Get the query string repesentation of a calculation status.
+// Get the query string representation of a calculation status.
 string
 calc_status_as_query_string(calculation_status status);
 
 // Query the status of a calculation.
-calculation_status
+cppcoro::task<calculation_status>
 query_calculation_status(
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& context_id,
-    string const& calc_id);
-
-// Retrieve a calculation request from Thinknode.
-calculation_request
-retrieve_calculation_request(
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& context_id,
-    string const& calc_id);
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    string calc_id);
 
 // Long poll the status of a calculation.
 //
@@ -48,14 +43,20 @@ retrieve_calculation_request(
 // status to :process_status, until no further progress is possible or an
 // error occurs.
 //
-void
+cppcoro::async_generator<calculation_status>
 long_poll_calculation_status(
-    check_in_interface& check_in,
-    std::function<void(calculation_status const&)> const& process_status,
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& context_id,
-    string const& calc_id);
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    string calc_id);
+
+// Retrieve a calculation request from Thinknode.
+cppcoro::shared_task<calculation_request>
+retrieve_calculation_request(
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    string calc_id);
 
 // Substitute the variables in a Thinknode request for new requests.
 calculation_request
@@ -73,11 +74,11 @@ struct calculation_submission_interface
     //
     // (The implementation of this can involve one or more levels of caching.)
     //
-    virtual optional<string>
+    virtual cppcoro::task<optional<string>>
     submit(
-        thinknode_session const& session,
-        string const& context_id,
-        calculation_request const& request,
+        thinknode_session session,
+        string context_id,
+        calculation_request request,
         bool dry_run)
         = 0;
 };
@@ -104,35 +105,24 @@ struct calculation_submission_interface
 // result is only valid if the calculation already exists (hence the
 // optional return type).
 //
-optional<let_calculation_submission_info>
+cppcoro::task<optional<let_calculation_submission_info>>
 submit_let_calculation_request(
     calculation_submission_interface& submitter,
-    thinknode_session const& session,
-    string const& context_id,
-    augmented_calculation_request const& request,
+    thinknode_session session,
+    string context_id,
+    augmented_calculation_request augmented_request,
     bool dry_run = false);
-
-struct calculation_retrieval_interface
-{
-    // Retrieve a calculation request from Thinknode.
-    virtual calculation_request
-    retrieve(
-        thinknode_session const& session,
-        string const& context_id,
-        string const& calculation_id)
-        = 0;
-};
 
 // Search within a calculation request and return a list of subcalculation IDs
 // that match :search_string.
 // Note that currently the search is limited to matching function names.
-std::vector<string>
+cppcoro::task<std::vector<string>>
 search_calculation(
-    calculation_retrieval_interface& retriever,
-    thinknode_session const& session,
-    string const& context_id,
-    string const& calculation_id,
-    string const& search_string);
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    string calculation_id,
+    string search_string);
 
 } // namespace cradle
 

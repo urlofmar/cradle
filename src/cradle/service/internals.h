@@ -7,6 +7,7 @@
 
 #include <cradle/caching/disk_cache.hpp>
 #include <cradle/caching/immutable.h>
+#include <cradle/io/mock_http.h>
 
 namespace cradle {
 
@@ -21,6 +22,8 @@ struct service_core_internals
     cradle::disk_cache disk_cache;
     cppcoro::static_thread_pool disk_read_pool;
     thread_pool disk_write_pool;
+
+    std::unique_ptr<mock_http_session> mock_http;
 };
 
 } // namespace detail

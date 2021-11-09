@@ -100,7 +100,7 @@ test_method_with_content(http_request_method method)
         method,
         "http://postman-echo.com/" + string(get_value_id(method)),
         {{"Accept", "application/json"}, {"Content-Type", "application/json"}},
-        make_string_blob(value_to_json(content))));
+        make_blob(value_to_json(content))));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
     REQUIRE(get_field(cast<dynamic_map>(body), "json") == content);
@@ -143,7 +143,7 @@ TEST_CASE("large HTTP request", "[io][http]")
         http_request_method::POST,
         "http://postman-echo.com/post",
         {{"Accept", "application/json"}, {"Content-Type", "application/json"}},
-        make_string_blob(value_to_json(content))));
+        make_blob(value_to_json(content))));
     REQUIRE(response.status_code == 200);
     auto body = parse_json_response(response);
     REQUIRE(get_field(cast<dynamic_map>(body), "json") == content);

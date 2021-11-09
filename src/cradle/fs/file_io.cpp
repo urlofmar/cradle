@@ -48,7 +48,7 @@ read_file_contents(file_path const& path)
     open_file(in, path, std::ios::in | std::ios::binary);
     string contents;
     in.seekg(0, std::ios::end);
-    contents.resize(in.tellg());
+    contents.resize(boost::numeric_cast<size_t>(std::streamoff(in.tellg())));
     in.seekg(0, std::ios::beg);
     in.read(&contents[0], contents.size());
     in.close();

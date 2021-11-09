@@ -318,7 +318,11 @@ hash_value(blob const& x);
 
 // Make a blob that holds the contents of the given string.
 blob
-make_string_blob(string s);
+make_blob(string s);
+
+// Make a blob that holds the contents of a byte vector.
+blob
+make_blob(byte_vector v);
 
 // STD::VECTOR
 

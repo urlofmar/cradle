@@ -38,7 +38,8 @@ struct immutable_cache_record
     std::list<immutable_cache_record*>::iterator eviction_list_iterator;
 
     // Is the data ready?
-    std::atomic<bool> is_ready = false;
+    std::atomic<immutable_cache_entry_state> state
+        = immutable_cache_entry_state::LOADING;
 
     // the associated cppcoro task - This should probably be stored more
     // efficiently. It holds a cppcoro::shared_task<T>, where T is the type
@@ -76,7 +77,7 @@ struct immutable_cache : noncopyable
 // Evict unused entries (in LRU order) until the total size of unused entries
 // in the cache is at most :desired_size (in bytes).
 void
-reduce_memory_cache_size(immutable_cache& cache, size_t desired_size);
+reduce_memory_cache_size(immutable_cache& cache, uint64_t desired_size);
 
 } // namespace detail
 } // namespace cradle

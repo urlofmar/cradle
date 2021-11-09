@@ -1,14 +1,20 @@
 #include <cradle/thinknode/apm.h>
 
+#include <cppcoro/sync_wait.hpp>
+
 #include <cradle/core/monitoring.h>
 #include <cradle/io/mock_http.h>
+#include <cradle/service/core.h>
 #include <cradle/utilities/testing.h>
 
 using namespace cradle;
 
 TEST_CASE("app version info", "[thinknode][apm]")
 {
-    mock_http_session mock_http;
+    service_core service;
+    init_test_service(service);
+
+    auto& mock_http = enable_http_mocking(service);
     mock_http.set_script(
         {{make_get_request(
               "https://mgh.thinknode.io/api/v1.0/apm/apps/acme/pets/"
@@ -132,9 +138,9 @@ TEST_CASE("app version info", "[thinknode][apm]")
         ptime(
             date(2017, boost::gregorian::Apr, 26),
             boost::posix_time::time_duration(1, 2, 3)));
-    mock_http_connection connection(mock_http);
-    auto version_info
-        = get_app_version_info(connection, session, "acme", "pets", "2.0.0");
+
+    auto version_info = cppcoro::sync_wait(
+        get_app_version_info(service, session, "acme", "pets", "2.0.0"));
     REQUIRE(version_info == expected_version_info);
 
     REQUIRE(mock_http.is_complete());

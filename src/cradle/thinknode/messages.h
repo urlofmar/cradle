@@ -63,11 +63,12 @@ read_message(tcp::socket& socket, uint8_t ipc_version)
     }
 
     // Read the body.
-    boost::shared_array<uint8_t> body_buffer(new uint8_t[header.body_length]);
+    auto body_length = boost::numeric_cast<size_t>(header.body_length);
+    boost::shared_array<uint8_t> body_buffer(new uint8_t[body_length]);
     boost::asio::read(
-        socket, boost::asio::buffer(body_buffer.get(), header.body_length));
+        socket, boost::asio::buffer(body_buffer.get(), body_length));
     IncomingMessage message;
-    read_message_body(&message, header.code, body_buffer, header.body_length);
+    read_message_body(&message, header.code, body_buffer, body_length);
     return message;
 }
 

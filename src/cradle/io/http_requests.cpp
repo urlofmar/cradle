@@ -39,7 +39,7 @@ make_http_200_response(string body)
 {
     http_response response;
     response.status_code = 200;
-    response.body = make_string_blob(std::move(body));
+    response.body = make_blob(std::move(body));
     return response;
 }
 

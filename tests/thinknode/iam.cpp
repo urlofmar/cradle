@@ -1,14 +1,20 @@
 #include <cradle/thinknode/iam.h>
 
+#include <cppcoro/sync_wait.hpp>
+
 #include <cradle/core/monitoring.h>
 #include <cradle/io/mock_http.h>
+#include <cradle/service/core.h>
 #include <cradle/utilities/testing.h>
 
 using namespace cradle;
 
 TEST_CASE("context contents retrieval", "[thinknode][iam]")
 {
-    mock_http_session mock_http;
+    service_core service;
+    init_test_service(service);
+
+    auto& mock_http = enable_http_mocking(service);
     mock_http.set_script(
         {{make_get_request(
               "https://mgh.thinknode.io/api/v1.0/iam/contexts/123",
@@ -48,8 +54,8 @@ TEST_CASE("context contents retrieval", "[thinknode][iam]")
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    mock_http_connection connection(mock_http);
-    auto contents = get_context_contents(connection, session, "123");
+    auto contents
+        = cppcoro::sync_wait(get_context_contents(service, session, "123"));
     REQUIRE(
         contents
         == make_thinknode_context_contents(

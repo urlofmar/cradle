@@ -1,19 +1,18 @@
 #ifndef CRADLE_WEBSOCKET_LOCAL_CALCS_H
 #define CRADLE_WEBSOCKET_LOCAL_CALCS_H
 
-#include <cradle/caching/disk_cache.hpp>
-#include <cradle/io/http_requests.hpp>
+#include <cradle/service/core.h>
 #include <cradle/thinknode/types.hpp>
 
 namespace cradle {
 
-dynamic
+cppcoro::task<dynamic>
 perform_local_calc(
-    disk_cache& cache,
-    http_connection& connection,
+    service_core& service,
     thinknode_session const& session,
     string const& context_id,
     calculation_request const& request);
+
 }
 
 #endif

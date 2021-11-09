@@ -13,9 +13,39 @@ map(Fn const& fn, std::vector<Item> const& items)
 {
     typedef decltype(fn(Item())) mapped_item_type;
     size_t item_count = items.size();
-    std::vector<mapped_item_type> result(item_count);
+    std::vector<mapped_item_type> result;
+    result.reserve(item_count);
     for (size_t i = 0; i != item_count; ++i)
-        result[i] = fn(items[i]);
+        result.push_back(fn(items[i]));
+    return result;
+}
+
+// functional map over a vector, with move semantics
+template<class Item, class Fn>
+auto
+map(Fn const& fn, std::vector<Item>&& items)
+{
+    typedef decltype(fn(Item())) mapped_item_type;
+    size_t item_count = items.size();
+    std::vector<mapped_item_type> result;
+    result.reserve(item_count);
+    for (size_t i = 0; i != item_count; ++i)
+        result.push_back(fn(std::move(items[i])));
+    return result;
+}
+
+// functional map from another container to a vector
+template<class Container, class Fn>
+auto
+map_to_vector(Fn const& fn, Container&& container)
+{
+    typedef decltype(
+        fn(std::declval<typename std::decay<Container>::type::value_type>()))
+        mapped_item_type;
+    std::vector<mapped_item_type> result;
+    result.reserve(container.size());
+    for (auto&& item : std::forward<Container>(container))
+        result.push_back(fn(std::forward<decltype(item)>(item)));
     return result;
 }
 
@@ -29,6 +59,19 @@ map(Fn const& fn, std::map<Key, Value> const& items)
     std::map<Key, mapped_item_type> result;
     for (auto const& item : items)
         result[item.first] = fn(item.second);
+    return result;
+}
+
+// functional map over a map, with move semantics
+template<class Key, class Value, class Fn>
+auto
+map(Fn const& fn, std::map<Key, Value>&& items)
+    -> std::map<Key, decltype(fn(Value()))>
+{
+    typedef decltype(fn(Value())) mapped_item_type;
+    std::map<Key, mapped_item_type> result;
+    for (auto&& item : items)
+        result[item.first] = fn(std::move(item.second));
     return result;
 }
 

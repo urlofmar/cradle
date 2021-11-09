@@ -72,23 +72,13 @@ enum class immutable_cache_entry_state
 };
 
 api(struct)
-struct immutable_cache_entry_status
-{
-    immutable_cache_entry_state state;
-
-    // :progress is only valid if state is LOADING, but still optional even
-    // then.
-    optional<float> progress;
-};
-
-api(struct)
 struct immutable_cache_entry_snapshot
 {
     // the key associated with this entry
     string key;
 
     // Is this entry ready? (i.e., Is it done being computed/retrieved?)
-    bool is_ready;
+    immutable_cache_entry_state state;
 
     // type info for the cached data - valid iff data is ready
     // optional<api_type_info> type_info;

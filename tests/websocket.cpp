@@ -35,6 +35,13 @@ TEST_CASE("websocket client/server", "[ws]")
                                            message) {
             switch (get_tag(message.content))
             {
+                case server_message_content_tag::REGISTRATION_ACKNOWLEDGEMENT:
+                    client.send(make_websocket_client_message(
+                        "id0",
+                        make_client_message_content_with_cache_insert(
+                            make_websocket_cache_insert(
+                                "test_key", "test_value"))));
+                    break;
                 case server_message_content_tag::CACHE_INSERT_ACKNOWLEDGEMENT:
                     REQUIRE(message.request_id == "id0");
                     client.send(make_websocket_client_message(
@@ -71,11 +78,7 @@ TEST_CASE("websocket client/server", "[ws]")
                 "no_id",
                 make_client_message_content_with_registration(
                     make_websocket_registration_message(
-                        "Kasey", make_thinknode_session("", "")))));
-            client.send(make_websocket_client_message(
-                "id0",
-                make_client_message_content_with_cache_insert(
-                    make_websocket_cache_insert("test_key", "test_value"))));
+                        "Kasey", make_thinknode_session("abc", "def")))));
         });
         client.connect("ws://localhost:41072");
         client.run();

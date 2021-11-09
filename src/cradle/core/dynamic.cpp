@@ -83,95 +83,11 @@ dynamic::dynamic(std::initializer_list<dynamic> list)
     }
 }
 
-void dynamic::set(nil_t)
-{
-    type_ = value_type::NIL;
-}
-void
-dynamic::set(bool v)
-{
-    type_ = value_type::BOOLEAN;
-    value_ = v;
-}
-void
-dynamic::set(integer v)
-{
-    type_ = value_type::INTEGER;
-    value_ = v;
-}
-void
-dynamic::set(double v)
-{
-    type_ = value_type::FLOAT;
-    value_ = v;
-}
-void
-dynamic::set(string const& v)
-{
-    type_ = value_type::STRING;
-    value_ = v;
-}
-void
-dynamic::set(string&& v)
-{
-    type_ = value_type::STRING;
-    value_ = std::move(v);
-}
-void
-dynamic::set(blob const& v)
-{
-    type_ = value_type::BLOB;
-    value_ = v;
-}
-void
-dynamic::set(blob&& v)
-{
-    type_ = value_type::BLOB;
-    value_ = std::move(v);
-}
-void
-dynamic::set(boost::posix_time::ptime const& v)
-{
-    type_ = value_type::DATETIME;
-    value_ = v;
-}
-void
-dynamic::set(boost::posix_time::ptime&& v)
-{
-    type_ = value_type::DATETIME;
-    value_ = std::move(v);
-}
-void
-dynamic::set(dynamic_array const& v)
-{
-    type_ = value_type::ARRAY;
-    value_ = v;
-}
-void
-dynamic::set(dynamic_array&& v)
-{
-    type_ = value_type::ARRAY;
-    value_ = std::move(v);
-}
-void
-dynamic::set(dynamic_map const& v)
-{
-    type_ = value_type::MAP;
-    value_ = v;
-}
-void
-dynamic::set(dynamic_map&& v)
-{
-    type_ = value_type::MAP;
-    value_ = std::move(v);
-}
-
 void
 swap(dynamic& a, dynamic& b)
 {
     using std::swap;
-    swap(a.type_, b.type_);
-    swap(a.value_, b.value_);
+    swap(a.storage_, b.storage_);
 }
 
 std::ostream&

@@ -6,6 +6,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <variant>
 
 #include <boost/core/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -29,6 +30,8 @@ some(T&& x)
 }
 
 typedef int64_t integer;
+
+typedef std::vector<boost::uint8_t> byte_vector;
 
 // ownership_holder is meant to express polymorphic ownership of a resource.
 // The idea is that the resource may be owned in many different ways, and we
@@ -117,6 +120,17 @@ typedef std::vector<dynamic> dynamic_array;
 // Maps are represented as std::maps and can be manipulated as such.
 typedef std::map<dynamic, dynamic> dynamic_map;
 
+using dynamic_storage = std::variant<
+    nil_t,
+    bool,
+    integer,
+    double,
+    string,
+    std::shared_ptr<blob>,
+    boost::posix_time::ptime,
+    dynamic_array,
+    dynamic_map>;
+
 struct dynamic
 {
     // CONSTRUCTORS
@@ -198,76 +212,117 @@ struct dynamic
     value_type
     type() const
     {
-        return type_;
+        return value_type(storage_.index());
     }
 
     // Get the contents.
     // This should be used with caution.
     // cast<T>(dynamic) provides a safer interface to this.
-    std::any const&
+    dynamic_storage const&
     contents() const&
     {
-        return value_;
+        return storage_;
     }
 
     // Get a non-const reference to the contents.
     // This should be used with caution.
     // cast<T>(dynamic) provides a safer interface to this.
-    std::any&
+    dynamic_storage&
     contents() &
     {
-        return value_;
+        return storage_;
     }
 
     // Get an r-value reference to the contents.
     // This should be used with caution.
     // cast<T>(dynamic) provides a safer interface to this.
-    std::any&&
+    dynamic_storage&&
     contents() &&
     {
-        return std::move(value_);
+        return std::move(storage_);
     }
 
  private:
     void
-    set(nil_t _);
+    set(nil_t _)
+    {
+        storage_ = _;
+    }
     void
-    set(bool v);
+    set(bool v)
+    {
+        storage_ = v;
+    }
     void
-    set(integer v);
+    set(integer v)
+    {
+        storage_ = v;
+    }
     void
-    set(double v);
+    set(double v)
+    {
+        storage_ = v;
+    }
     void
-    set(string const& v);
+    set(string const& v)
+    {
+        storage_ = v;
+    }
     void
-    set(string&& v);
+    set(string&& v)
+    {
+        storage_ = std::move(v);
+    }
     void
     set(char const* v)
     {
         set(string(v));
     }
     void
-    set(blob const& v);
+    set(blob const& v)
+    {
+        storage_ = std::make_shared<blob>(v);
+    }
     void
-    set(blob&& v);
+    set(blob&& v)
+    {
+        storage_ = std::make_shared<blob>(std::move(v));
+    }
     void
-    set(boost::posix_time::ptime const& v);
+    set(boost::posix_time::ptime const& v)
+    {
+        storage_ = v;
+    }
     void
-    set(boost::posix_time::ptime&& v);
+    set(boost::posix_time::ptime&& v)
+    {
+        storage_ = std::move(v);
+    }
     void
-    set(dynamic_array const& v);
+    set(dynamic_array const& v)
+    {
+        storage_ = v;
+    }
     void
-    set(dynamic_array&& v);
+    set(dynamic_array&& v)
+    {
+        storage_ = std::move(v);
+    }
     void
-    set(dynamic_map const& v);
+    set(dynamic_map const& v)
+    {
+        storage_ = v;
+    }
     void
-    set(dynamic_map&& v);
+    set(dynamic_map&& v)
+    {
+        storage_ = std::move(v);
+    }
 
     friend void
     swap(dynamic& a, dynamic& b);
 
-    value_type type_;
-    std::any value_;
+    dynamic_storage storage_;
 };
 
 // omissible<T> is essentially the same as optional<T>, but it obeys

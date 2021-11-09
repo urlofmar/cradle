@@ -103,8 +103,6 @@ read_string(raw_memory_reader<Buffer>& r)
 
 // WRITING
 
-typedef std::vector<boost::uint8_t> byte_vector;
-
 struct byte_vector_buffer
 {
     byte_vector_buffer(byte_vector& bytes) : bytes(&bytes)
@@ -114,12 +112,31 @@ struct byte_vector_buffer
     byte_vector* bytes;
 
     void
-    write(char const* src, size_t size)
+    write(char const* data, size_t size)
     {
         size_t current_size = bytes->size();
         bytes->resize(bytes->size() + size);
-        std::memcpy(&(*bytes)[0] + current_size, src, size);
+        std::memcpy(&(*bytes)[0] + current_size, data, size);
     }
+};
+
+// a buffer that will simply count the number of bytes that passes through it
+struct counting_buffer
+{
+    size_t
+    size() const
+    {
+        return size_;
+    }
+
+    void
+    write(char const* data, size_t size)
+    {
+        this->size_ += size;
+    }
+
+ private:
+    size_t size_ = 0;
 };
 
 template<class Buffer>

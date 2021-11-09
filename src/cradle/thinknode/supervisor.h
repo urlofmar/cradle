@@ -6,12 +6,12 @@
 
 namespace cradle {
 
-struct http_connection;
+struct http_connection_interface;
 
 // Execute a local Thinknode calculation by invoking a provider via Docker.
 dynamic
 supervise_thinknode_calculation(
-    http_connection& connection,
+    http_connection_interface& connection,
     string const& account,
     string const& app,
     thinknode_provider_image_info const& image,

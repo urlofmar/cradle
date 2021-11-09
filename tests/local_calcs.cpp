@@ -2,6 +2,8 @@
 
 #include <thread>
 
+#include <cppcoro/sync_wait.hpp>
+
 #include <cradle/utilities/testing.h>
 
 #include <cradle/encodings/base64.h>
@@ -13,10 +15,8 @@ using namespace cradle;
 #ifdef LOCAL_DOCKER_TESTING
 TEST_CASE("local calcs", "[local_calcs][ws]")
 {
-    disk_cache cache(disk_cache_config("local_docker_cache", 0x1'00'00'00'00));
-
-    http_request_system http_system;
-    http_connection connection(http_system);
+    service_core core;
+    init_test_service(core);
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
@@ -24,12 +24,8 @@ TEST_CASE("local calcs", "[local_calcs][ws]")
         = get_environment_variable("CRADLE_THINKNODE_API_TOKEN");
 
     auto eval = [&](calculation_request const& request) {
-        return perform_local_calc(
-            cache,
-            connection,
-            session,
-            "5dadeb4a004073e81b5e096255e83652",
-            request);
+        return cppcoro::sync_wait(perform_local_calc(
+            core, session, "5dadeb4a004073e81b5e096255e83652", request));
     };
 
     // value

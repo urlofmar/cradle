@@ -75,7 +75,7 @@ make_docker_request(
 }
 
 static docker_service_type
-detect_docker(http_connection& connection)
+detect_docker(http_connection_interface& connection)
 {
     // Try Linux.
     try
@@ -124,7 +124,7 @@ detect_docker(http_connection& connection)
 static void
 pull_image(
     docker_service_type service_type,
-    http_connection& connection,
+    http_connection_interface& connection,
     string const& account,
     string const& app,
     thinknode_provider_image_info const& image)
@@ -148,7 +148,7 @@ pull_image(
 static string
 spawn_provider(
     docker_service_type service_type,
-    http_connection& connection,
+    http_connection_interface& connection,
     string const& account,
     string const& app,
     thinknode_provider_image_info const& image)
@@ -203,7 +203,7 @@ spawn_provider(
 
 dynamic
 supervise_thinknode_calculation(
-    http_connection& connection,
+    http_connection_interface& connection,
     string const& account,
     string const& app,
     thinknode_provider_image_info const& image,

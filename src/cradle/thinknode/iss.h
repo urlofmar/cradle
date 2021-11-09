@@ -1,6 +1,7 @@
 #ifndef CRADLE_THINKNODE_ISS_H
 #define CRADLE_THINKNODE_ISS_H
 
+#include <cradle/service/core.h>
 #include <cradle/thinknode/types.hpp>
 
 namespace cradle {
@@ -8,29 +9,37 @@ namespace cradle {
 struct http_connection_interface;
 
 // Resolve an ISS object to an immutable ID.
-string
+cppcoro::shared_task<string>
 resolve_iss_object_to_immutable(
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& context_id,
-    string const& object_id,
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    string object_id,
     bool ignore_upgrades);
 
 // Get the metadata for an ISS object.
-std::map<string, string>
+cppcoro::shared_task<std::map<string, string>>
 get_iss_object_metadata(
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& context_id,
-    string const& object_id);
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    string object_id);
 
 // Retrieve an immutable data object.
-dynamic
+cppcoro::shared_task<dynamic>
 retrieve_immutable(
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& context_id,
-    string const& immutable_id);
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    string immutable_id);
+
+// Retrieve an immutable object as a raw blob of data (in MessagePack format).
+cppcoro::shared_task<blob>
+retrieve_immutable_blob(
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    string immutable_id);
 
 // Get the URL form of a schema.
 string
@@ -42,22 +51,32 @@ thinknode_type_info
 parse_url_type_string(string const& url_type);
 
 // Post an ISS object and return its ID.
-string
+cppcoro::shared_task<string>
 post_iss_object(
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& context_id,
-    thinknode_type_info const& schema,
-    dynamic const& data);
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    thinknode_type_info schema,
+    dynamic data);
 
-// Copy an ISS object from one bucket to another.
-void
-copy_iss_object(
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& source_bucket,
-    string const& destination_context_id,
-    string const& object_id);
+// Post an ISS object and return its ID.
+// This form takes the object already encoded in msgpack.
+cppcoro::shared_task<string>
+post_iss_object(
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    thinknode_type_info schema,
+    blob msgpack_data);
+
+// Shallowly copy an ISS object from one bucket to another.
+cppcoro::task<nil_t>
+shallowly_copy_iss_object(
+    service_core& service,
+    thinknode_session session,
+    string source_bucket,
+    string destination_context_id,
+    string object_id);
 
 } // namespace cradle
 

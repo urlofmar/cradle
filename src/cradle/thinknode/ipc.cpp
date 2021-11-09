@@ -28,7 +28,8 @@ read_message_body(
             ownership_holder ownership(body);
             for (uint16_t i = 0; i != n_args; ++i)
             {
-                auto arg_length = read_int<uint64_t>(reader);
+                auto arg_length
+                    = boost::numeric_cast<size_t>(read_int<uint64_t>(reader));
                 request.args[i] = parse_msgpack_value(
                     ownership, buffer.data(), arg_length);
                 buffer.advance(arg_length);
@@ -143,25 +144,6 @@ get_message_code(thinknode_provider_message const& message)
                 << enum_value_info(static_cast<int>(get_tag(message))));
     }
 }
-
-// a buffer that will simply count the number of bytes that passes through it
-struct counting_buffer
-{
-    size_t
-    size() const
-    {
-        return size_;
-    }
-
-    void
-    write(char const* data, size_t size)
-    {
-        this->size_ += size;
-    }
-
- private:
-    size_t size_ = 0;
-};
 
 size_t
 measure_msgpack_size(dynamic const& value)

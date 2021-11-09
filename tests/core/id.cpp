@@ -8,6 +8,7 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <cradle/encodings/sha256_hash_id.h>
 #include <cradle/utilities/testing.h>
 
 using namespace cradle;

@@ -52,11 +52,11 @@ websocket_client::connect(string const& uri)
 
 void
 websocket_client::set_message_handler(
-    std::function<void(websocket_server_message const& message)> const&
-        handler)
+    std::function<void(websocket_server_message const& message)> handler)
 {
     impl_->client.set_message_handler(
-        [=](websocketpp::connection_hdl hdl, message_ptr message) {
+        [handler = std::move(handler)](
+            websocketpp::connection_hdl hdl, message_ptr message) {
             handler(from_dynamic<websocket_server_message>(
                 parse_msgpack_value(message->get_payload())));
         });
@@ -84,10 +84,12 @@ websocket_client::run()
 }
 
 void
-websocket_client::set_open_handler(std::function<void()> const& handler)
+websocket_client::set_open_handler(std::function<void()> handler)
 {
     impl_->client.set_open_handler(
-        [=](websocketpp::connection_hdl hdl) { handler(); });
+        [handler = std::move(handler)](websocketpp::connection_hdl hdl) {
+            handler();
+        });
 }
 
 void

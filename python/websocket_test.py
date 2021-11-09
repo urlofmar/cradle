@@ -43,7 +43,7 @@ def test_websocket_server():
         ws.send_binary(
             msgpack.packb(
                 {
-                    "request_id": "no_id",
+                    "request_id": "reg",
                     "content": {
                         "registration": {
                             "name": "Channing",
@@ -55,6 +55,13 @@ def test_websocket_server():
                     }
                 },
                 use_bin_type=True))
+        response = msgpack.unpackb(ws.recv(), use_list=False, raw=False)
+        assert response == {
+            "request_id": "reg",
+            "content": {
+                "registration_acknowledgement": None
+            }
+        }
         ws.send_binary(
             msgpack.packb(
                 {

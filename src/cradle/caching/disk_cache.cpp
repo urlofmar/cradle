@@ -514,7 +514,7 @@ write_usage_records(disk_cache_impl& cache)
 }
 
 void
-record_cache_growth(disk_cache_impl& cache, size_t size)
+record_cache_growth(disk_cache_impl& cache, uint64_t size)
 {
     cache.bytes_inserted_since_last_sweep += size;
     // Allow the cache to write out roughly 1% of its capacity between size

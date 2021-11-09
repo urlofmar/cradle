@@ -68,6 +68,7 @@ conan_cmake_configure(
         spdlog/1.8.2
         simdjson/0.9.1
         lz4/1.9.3
+        fmt/7.1.3
     OPTIONS
         boost:without_chrono=True
         boost:without_container=True
@@ -191,6 +192,16 @@ if (IS_CLANG)
 elseif(IS_MSVC)
     add_compile_options(/FC)
 endif()
+
+# Enable big objects on MSVC.
+if(IS_MSVC)
+    add_compile_options(/bigobj)
+endif()
+
+# Enable the address sanitizer (for now).
+# if(IS_MSVC)
+#     add_compile_options(/fsanitize=address /Zi)
+# endif()
 
 # Exclude as much of the Windows API as possible to avoid #define pollution
 # and speed up builds. Note that this has to be done via command-line arguments

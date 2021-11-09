@@ -6,12 +6,31 @@ namespace cradle {
 namespace detail {
 
 void
-record_immutable_cache_value(immutable_cache_record& record, size_t size)
+record_immutable_cache_value(
+    immutable_cache& cache, id_interface const& key, size_t size)
 {
-    std::scoped_lock<std::mutex> lock(record.owner_cache->mutex);
+    std::scoped_lock<std::mutex> lock(cache.mutex);
+    cache_record_map::iterator i = cache.records.find(&key);
+    if (i != cache.records.end())
+    {
+        immutable_cache_record& record = *i->second;
+        record.state.store(
+            immutable_cache_entry_state::READY, std::memory_order_relaxed);
+        record.size = size;
+    }
+}
 
-    record.is_ready.store(true, std::memory_order_relaxed);
-    record.size = size;
+void
+record_immutable_cache_failure(immutable_cache& cache, id_interface const& key)
+{
+    std::scoped_lock<std::mutex> lock(cache.mutex);
+    cache_record_map::iterator i = cache.records.find(&key);
+    if (i != cache.records.end())
+    {
+        immutable_cache_record& record = *i->second;
+        record.state.store(
+            immutable_cache_entry_state::FAILED, std::memory_order_relaxed);
+    }
 }
 
 namespace {
@@ -24,8 +43,11 @@ remove_from_eviction_list(
     assert(record->eviction_list_iterator != list.records.end());
     list.records.erase(record->eviction_list_iterator);
     record->eviction_list_iterator = list.records.end();
-    if (record->is_ready.load(std::memory_order_relaxed))
+    if (record->state.load(std::memory_order_relaxed)
+        == immutable_cache_entry_state::READY)
+    {
         list.total_size -= record->size;
+    }
 }
 
 void
@@ -44,7 +66,8 @@ immutable_cache_record*
 acquire_cache_record(
     immutable_cache& cache,
     id_interface const& key,
-    function_view<std::any(immutable_cache_record& record)> const& create_task)
+    function_view<std::any(
+        immutable_cache& cache, id_interface const& key)> const& create_task)
 {
     std::scoped_lock<std::mutex> lock(cache.mutex);
     cache_record_map::iterator i = cache.records.find(&key);
@@ -55,10 +78,18 @@ acquire_cache_record(
         record->eviction_list_iterator = cache.eviction_list.records.end();
         record->key.capture(key);
         record->ref_count = 0;
-        record->task = create_task(*record);
+        record->task = create_task(cache, key);
         i = cache.records.emplace(&*record->key, std::move(record)).first;
     }
     immutable_cache_record* record = i->second.get();
+    // TODO: Better (optional) retry logic.
+    if (record->state.load(std::memory_order_relaxed)
+        == immutable_cache_entry_state::FAILED)
+    {
+        record->task = create_task(cache, key);
+        record->state.store(
+            immutable_cache_entry_state::LOADING, std::memory_order_relaxed);
+    }
     acquire_cache_record_no_lock(record);
     return record;
 }
@@ -95,7 +126,9 @@ release_cache_record(immutable_cache_record* record)
         }
     }
     if (do_lru_eviction)
+    {
         reduce_memory_cache_size(cache, cache.config.unused_size_limit);
+    }
 }
 
 } // namespace
@@ -117,7 +150,8 @@ void
 untyped_immutable_cache_ptr::acquire(
     cradle::immutable_cache& cache,
     id_interface const& key,
-    function_view<std::any(immutable_cache_record& record)> const& create_task)
+    function_view<std::any(
+        immutable_cache& cache, id_interface const& key)> const& create_task)
 {
     record_ = detail::acquire_cache_record(*cache.impl, key, create_task);
     key_.capture(key);

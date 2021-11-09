@@ -1,6 +1,9 @@
 #include <cradle/thinknode/calc.h>
 
 #include <cstring>
+
+#include <cppcoro/sync_wait.hpp>
+
 #include <fmt/format.h>
 
 #include <fakeit.h>
@@ -74,7 +77,10 @@ TEST_CASE("calc status utilities", "[thinknode][tn_calc]")
 
 TEST_CASE("calc status query", "[thinknode][tn_calc]")
 {
-    mock_http_session mock_http;
+    service_core service;
+    init_test_service(service);
+
+    auto& mock_http = enable_http_mocking(service);
     mock_http.set_script(
         {{make_get_request(
               "https://mgh.thinknode.io/api/v1.0/calc/abc/"
@@ -87,8 +93,8 @@ TEST_CASE("calc status query", "[thinknode][tn_calc]")
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    mock_http_connection connection(mock_http);
-    auto status = query_calculation_status(connection, session, "123", "abc");
+    auto status = cppcoro::sync_wait(
+        query_calculation_status(service, session, "123", "abc"));
     REQUIRE(status == make_calculation_status_with_completed(nil));
 
     REQUIRE(mock_http.is_complete());
@@ -97,7 +103,10 @@ TEST_CASE("calc status query", "[thinknode][tn_calc]")
 
 TEST_CASE("calc request retrieval", "[thinknode][tn_calc]")
 {
-    mock_http_session mock_http;
+    service_core service;
+    init_test_service(service);
+
+    auto& mock_http = enable_http_mocking(service);
     mock_http.set_script(
         {{make_get_request(
               "https://mgh.thinknode.io/api/v1.0/calc/abc?context=123",
@@ -109,9 +118,8 @@ TEST_CASE("calc request retrieval", "[thinknode][tn_calc]")
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    mock_http_connection connection(mock_http);
-    auto request
-        = retrieve_calculation_request(connection, session, "123", "abc");
+    auto request = cppcoro::sync_wait(
+        retrieve_calculation_request(service, session, "123", "abc"));
     REQUIRE(
         request == make_calculation_request_with_value(dynamic({2.1, 4.2})));
 
@@ -121,7 +129,10 @@ TEST_CASE("calc request retrieval", "[thinknode][tn_calc]")
 
 TEST_CASE("calc status long polling", "[thinknode][tn_calc]")
 {
-    mock_http_session mock_http;
+    service_core service;
+    init_test_service(service);
+
+    auto& mock_http = enable_http_mocking(service);
     mock_http.set_script(
         {{make_get_request(
               "https://mgh.thinknode.io/api/v1.0/calc/abc/status?context=123",
@@ -146,32 +157,30 @@ TEST_CASE("calc status long polling", "[thinknode][tn_calc]")
           make_http_200_response(value_to_json(
               to_dynamic(make_calculation_status_with_completed(nil))))}});
 
-    std::vector<calculation_status> statuses
+    std::vector<calculation_status> expected_statuses
         = {make_calculation_status_with_calculating(
                calculation_calculating_status{0.115}),
            make_calculation_status_with_uploading(
                calculation_uploading_status{0.995}),
            make_calculation_status_with_completed(nil)};
 
-    size_t status_counter = 0;
-    auto status_checker = [&](calculation_status const& status) {
-        REQUIRE(status == statuses.at(status_counter));
-        ++status_counter;
-    };
-
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
     session.access_token = "xyz";
 
-    mock_http_connection connection(mock_http);
-    null_check_in check_in;
-    long_poll_calculation_status(
-        check_in, status_checker, connection, session, "123", "abc");
+    cppcoro::sync_wait([&]() -> cppcoro::task<> {
+        auto statuses
+            = long_poll_calculation_status(service, session, "123", "abc");
+        size_t status_counter = 0;
+        co_await for_async(std::move(statuses), [&](auto status) {
+            REQUIRE(status == expected_statuses.at(status_counter));
+            ++status_counter;
+        });
+        REQUIRE(status_counter == expected_statuses.size());
+    }());
 
     REQUIRE(mock_http.is_complete());
     REQUIRE(mock_http.is_in_order());
-
-    REQUIRE(status_counter == statuses.size());
 }
 
 TEST_CASE("calc variable substitution", "[thinknode][tn_calc]")
@@ -361,10 +370,10 @@ TEST_CASE("let calculation submission", "[thinknode][tn_calc]")
     size_t request_counter = 0;
     When(Method(mock_submitter, submit))
         .AlwaysDo(
-            [&](thinknode_session const& session,
-                string const& context_id,
-                calculation_request const& request,
-                bool dry_run) -> optional<string> {
+            [&](thinknode_session session,
+                string context_id,
+                calculation_request request,
+                bool dry_run) -> cppcoro::task<optional<string>> {
                 REQUIRE(session == mock_session);
                 REQUIRE(context_id == mock_context_id);
                 REQUIRE(request == expected_requests.at(request_counter));
@@ -372,21 +381,21 @@ TEST_CASE("let calculation submission", "[thinknode][tn_calc]")
                 {
                     auto response = mock_responses.at(request_counter);
                     ++request_counter;
-                    return some(response);
+                    co_return some(response);
                 }
                 else
                 {
                     ++request_counter;
-                    return none;
+                    co_return none;
                 }
             });
 
-    auto submission_info = submit_let_calculation_request(
+    auto submission_info = cppcoro::sync_wait(submit_let_calculation_request(
         mock_submitter.get(),
         mock_session,
         mock_context_id,
         make_augmented_calculation_request(let_calculation, {"d"}),
-        false);
+        false));
     REQUIRE(request_counter == expected_requests.size());
     REQUIRE(submission_info);
     REQUIRE(submission_info->main_calc_id == "main-id");
@@ -399,11 +408,11 @@ TEST_CASE("let calculation submission", "[thinknode][tn_calc]")
         == (std::vector<string>{"a-id", "b-id", "c-id"}));
 
     request_counter = 0;
-    submission_info = submit_let_calculation_request(
+    submission_info = cppcoro::sync_wait(submit_let_calculation_request(
         mock_submitter.get(),
         mock_session,
         mock_context_id,
         make_augmented_calculation_request(let_calculation, {"d"}),
-        true);
+        true));
     REQUIRE(!submission_info);
 }

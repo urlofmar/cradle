@@ -44,7 +44,7 @@ get_cache_snapshot(immutable_cache& cache_object)
     {
         immutable_cache_entry_snapshot entry{
             lexical_cast<string>(*record->key),
-            record->is_ready.load(std::memory_order_relaxed),
+            record->state.load(std::memory_order_relaxed),
             // is_initialized(data) ? some(data.ptr->type_info()) : none,
             record->size};
         // Put the entry's info the appropriate list depending on whether

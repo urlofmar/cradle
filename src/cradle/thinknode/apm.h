@@ -1,6 +1,7 @@
 #ifndef CRADLE_THINKNODE_APM_H
 #define CRADLE_THINKNODE_APM_H
 
+#include <cradle/service/core.h>
 #include <cradle/thinknode/types.hpp>
 
 namespace cradle {
@@ -8,13 +9,13 @@ namespace cradle {
 struct http_connection_interface;
 
 // Query a particular version of an app.
-thinknode_app_version_info
+cppcoro::shared_task<thinknode_app_version_info>
 get_app_version_info(
-    http_connection_interface& connection,
-    thinknode_session const& session,
-    string const& account,
-    string const& app,
-    string const& version);
+    service_core& service,
+    thinknode_session session,
+    string account,
+    string app,
+    string version);
 
 } // namespace cradle
 

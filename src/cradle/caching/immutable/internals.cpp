@@ -9,7 +9,7 @@ namespace cradle {
 namespace detail {
 
 void
-reduce_memory_cache_size(immutable_cache& cache, size_t desired_size)
+reduce_memory_cache_size(immutable_cache& cache, uint64_t desired_size)
 {
     std::scoped_lock<std::mutex> lock(cache.mutex);
     while (!cache.eviction_list.records.empty()

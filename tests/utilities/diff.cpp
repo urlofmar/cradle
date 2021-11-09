@@ -46,18 +46,18 @@ TEST_CASE("array diffs", "[core][diff]")
             some(dynamic{1., 3.}))});
 
     test_diff(
-        dynamic{0., 1., 2.},
-        dynamic{1., 3., 2.},
+        dynamic{0., 3., 2., 4., 5., 6., 7.},
+        dynamic{1., 3., 2., 0., 5., 6., 7.},
         {make_value_diff_item(
              {integer(0)},
              value_diff_op::UPDATE,
              some(dynamic(0.)),
              some(dynamic(1.))),
          make_value_diff_item(
-             {integer(1)},
+             {integer(3)},
              value_diff_op::UPDATE,
-             some(dynamic(1.)),
-             some(dynamic(3.)))});
+             some(dynamic(4.)),
+             some(dynamic(0.)))});
 
     test_diff(
         dynamic{0., 1., 2.},
@@ -87,8 +87,8 @@ TEST_CASE("array diffs", "[core][diff]")
             {integer(0)}, value_diff_op::DELETE, some(dynamic(0.)), none)});
 
     test_diff(
-        dynamic{3., 1., 2.},
-        dynamic{2.},
+        dynamic{3., 1., 2., 4., 6., 0., 4.},
+        dynamic{2., 4., 6., 0., 4.},
         {make_value_diff_item(
              {integer(1)}, value_diff_op::DELETE, some(dynamic(1.)), none),
          make_value_diff_item(
@@ -122,8 +122,8 @@ TEST_CASE("array diffs", "[core][diff]")
             {integer(2)}, value_diff_op::INSERT, none, dynamic(2.))});
 
     test_diff(
-        dynamic{0.},
-        dynamic{0., 3., 2.},
+        dynamic{0., 1., 4., 3., 1.},
+        dynamic{0., 3., 2., 1., 4., 3., 1.},
         {make_value_diff_item(
              {integer(1)}, value_diff_op::INSERT, none, dynamic(3.)),
          make_value_diff_item(
@@ -160,8 +160,20 @@ TEST_CASE("map diffs", "[core][diff]")
             some(dynamic(1.)))});
 
     test_diff(
-        dynamic{{"abc", 1.}, {"foo", 0.}, {"bar", 1.}},
-        dynamic{{"abc", 1.}, {"foo", 3.}, {"baz", 0.}},
+        dynamic{
+            {"abc", 1.},
+            {"foo", 0.},
+            {"bar", 1.},
+            {"other",
+             "irrelevant but unchanged stuff to ensure that the 'simple' diff "
+             "is larger than the 'compressed' one"}},
+        dynamic{
+            {"abc", 1.},
+            {"foo", 3.},
+            {"baz", 0.},
+            {"other",
+             "irrelevant but unchanged stuff to ensure that the 'simple' diff "
+             "is larger than the 'compressed' one"}},
         {make_value_diff_item(
              {dynamic("bar")}, value_diff_op::DELETE, dynamic(1.), none),
          make_value_diff_item(

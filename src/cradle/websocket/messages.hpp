@@ -132,6 +132,14 @@ struct copy_iss_object_request
 };
 
 api(struct)
+struct copy_calculation_request
+{
+    std::string source_context_id;
+    std::string destination_context_id;
+    std::string calculation_id;
+};
+
+api(struct)
 struct post_calculation_request
 {
     std::string context_id;
@@ -223,6 +231,21 @@ struct iss_diff_request
 
 typedef cradle::object_tree_diff iss_diff_response;
 
+api(struct)
+struct results_api_query
+{
+    string context_id;
+    string plan_iss_id;
+    string function;
+    std::vector<dynamic> args;
+};
+
+api(struct)
+struct results_api_response
+{
+    std::string calculation_id;
+};
+
 api(union)
 union client_message_content
 {
@@ -236,6 +259,7 @@ union client_message_content
     cradle::iss_object_metadata_request iss_object_metadata;
     cradle::post_iss_object_request post_iss_object;
     cradle::copy_iss_object_request copy_iss_object;
+    cradle::copy_calculation_request copy_calculation;
     cradle::post_calculation_request post_calculation;
     cradle::resolve_meta_chain_request resolve_meta_chain;
     cradle::calculation_request_message calculation_request;
@@ -243,6 +267,7 @@ union client_message_content
     cradle::calculation_search_request calculation_search;
     cradle::iss_diff_request iss_diff;
     cradle::post_calculation_request perform_local_calc;
+    cradle::results_api_query results_api_query;
 };
 
 api(struct)
@@ -282,6 +307,7 @@ union server_message_content
     cradle::iss_object_metadata_response iss_object_metadata_response;
     cradle::post_iss_object_response post_iss_object_response;
     cradle::nil_t copy_iss_object_response;
+    cradle::nil_t copy_calculation_response;
     cradle::post_calculation_response post_calculation_response;
     cradle::resolve_meta_chain_response resolve_meta_chain_response;
     cradle::calculation_request_response calculation_request_response;
@@ -289,6 +315,7 @@ union server_message_content
     cradle::calculation_search_response calculation_search_response;
     cradle::iss_diff_response iss_diff_response;
     cradle::dynamic local_calc_result;
+    cradle::results_api_response results_api_response;
 };
 
 api(struct)

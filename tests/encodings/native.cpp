@@ -54,6 +54,8 @@ TEST_CASE("basic native encoding", "[encodings][native]")
 
     auto native_data = write_natively_encoded_value(original_data);
 
+    REQUIRE(natively_encoded_sizeof(original_data) == native_data.size());
+
     auto decoded_data
         = read_natively_encoded_value(native_data.data(), native_data.size());
 

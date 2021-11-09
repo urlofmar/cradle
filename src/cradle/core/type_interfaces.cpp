@@ -241,7 +241,7 @@ hash_value(blob const& x)
 }
 
 blob
-make_string_blob(string s)
+make_blob(string s)
 {
     blob b;
     // This is a little roundabout, but it seems like the most reasonable way
@@ -250,8 +250,20 @@ make_string_blob(string s)
     b.ownership = std::make_shared<string>(std::move(s));
     string const& owned_string
         = *std::any_cast<std::shared_ptr<string> const&>(b.ownership);
-    b.data = owned_string.c_str();
-    b.size = owned_string.length();
+    b.data = owned_string.data();
+    b.size = owned_string.size();
+    return b;
+}
+
+blob
+make_blob(byte_vector v)
+{
+    blob b;
+    b.ownership = std::make_shared<byte_vector>(std::move(v));
+    byte_vector const& owned_vector
+        = *std::any_cast<std::shared_ptr<byte_vector> const&>(b.ownership);
+    b.data = reinterpret_cast<char const*>(owned_vector.data());
+    b.size = owned_vector.size();
     return b;
 }
 

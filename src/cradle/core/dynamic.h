@@ -117,29 +117,65 @@ add_dynamic_path_element(boost::exception& e, dynamic const& path_element);
 
 // VALUES
 
-// Cast a dynamic value to one of the base types.
+template<class T>
+struct dynamic_caster
+{
+    static T const&
+    cast(dynamic const& v)
+    {
+        return std::get<T>(v.contents());
+    }
+
+    static T&
+    cast(dynamic& v)
+    {
+        return std::get<T>(v.contents());
+    }
+
+    static T&&
+    cast(dynamic&& v)
+    {
+        return std::get<T>(std::move(v).contents());
+    }
+};
+
+template<>
+struct dynamic_caster<blob>
+{
+    static blob const&
+    cast(dynamic const& v)
+    {
+        return *std::get<std::shared_ptr<blob>>(v.contents());
+    }
+
+    static blob&
+    cast(dynamic& v)
+    {
+        return *std::get<std::shared_ptr<blob>>(v.contents());
+    }
+};
+
+// Cast to a blob. (Blobs are stored differently.)
 template<class T>
 T const&
 cast(dynamic const& v)
 {
     check_type(value_type_of<T>::value, v.type());
-    return std::any_cast<T const&>(v.contents());
+    return dynamic_caster<T>::cast(v);
 }
-// Same, but with a non-const reference.
 template<class T>
 T&
 cast(dynamic& v)
 {
     check_type(value_type_of<T>::value, v.type());
-    return std::any_cast<T&>(v.contents());
+    return dynamic_caster<T>::cast(v);
 }
-// Same, but with move semantics.
 template<class T>
 T&&
 cast(dynamic&& v)
 {
     check_type(value_type_of<T>::value, v.type());
-    return std::any_cast<T&&>(std::move(v).contents());
+    return dynamic_caster<T>::cast(std::move(v));
 }
 
 std::ostream&

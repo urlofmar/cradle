@@ -1,5 +1,7 @@
-#include <cradle/core/type_interfaces.h>
 #include <cradle/utilities/diff.hpp>
+
+#include <cradle/core/type_interfaces.h>
+#include <cradle/encodings/native.h>
 
 namespace cradle {
 
@@ -121,7 +123,8 @@ compute_map_diff(
 
     // Use whichever diff is smaller.
     value_diff* diff_to_use
-        = deep_sizeof(compressed_diff) < deep_sizeof(simple_diff)
+        = natively_encoded_sizeof(to_dynamic(compressed_diff))
+                  < natively_encoded_sizeof(to_dynamic(simple_diff))
               ? &compressed_diff
               : &simple_diff;
     std::move(

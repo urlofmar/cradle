@@ -13,6 +13,9 @@ read_natively_encoded_value(uint8_t const* data, size_t size);
 byte_vector
 write_natively_encoded_value(dynamic const& value);
 
+size_t
+natively_encoded_sizeof(dynamic const& value);
+
 } // namespace cradle
 
 #endif

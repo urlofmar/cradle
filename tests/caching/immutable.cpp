@@ -75,7 +75,9 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
         REQUIRE(p_needed_creation);
         // Also check all that all the ptr accessors work.
         REQUIRE(p.is_initialized());
+        REQUIRE(p.is_loading());
         REQUIRE(!p.is_ready());
+        REQUIRE(!p.is_failed());
         REQUIRE(p.key() == make_id(0));
     }
 
@@ -83,7 +85,8 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
         INFO("get_cache_snapshot reflects that entry 0 is loading.");
         REQUIRE(
             sort_cache_snapshot(get_cache_snapshot(cache))
-            == (immutable_cache_snapshot{{{"0", false, 0}}, {}}));
+            == (immutable_cache_snapshot{
+                {{"0", immutable_cache_entry_state::LOADING, 0}}, {}}));
     }
 
     bool q_needed_creation = false;
@@ -108,7 +111,9 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
         REQUIRE(
             sort_cache_snapshot(get_cache_snapshot(cache))
             == (immutable_cache_snapshot{
-                {{"0", false, 0}, {"1", false, 0}}, {}}));
+                {{"0", immutable_cache_entry_state::LOADING, 0},
+                 {"1", immutable_cache_entry_state::LOADING, 0}},
+                {}}));
     }
 
     bool r_needed_creation = false;
@@ -128,7 +133,9 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
         REQUIRE(
             sort_cache_snapshot(get_cache_snapshot(cache))
             == (immutable_cache_snapshot{
-                {{"0", false, 0}, {"1", false, 0}}, {}}));
+                {{"0", immutable_cache_entry_state::LOADING, 0},
+                 {"1", immutable_cache_entry_state::LOADING, 0}},
+                {}}));
     }
 
     {
@@ -148,7 +155,9 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
         REQUIRE(
             sort_cache_snapshot(get_cache_snapshot(cache))
             == (immutable_cache_snapshot{
-                {{"0", false, 0}, {"1", true, sizeof(int)}}, {}}));
+                {{"0", immutable_cache_entry_state::LOADING, 0},
+                 {"1", immutable_cache_entry_state::READY, sizeof(int)}},
+                {}}));
         REQUIRE(p.is_ready());
         REQUIRE(q.is_ready());
     }
@@ -180,7 +189,9 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
         REQUIRE(
             sort_cache_snapshot(get_cache_snapshot(cache))
             == (immutable_cache_snapshot{
-                {{"0", false, 0}, {"1", true, sizeof(int)}}, {}}));
+                {{"0", immutable_cache_entry_state::LOADING, 0},
+                 {"1", immutable_cache_entry_state::READY, sizeof(int)}},
+                {}}));
     }
 
     {
@@ -193,7 +204,8 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
         REQUIRE(
             sort_cache_snapshot(get_cache_snapshot(cache))
             == (immutable_cache_snapshot{
-                {{"0", false, 0}}, {{"1", true, sizeof(int)}}}));
+                {{"0", immutable_cache_entry_state::LOADING, 0}},
+                {{"1", immutable_cache_entry_state::READY, sizeof(int)}}}));
     }
 
     {
@@ -206,7 +218,9 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
         REQUIRE(
             sort_cache_snapshot(get_cache_snapshot(cache))
             == (immutable_cache_snapshot{
-                {{"0", false, 0}, {"1", true, sizeof(int)}}, {}}));
+                {{"0", immutable_cache_entry_state::LOADING, 0},
+                 {"1", immutable_cache_entry_state::READY, sizeof(int)}},
+                {}}));
     }
 
     {
@@ -217,7 +231,8 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
         REQUIRE(
             sort_cache_snapshot(get_cache_snapshot(cache))
             == (immutable_cache_snapshot{
-                {{"0", false, 0}}, {{"1", true, sizeof(int)}}}));
+                {{"0", immutable_cache_entry_state::LOADING, 0}},
+                {{"1", immutable_cache_entry_state::READY, sizeof(int)}}}));
     }
 
     {
@@ -229,7 +244,8 @@ TEST_CASE("basic immutable cache usage", "[immutable_cache]")
 
         REQUIRE(
             sort_cache_snapshot(get_cache_snapshot(cache))
-            == (immutable_cache_snapshot{{{"0", false, 0}}, {}}));
+            == (immutable_cache_snapshot{
+                {{"0", immutable_cache_entry_state::LOADING, 0}}, {}}));
     }
 }
 

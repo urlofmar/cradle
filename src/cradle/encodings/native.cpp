@@ -98,9 +98,9 @@ read_natively_encoded_value(uint8_t const* data, size_t size)
     return value;
 }
 
+template<class Buffer>
 void
-write_natively_encoded_value(
-    raw_memory_writer<byte_vector_buffer>& w, dynamic const& v)
+write_natively_encoded_value(raw_memory_writer<Buffer>& w, dynamic const& v)
 {
     {
         uint32_t t = uint32_t(v.type());
@@ -171,6 +171,15 @@ write_natively_encoded_value(dynamic const& v)
     raw_memory_writer<byte_vector_buffer> w(buffer);
     write_natively_encoded_value(w, v);
     return data;
+}
+
+size_t
+natively_encoded_sizeof(dynamic const& v)
+{
+    counting_buffer buffer;
+    raw_memory_writer<counting_buffer> w(buffer);
+    write_natively_encoded_value(w, v);
+    return buffer.size();
 }
 
 } // namespace cradle

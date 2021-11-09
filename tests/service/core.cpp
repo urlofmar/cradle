@@ -4,32 +4,12 @@
 
 #include <filesystem>
 
-#include <cradle/fs/utilities.h>
 #include <cradle/service/internals.h>
 #include <cradle/utilities/concurrency_testing.h>
 
 #include <cradle/utilities/testing.h>
 
 using namespace cradle;
-
-namespace {
-
-void
-init_test_service(service_core& core)
-{
-    auto cache_dir = file_path("service_disk_cache");
-
-    reset_directory(cache_dir);
-
-    core.reset(service_config(
-        immutable_cache_config(0x40'00'00'00),
-        disk_cache_config(some(cache_dir.string()), 0x40'00'00'00),
-        2,
-        2,
-        2));
-}
-
-} // namespace
 
 TEST_CASE("HTTP requests", "[service][core]")
 {
@@ -61,12 +41,14 @@ TEST_CASE("small value disk caching", "[service][core]")
     };
 
     {
-        auto result = disk_cached(core, "id_12", counted_task(12));
+        auto result
+            = disk_cached(core, "id_12", [&] { return counted_task(12); });
         REQUIRE(cppcoro::sync_wait(result) == dynamic(integer(12)));
         REQUIRE(execution_count == 1);
     }
     {
-        auto result = disk_cached(core, "id_42", counted_task(42));
+        auto result
+            = disk_cached(core, "id_42", [&] { return counted_task(42); });
         REQUIRE(cppcoro::sync_wait(result) == dynamic(integer(42)));
         REQUIRE(execution_count == 2);
     }
@@ -77,7 +59,8 @@ TEST_CASE("small value disk caching", "[service][core]")
     }));
     // Now redo the 'id_12' task to see that it's not actually rerun.
     {
-        auto result = disk_cached(core, "id_12", counted_task(12));
+        auto result
+            = disk_cached(core, "id_12", [&] { return counted_task(12); });
         REQUIRE(cppcoro::sync_wait(result) == dynamic(integer(12)));
         REQUIRE(execution_count == 2);
     }
@@ -104,14 +87,16 @@ TEST_CASE("large value disk caching", "[service][core]")
     };
 
     {
-        auto result = disk_cached(core, "id_12", counted_task(12));
+        auto result
+            = disk_cached(core, "id_12", [&] { return counted_task(12); });
         REQUIRE(
             cppcoro::sync_wait(result)
             == to_dynamic(generate_random_data(12)));
         REQUIRE(execution_count == 1);
     }
     {
-        auto result = disk_cached(core, "id_42", counted_task(42));
+        auto result
+            = disk_cached(core, "id_42", [&] { return counted_task(42); });
         REQUIRE(
             cppcoro::sync_wait(result)
             == to_dynamic(generate_random_data(42)));
@@ -124,7 +109,8 @@ TEST_CASE("large value disk caching", "[service][core]")
     }));
     // Now redo the 'id_12' task to see that it's not actually rerun.
     {
-        auto result = disk_cached(core, "id_12", counted_task(12));
+        auto result
+            = disk_cached(core, "id_12", [&] { return counted_task(12); });
         REQUIRE(
             cppcoro::sync_wait(result)
             == to_dynamic(generate_random_data(12)));
@@ -156,6 +142,44 @@ TEST_CASE("cached tasks", "[service][core]")
     // Now redo the '12' task to see that it's not actually rerun.
     {
         auto result = cached(core, make_id(12), counted_task(12));
+        REQUIRE(cppcoro::sync_wait(result) == integer(12));
+        REQUIRE(execution_count == 2);
+    }
+}
+
+TEST_CASE("lazily generated cached tasks", "[service][core]")
+{
+    service_core core;
+    init_test_service(core);
+
+    int execution_count = 0;
+    auto counted_task = [&](int answer) -> cppcoro::task<integer> {
+        ++execution_count;
+        co_return integer(answer);
+    };
+
+    {
+        auto result = cached<integer>(
+            core, make_id(12), [&]() -> cppcoro::task<integer> {
+                return counted_task(12);
+            });
+        REQUIRE(cppcoro::sync_wait(result) == integer(12));
+        REQUIRE(execution_count == 1);
+    }
+    {
+        auto result = cached<integer>(
+            core, make_id(42), [&]() -> cppcoro::task<integer> {
+                return counted_task(42);
+            });
+        REQUIRE(cppcoro::sync_wait(result) == integer(42));
+        REQUIRE(execution_count == 2);
+    }
+    // Now redo the '12' task to see that it's not actually rerun.
+    {
+        auto result = cached<integer>(
+            core, make_id(12), [&]() -> cppcoro::task<integer> {
+                return counted_task(12);
+            });
         REQUIRE(cppcoro::sync_wait(result) == integer(12));
         REQUIRE(execution_count == 2);
     }

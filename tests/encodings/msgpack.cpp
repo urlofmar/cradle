@@ -1,5 +1,6 @@
 #include <cradle/encodings/msgpack.h>
 
+#include <cstdint>
 #include <cstring>
 
 #include <cradle/encodings/json.h>
@@ -146,6 +147,7 @@ TEST_CASE("malformed MessagePack", "[encodings][msgpack]")
 
 TEST_CASE("blob too large for MessagePack", "[encodings][msgpack]")
 {
+#if INTPTR_MAX == INT64_MAX
     try
     {
         value_to_msgpack_string(
@@ -162,9 +164,9 @@ TEST_CASE("blob too large for MessagePack", "[encodings][msgpack]")
             == 0x1'00'00'00'00);
     }
 
-    // Do another one at exactly the limit just to make sure that it's enforced
-    // there. (We would ideally do one right below the limit too, but then that
-    // would have to actually be processed.)
+    // Do another one at exactly the limit just to make sure that it's
+    // enforced there. (We would ideally do one right below the limit too,
+    // but then that would have to actually be processed.)
     try
     {
         value_to_msgpack_string(
@@ -180,4 +182,5 @@ TEST_CASE("blob too large for MessagePack", "[encodings][msgpack]")
             get_required_error_info<msgpack_blob_size_limit_info>(e)
             == 0x1'00'00'00'00);
     }
+#endif
 }
