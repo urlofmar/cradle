@@ -230,15 +230,16 @@ add_dynamic_path_element(boost::exception& e, dynamic const& path_element)
 
 namespace detail {
 
-bool
+cppcoro::task<bool>
 value_requires_coercion(
-    std::function<api_type_info(api_named_type_reference const& ref)> const&
-        look_up_named_type,
+    std::function<cppcoro::task<api_type_info>(
+        api_named_type_reference const& ref)> const& look_up_named_type,
     api_type_info const& type,
     dynamic const& value)
 {
     auto recurse = [&look_up_named_type](
-                       api_type_info const& type, dynamic const& value) {
+                       api_type_info const& type,
+                       dynamic const& value) -> cppcoro::task<bool> {
         return value_requires_coercion(look_up_named_type, type, value);
     };
 
@@ -251,8 +252,9 @@ value_requires_coercion(
                 auto this_index = index++;
                 try
                 {
-                    if (recurse(as_array_type(type).element_schema, item))
-                        return true;
+                    if (co_await recurse(
+                            as_array_type(type).element_schema, item))
+                        co_return true;
                 }
                 catch (boost::exception& e)
                 {
@@ -260,14 +262,14 @@ value_requires_coercion(
                     throw;
                 }
             }
-            return false;
+            co_return false;
         }
         case api_type_info_tag::BLOB_TYPE:
             check_type(value_type::BLOB, value.type());
-            return false;
+            co_return false;
         case api_type_info_tag::BOOLEAN_TYPE:
             check_type(value_type::BOOLEAN, value.type());
-            return false;
+            co_return false;
         case api_type_info_tag::DATETIME_TYPE:
             // Be forgiving of clients that leave their datetimes as strings.
             if (value.type() == value_type::STRING)
@@ -275,16 +277,16 @@ value_requires_coercion(
                 try
                 {
                     parse_ptime(cast<string>(value));
-                    return true;
+                    co_return true;
                 }
                 catch (...)
                 {
                 }
             }
             check_type(value_type::DATETIME, value.type());
-            return false;
+            co_return false;
         case api_type_info_tag::DYNAMIC_TYPE:
-            return false;
+            co_return false;
         case api_type_info_tag::ENUM_TYPE:
             check_type(value_type::STRING, value.type());
             if (as_enum_type(type).values.find(cast<string>(value))
@@ -294,12 +296,12 @@ value_requires_coercion(
                     cradle::invalid_enum_string()
                     << cradle::enum_string_info(cast<string>(value)));
             }
-            return false;
+            co_return false;
         case api_type_info_tag::FLOAT_TYPE:
             if (value.type() == value_type::INTEGER)
-                return true;
+                co_return true;
             check_type(value_type::FLOAT, value.type());
-            return false;
+            co_return false;
         case api_type_info_tag::INTEGER_TYPE:
             if (value.type() == value_type::FLOAT)
             {
@@ -307,10 +309,10 @@ value_requires_coercion(
                 integer i = boost::numeric_cast<integer>(d);
                 // Check that coercion doesn't change the value.
                 if (boost::numeric_cast<double>(i) == d)
-                    return true;
+                    co_return true;
             }
             check_type(value_type::INTEGER, value.type());
-            return false;
+            co_return false;
         case api_type_info_tag::MAP_TYPE: {
             auto const& map_type = as_map_type(type);
             // This is a little hack to support the fact that JSON maps are
@@ -319,16 +321,17 @@ value_requires_coercion(
             if (value.type() == value_type::ARRAY
                 && cast<dynamic_array>(value).empty())
             {
-                return true;
+                co_return true;
             }
             for (auto const& key_value : cast<dynamic_map>(value))
             {
                 try
                 {
-                    if (recurse(map_type.key_schema, key_value.first)
-                        || recurse(map_type.value_schema, key_value.second))
+                    if (co_await recurse(map_type.key_schema, key_value.first)
+                        || co_await recurse(
+                            map_type.value_schema, key_value.second))
                     {
-                        return true;
+                        co_return true;
                     }
                 }
                 catch (boost::exception& e)
@@ -337,14 +340,15 @@ value_requires_coercion(
                     throw;
                 }
             }
-            return false;
+            co_return false;
         }
         case api_type_info_tag::NAMED_TYPE:
-            return recurse(look_up_named_type(as_named_type(type)), value);
+            co_return co_await recurse(
+                co_await look_up_named_type(as_named_type(type)), value);
         case api_type_info_tag::NIL_TYPE:
         default:
             check_type(value_type::NIL, value.type());
-            return false;
+            co_return false;
         case api_type_info_tag::OPTIONAL_TYPE: {
             auto const& map = cast<dynamic_map>(value);
             auto const& tag = cast<string>(cradle::get_union_tag(map));
@@ -352,7 +356,7 @@ value_requires_coercion(
             {
                 try
                 {
-                    return recurse(
+                    co_return co_await recurse(
                         as_optional_type(type), get_field(map, "some"));
                 }
                 catch (boost::exception& e)
@@ -364,7 +368,7 @@ value_requires_coercion(
             else if (tag == "none")
             {
                 check_type(value_type::NIL, get_field(map, "none").type());
-                return false;
+                co_return false;
             }
             else
             {
@@ -374,10 +378,10 @@ value_requires_coercion(
         }
         case api_type_info_tag::REFERENCE_TYPE:
             check_type(value_type::STRING, value.type());
-            return false;
+            co_return false;
         case api_type_info_tag::STRING_TYPE:
             check_type(value_type::STRING, value.type());
-            return false;
+            co_return false;
         case api_type_info_tag::STRUCTURE_TYPE: {
             auto const& structure_type = as_structure_type(type);
             auto const& map = cast<dynamic_map>(value);
@@ -392,8 +396,8 @@ value_requires_coercion(
                 {
                     try
                     {
-                        if (recurse(field_info.schema, *field_value))
-                            return true;
+                        if (co_await recurse(field_info.schema, *field_value))
+                            co_return true;
                     }
                     catch (boost::exception& e)
                     {
@@ -407,7 +411,7 @@ value_requires_coercion(
                         missing_field() << field_name_info(field_name));
                 }
             }
-            return false;
+            co_return false;
         }
         case api_type_info_tag::UNION_TYPE: {
             auto const& union_type = as_union_type(type);
@@ -421,7 +425,7 @@ value_requires_coercion(
                 {
                     try
                     {
-                        return recurse(
+                        co_return co_await recurse(
                             member_info.schema, get_field(map, member_name));
                     }
                     catch (boost::exception& e)
@@ -441,17 +445,18 @@ value_requires_coercion(
 
 } // namespace detail
 
-void
+cppcoro::task<void>
 coerce_value_impl(
-    std::function<api_type_info(api_named_type_reference const& ref)> const&
-        look_up_named_type,
+    std::function<cppcoro::task<api_type_info>(
+        api_named_type_reference const& ref)> const& look_up_named_type,
     api_type_info const& type,
     dynamic& value)
 {
-    auto recurse
-        = [&look_up_named_type](api_type_info const& type, dynamic& value) {
-              coerce_value_impl(look_up_named_type, type, value);
-          };
+    auto recurse = [&look_up_named_type](
+                       api_type_info const& type,
+                       dynamic& value) -> cppcoro::task<void> {
+        return coerce_value_impl(look_up_named_type, type, value);
+    };
 
     switch (get_tag(type))
     {
@@ -462,7 +467,7 @@ coerce_value_impl(
                 auto this_index = index++;
                 try
                 {
-                    recurse(as_array_type(type).element_schema, item);
+                    co_await recurse(as_array_type(type).element_schema, item);
                 }
                 catch (boost::exception& e)
                 {
@@ -543,7 +548,7 @@ coerce_value_impl(
             bool key_coercion_required = false;
             for (auto const& key_value : cast<dynamic_map>(value))
             {
-                if (detail::value_requires_coercion(
+                if (co_await detail::value_requires_coercion(
                         look_up_named_type,
                         map_type.key_schema,
                         key_value.first))
@@ -562,8 +567,8 @@ coerce_value_impl(
                     {
                         dynamic k = key_value.first;
                         dynamic v = std::move(key_value.second);
-                        recurse(map_type.key_schema, k);
-                        recurse(map_type.value_schema, v);
+                        co_await recurse(map_type.key_schema, k);
+                        co_await recurse(map_type.value_schema, v);
                         coerced[k] = v;
                     }
                     catch (boost::exception& e)
@@ -581,7 +586,8 @@ coerce_value_impl(
                 {
                     try
                     {
-                        recurse(map_type.value_schema, key_value.second);
+                        co_await recurse(
+                            map_type.value_schema, key_value.second);
                     }
                     catch (boost::exception& e)
                     {
@@ -592,9 +598,12 @@ coerce_value_impl(
             }
             break;
         }
-        case api_type_info_tag::NAMED_TYPE:
-            recurse(look_up_named_type(as_named_type(type)), value);
+        case api_type_info_tag::NAMED_TYPE: {
+            auto resolved_type
+                = co_await look_up_named_type(as_named_type(type));
+            co_await recurse(resolved_type, value);
             break;
+        }
         case api_type_info_tag::NIL_TYPE:
         default:
             check_type(value_type::NIL, value.type());
@@ -606,7 +615,8 @@ coerce_value_impl(
             {
                 try
                 {
-                    recurse(as_optional_type(type), get_field(map, "some"));
+                    co_await recurse(
+                        as_optional_type(type), get_field(map, "some"));
                 }
                 catch (boost::exception& e)
                 {
@@ -645,7 +655,7 @@ coerce_value_impl(
                 {
                     try
                     {
-                        recurse(field_info.schema, *field_value);
+                        co_await recurse(field_info.schema, *field_value);
                     }
                     catch (boost::exception& e)
                     {
@@ -673,9 +683,9 @@ coerce_value_impl(
                 {
                     try
                     {
-                        recurse(
+                        co_await recurse(
                             member_info.schema, get_field(map, member_name));
-                        return;
+                        co_return;
                     }
                     catch (boost::exception& e)
                     {
@@ -692,15 +702,15 @@ coerce_value_impl(
     }
 }
 
-dynamic
+cppcoro::task<dynamic>
 coerce_value(
-    std::function<api_type_info(api_named_type_reference const& ref)> const&
-        look_up_named_type,
-    api_type_info const& type,
+    std::function<cppcoro::task<api_type_info>(
+        api_named_type_reference const& ref)> const& look_up_named_type,
+    api_type_info type,
     dynamic value)
 {
-    coerce_value_impl(look_up_named_type, type, value);
-    return value;
+    co_await coerce_value_impl(look_up_named_type, type, value);
+    co_return value;
 }
 
 } // namespace cradle

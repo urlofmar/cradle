@@ -16,6 +16,9 @@ write_natively_encoded_value(dynamic const& value);
 size_t
 natively_encoded_sizeof(dynamic const& value);
 
+string
+natively_encoded_sha256(dynamic const& value);
+
 } // namespace cradle
 
 #endif

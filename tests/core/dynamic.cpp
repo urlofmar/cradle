@@ -1,5 +1,7 @@
 #include <cradle/core/dynamic.h>
 
+#include <cppcoro/sync_wait.hpp>
+
 #include <cradle/core.h>
 #include <cradle/utilities/testing.h>
 #include <cradle/utilities/text.h>
@@ -245,22 +247,18 @@ TEST_CASE("dynamic value coercion", "[core][dynamic]")
           make_api_type_info_with_integer_type(api_integer_type())},
          {make_api_named_type_reference("my_app", "float"),
           make_api_type_info_with_float_type(api_float_type())}});
+    std::function<cppcoro::task<api_type_info>(
+        api_named_type_reference const& ref)>
+        look_up_named_type = [&](api_named_type_reference const& ref)
+        -> cppcoro::task<api_type_info> { co_return type_dictionary[ref]; };
     auto coerce_value = [&](api_type_info const& type, auto&& value) {
-        return cradle::coerce_value(
-            [&](api_named_type_reference const& ref) {
-                return type_dictionary[ref];
-            },
-            type,
-            value);
+        return cppcoro::sync_wait(
+            cradle::coerce_value(look_up_named_type, type, value));
     };
     auto value_requires_coercion
         = [&](api_type_info const& type, auto const& value) -> bool {
-        return cradle::detail::value_requires_coercion(
-            [&](api_named_type_reference const& ref) {
-                return type_dictionary[ref];
-            },
-            type,
-            value);
+        return cppcoro::sync_wait(cradle::detail::value_requires_coercion(
+            look_up_named_type, type, value));
     };
 
     auto nil_type = make_api_type_info_with_nil_type(api_nil_type());

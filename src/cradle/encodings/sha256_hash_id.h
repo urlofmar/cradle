@@ -3,6 +3,8 @@
 
 #include <picosha2.h>
 
+#include <spdlog/spdlog.h>
+
 #include <cradle/core/id.h>
 #include <cradle/encodings/native.h>
 
@@ -85,6 +87,17 @@ struct sha256_hashed_id : id_interface
         picosha2::byte_t hashed[32];
         hasher.get_hash_bytes(hashed, hashed + 32);
         picosha2::output_hex(hashed, hashed + 32, o);
+        {
+            std::ostringstream s;
+            s << "sha256_hash_id::stream\n";
+            std::apply(
+                [&s](auto... args) {
+                    ((s << "<- " << to_dynamic(args) << std::endl), ...);
+                },
+                args_);
+            picosha2::output_hex(hashed, hashed + 32, s);
+            spdlog::get("cradle")->info(s.str());
+        }
     }
 
     size_t

@@ -371,11 +371,11 @@ coerce_encoded_object(
 
     // Apply type coercion.
     spdlog::get("cradle")->info("coerce_encoded_object: coercing");
-    auto coerced_object = coerce_value(
-        [&](api_named_type_reference const& ref) {
-            auto type_info = cradle::resolve_named_type_reference(
+    auto coerced_object = co_await coerce_value(
+        [&](api_named_type_reference const& ref)
+            -> cppcoro::task<api_type_info> {
+            co_return co_await cradle::resolve_named_type_reference(
                 core, session, context_id, ref);
-            return cppcoro::sync_wait(type_info);
         },
         as_api_type(schema),
         std::move(decoded_object));
@@ -1252,26 +1252,24 @@ struct simple_calculation_submitter : calculation_submission_interface
     }
 };
 
-static cppcoro::task<string>
+static cppcoro::shared_task<string>
 resolve_meta_chain(
     service_core& service,
     thinknode_session session,
     string context_id,
     calculation_request request)
 {
+    CRADLE_LOG_CALL(
+        << CRADLE_LOG_ARG(session) << CRADLE_LOG_ARG(context_id)
+        << CRADLE_LOG_ARG(request))
+
     simple_calculation_submitter submitter(service);
     while (is_meta(request))
     {
-        auto const& generator
-            = as_meta(request)
-                  .generator; // Should be moved out to avoid copies.
-        auto submission_info = co_await submit_let_calculation_request(
-            submitter,
-            session,
-            context_id,
-            augmented_calculation_request{generator, {}});
-        request = from_dynamic<calculation_request>(co_await get_iss_object(
-            service, session, context_id, submission_info->main_calc_id));
+        auto generator = as_meta(std::move(request)).generator;
+        request
+            = from_dynamic<calculation_request>(co_await perform_local_calc(
+                service, session, context_id, std::move(generator)));
     }
     auto submission_info = co_await submit_let_calculation_request(
         submitter,
@@ -1279,6 +1277,30 @@ resolve_meta_chain(
         context_id,
         augmented_calculation_request{std::move(request), {}});
     co_return submission_info->main_calc_id;
+}
+
+static cppcoro::shared_task<dynamic>
+locally_resolve_meta_chain(
+    service_core& service,
+    thinknode_session session,
+    string context_id,
+    calculation_request request)
+{
+    CRADLE_LOG_CALL(
+        << CRADLE_LOG_ARG(session) << CRADLE_LOG_ARG(context_id)
+        << CRADLE_LOG_ARG(request))
+
+    simple_calculation_submitter submitter(service);
+    while (is_meta(request))
+    {
+        auto generator = as_meta(std::move(request)).generator;
+        request
+            = from_dynamic<calculation_request>(co_await perform_local_calc(
+                service, session, context_id, std::move(generator)));
+    }
+
+    co_return co_await perform_local_calc(
+        service, session, context_id, std::move(request));
 }
 
 static cppcoro::task<object_tree_diff>
@@ -1402,7 +1424,74 @@ CRADLE_DEFINE_ERROR_INFO(string, function_name)
 namespace uncached {
 
 cppcoro::task<string>
-resolve_results_api_query(
+uncached_resolve_results_api_query(
+    service_core& service,
+    thinknode_session const& session,
+    string const& context_id,
+    string const& plan_iss_id,
+    string const& function,
+    std::vector<dynamic> const& args)
+{
+    CRADLE_LOG_CALL(
+        << CRADLE_LOG_ARG(context_id) << CRADLE_LOG_ARG(plan_iss_id)
+        << CRADLE_LOG_ARG(function) << CRADLE_LOG_ARG(args))
+
+    // Get the original context ID associated with this plan.
+    auto raw_plan_data = co_await get_iss_object(
+        service, session, context_id, plan_iss_id, true);
+    auto plan_context = cast<string>(
+        get_field(cast<dynamic_map>(raw_plan_data), "context_id"));
+    // Get an ID for the plan as a dynamic value.
+    // This has to be done in the plan's original context so that Thinknode
+    // doesn't upgrade it.
+    auto dynamic_plan_id = co_await post_calculation(
+        service,
+        session,
+        plan_context,
+        make_calculation_request_with_cast(calculation_cast_request(
+            make_thinknode_type_info_with_dynamic_type(
+                thinknode_dynamic_type()),
+            make_calculation_request_with_reference(plan_iss_id))));
+
+    // Issue the "api_" form of the generator request.
+    std::vector<calculation_request> calc_args;
+    calc_args.reserve(args.size() + 1);
+    // The first argument is always the (dynamic) plan.
+    calc_args.push_back(
+        make_calculation_request_with_reference(dynamic_plan_id));
+    for (auto const& arg : args)
+        calc_args.push_back(make_calculation_request_with_value(arg));
+    auto generator_request
+        = make_calculation_request_with_function(function_application(
+            "mgh", "planning", "api_" + function, none, calc_args));
+    auto generator_calc_id = co_await post_calculation(
+        service, session, context_id, generator_request);
+    auto generated_request
+        = from_dynamic<results_api_generated_request>(co_await get_iss_object(
+            service, session, context_id, generator_calc_id));
+
+    // If there's no generated request, this query isn't supported by the
+    // version of the planning app that created the plan.
+    if (!generated_request.request)
+    {
+        CRADLE_THROW(
+            unsupported_results_api_query()
+            << plan_iss_id_info(plan_iss_id) << function_name_info(function));
+    }
+    // Otherwise, submit the request as a meta generator.
+    co_return co_await resolve_meta_chain(
+        service,
+        session,
+        generated_request.context_id,
+        make_calculation_request_with_meta(meta_calculation_request{
+            *std::move(generated_request.request),
+            // This isn't used.
+            make_thinknode_type_info_with_dynamic_type(
+                thinknode_dynamic_type())}));
+}
+
+cppcoro::task<dynamic>
+locally_resolve_results_api_query(
     service_core& service,
     thinknode_session const& session,
     string const& context_id,
@@ -1430,7 +1519,7 @@ resolve_results_api_query(
     // Issue the "api_" form of the generator request.
     std::vector<calculation_request> calc_args;
     calc_args.reserve(args.size() + 1);
-    // The first argument is always the(dynamic) plan.
+    // The first argument is always the (dynamic) plan.
     calc_args.push_back(
         make_calculation_request_with_reference(dynamic_plan_id));
     for (auto const& arg : args)
@@ -1444,7 +1533,7 @@ resolve_results_api_query(
         = from_dynamic<results_api_generated_request>(co_await get_iss_object(
             service, session, context_id, generator_calc_id));
 
-    // If there 's no generated request, this query isn' t supported by the
+    // If there's no generated request, this query isn't supported by the
     // version of the planning app that created the plan.
     if (!generated_request.request)
     {
@@ -1453,7 +1542,7 @@ resolve_results_api_query(
             << plan_iss_id_info(plan_iss_id) << function_name_info(function));
     }
     // Otherwise, submit the request as a meta generator.
-    co_return co_await resolve_meta_chain(
+    co_return co_await locally_resolve_meta_chain(
         service,
         session,
         generated_request.context_id,
@@ -1488,7 +1577,34 @@ resolve_results_api_query(
         args);
 
     co_return co_await fully_cached<string>(service, cache_key, [&] {
-        return uncached::resolve_results_api_query(
+        return uncached::uncached_resolve_results_api_query(
+            service, session, context_id, plan_iss_id, function, args);
+    });
+}
+
+cppcoro::task<dynamic>
+locally_resolve_results_api_query(
+    service_core& service,
+    thinknode_session const& session,
+    string const& context_id,
+    string const& plan_iss_id,
+    string const& function,
+    std::vector<dynamic> const& args)
+{
+    CRADLE_LOG_CALL(
+        << CRADLE_LOG_ARG(context_id) << CRADLE_LOG_ARG(plan_iss_id)
+        << CRADLE_LOG_ARG(function) << CRADLE_LOG_ARG(args))
+
+    auto cache_key = make_sha256_hashed_id(
+        "locally_resolve_results_api_query",
+        session.api_url,
+        context_id,
+        plan_iss_id,
+        function,
+        args);
+
+    co_return co_await fully_cached<dynamic>(service, cache_key, [&] {
+        return uncached::locally_resolve_results_api_query(
             service, session, context_id, plan_iss_id, function, args);
     });
 }
@@ -1795,6 +1911,22 @@ process_message(websocket_server_impl& server, client_request request)
                 request,
                 make_server_message_content_with_results_api_response(
                     make_results_api_response(result)));
+            break;
+        }
+        case client_message_content_tag::LOCAL_RESULTS_API_QUERY: {
+            auto const& raq = as_local_results_api_query(content);
+            auto result = co_await locally_resolve_results_api_query(
+                server.core,
+                get_client(server.clients, request.client).session,
+                raq.context_id,
+                raq.plan_iss_id,
+                raq.function,
+                raq.args);
+            send_response(
+                server,
+                request,
+                make_server_message_content_with_local_results_api_response(
+                    make_local_results_api_response(result)));
             break;
         }
         default:

@@ -41,11 +41,8 @@ service_core::reset(service_config const& config)
         .cache = immutable_cache(
             config.immutable_cache ? *config.immutable_cache
                                    : immutable_cache_config(0x40'00'00'00)),
-        .compute_pool = cppcoro::static_thread_pool(
-            config.compute_concurrency ? *config.compute_concurrency
-                                       : std::thread::hardware_concurrency()),
         .http_pool = cppcoro::static_thread_pool(
-            config.http_concurrency ? *config.http_concurrency : 24),
+            config.http_concurrency ? *config.http_concurrency : 36),
         .disk_cache = disk_cache(
             config.disk_cache ? *config.disk_cache
                               : disk_cache_config(none, 0x1'00'00'00'00)),
@@ -152,6 +149,8 @@ generic_disk_cached(
         auto entry = cache.find(key);
         if (entry)
         {
+            spdlog::get("cradle")->info("disk cache hit on {}", key);
+
             if (entry->value)
             {
                 auto natively_encoded_data = base64_decode(
@@ -159,12 +158,13 @@ generic_disk_cached(
 
                 T x;
                 detail::deserialize(&x, std::move(natively_encoded_data));
+                spdlog::get("cradle")->info(
+                    "deserialized: {}",
+                    boost::lexical_cast<std::string>(to_dynamic(x)));
                 co_return x;
             }
             else
             {
-                spdlog::get("cradle")->info("disk cache hit on {}", key);
-
                 spdlog::get("cradle")->info("reading file", key);
                 auto data = co_await read_file_contents(
                     core, cache.get_path_for_id(entry->id));

@@ -1,5 +1,9 @@
 #include <cradle/io/raw_memory_io.h>
 
+#include <picosha2.h>
+
+#include <cradle/encodings/yaml.h>
+
 namespace cradle {
 
 // This is used for encoding datetimes.
@@ -164,22 +168,54 @@ write_natively_encoded_value(raw_memory_writer<Buffer>& w, dynamic const& v)
 }
 
 byte_vector
-write_natively_encoded_value(dynamic const& v)
+write_natively_encoded_value(dynamic const& value)
 {
     byte_vector data;
     byte_vector_buffer buffer(data);
-    raw_memory_writer<byte_vector_buffer> w(buffer);
-    write_natively_encoded_value(w, v);
+    raw_memory_writer<byte_vector_buffer> writer(buffer);
+    write_natively_encoded_value(writer, value);
     return data;
 }
 
 size_t
-natively_encoded_sizeof(dynamic const& v)
+natively_encoded_sizeof(dynamic const& value)
 {
     counting_buffer buffer;
-    raw_memory_writer<counting_buffer> w(buffer);
-    write_natively_encoded_value(w, v);
+    raw_memory_writer<counting_buffer> writer(buffer);
+    write_natively_encoded_value(writer, value);
     return buffer.size();
+}
+
+struct sha256_hashing_buffer
+{
+    string
+    hash()
+    {
+        std::ostringstream oss;
+        hasher_.finish();
+        picosha2::byte_t hashed[32];
+        hasher_.get_hash_bytes(hashed, hashed + 32);
+        picosha2::output_hex(hashed, hashed + 32, oss);
+        return oss.str();
+    }
+
+    void
+    write(char const* data, size_t size)
+    {
+        hasher_.process(data, data + size);
+    }
+
+ private:
+    picosha2::hash256_one_by_one hasher_;
+};
+
+string
+natively_encoded_sha256(dynamic const& value)
+{
+    sha256_hashing_buffer buffer;
+    raw_memory_writer<sha256_hashing_buffer> writer(buffer);
+    write_natively_encoded_value(writer, value);
+    return buffer.hash();
 }
 
 } // namespace cradle

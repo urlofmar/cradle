@@ -6,6 +6,8 @@
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
+#include <cppcoro/task.hpp>
+
 #include <cradle/core/exception.h>
 #include <cradle/core/type_definitions.h>
 
@@ -320,19 +322,19 @@ struct api_type_info;
 // This only applies very gentle coercions (e.g., lossless numeric casts).
 // :look_up_named_type must be implemented by the caller as a means for the
 // algorithm to look up named types.
-dynamic
+cppcoro::task<dynamic>
 coerce_value(
-    std::function<api_type_info(api_named_type_reference const& ref)> const&
-        look_up_named_type,
-    api_type_info const& type,
+    std::function<cppcoro::task<api_type_info>(
+        api_named_type_reference const& ref)> const& look_up_named_type,
+    api_type_info type,
     dynamic value);
 
 namespace detail {
 
-bool
+cppcoro::task<bool>
 value_requires_coercion(
-    std::function<api_type_info(api_named_type_reference const& ref)> const&
-        look_up_named_type,
+    std::function<cppcoro::task<api_type_info>(
+        api_named_type_reference const& ref)> const& look_up_named_type,
     api_type_info const& type,
     dynamic const& value);
 

@@ -20,8 +20,8 @@ TEST_CASE("local calcs", "[local_calcs][ws]")
 
     thinknode_session session;
     session.api_url = "https://mgh.thinknode.io/api/v1.0";
-    session.access_token
-        = get_environment_variable("CRADLE_THINKNODE_API_TOKEN");
+    session.access_token = "aIq+OgPZI8fUnt+hp7thyOgxNlU+QJP0LeKt1by9";
+    // = get_environment_variable("CRADLE_THINKNODE_API_TOKEN");
 
     auto eval = [&](calculation_request const& request) {
         return cppcoro::sync_wait(perform_local_calc(

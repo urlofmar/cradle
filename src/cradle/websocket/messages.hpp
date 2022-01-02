@@ -246,6 +246,12 @@ struct results_api_response
     std::string calculation_id;
 };
 
+api(struct)
+struct local_results_api_response
+{
+    dynamic result;
+};
+
 api(union)
 union client_message_content
 {
@@ -268,6 +274,7 @@ union client_message_content
     cradle::iss_diff_request iss_diff;
     cradle::post_calculation_request perform_local_calc;
     cradle::results_api_query results_api_query;
+    cradle::results_api_query local_results_api_query;
 };
 
 api(struct)
@@ -316,6 +323,7 @@ union server_message_content
     cradle::iss_diff_response iss_diff_response;
     cradle::dynamic local_calc_result;
     cradle::results_api_response results_api_response;
+    cradle::local_results_api_response local_results_api_response;
 };
 
 api(struct)

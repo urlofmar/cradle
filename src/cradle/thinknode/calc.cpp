@@ -2,8 +2,6 @@
 
 #include <fmt/format.h>
 
-#include <cppcoro/sync_wait.hpp>
-
 #include <cradle/core/monitoring.h>
 #include <cradle/encodings/json.h>
 #include <cradle/encodings/sha256_hash_id.h>
@@ -499,7 +497,7 @@ submit_let_calculation_request(
     co_return result;
 }
 
-static void
+static cppcoro::task<void>
 search_calculation(
     service_core& service,
     std::map<string, bool>& is_matching,
@@ -510,14 +508,14 @@ search_calculation(
 {
     // If this calculation has already been searched, don't redo the work.
     if (is_matching.find(calculation_id) != is_matching.end())
-        return;
+        co_return;
 
     // Get the calculation request;
     calculation_request request;
     try
     {
-        request = cppcoro::sync_wait(retrieve_calculation_request(
-            service, session, context_id, calculation_id));
+        request = co_await retrieve_calculation_request(
+            service, session, context_id, calculation_id);
     }
     catch (bad_http_status_code& e)
     {
@@ -532,17 +530,18 @@ search_calculation(
             spdlog::get("cradle")->warn(
                 "failed to search {} due to 404; results may be incomplete",
                 calculation_id);
-            return;
+            co_return;
         }
     }
 
-    auto recurse = [&](calculation_request const& request) {
+    auto recurse
+        = [&](calculation_request const& request) -> cppcoro::task<void> {
         if (is_reference(request))
         {
             auto ref = as_reference(request);
             if (get_thinknode_service_id(ref) == thinknode_service_id::CALC)
             {
-                search_calculation(
+                co_await search_calculation(
                     service,
                     is_matching,
                     session,
@@ -564,25 +563,25 @@ search_calculation(
                 = as_function(request).name.find(search_string)
                   != string::npos;
             for (auto const& arg : as_function(request).args)
-                recurse(arg);
+                co_await recurse(arg);
             break;
         case calculation_request_tag::ARRAY:
             is_matching[calculation_id] = false;
             for (auto const& item : as_array(request).items)
-                recurse(item);
+                co_await recurse(item);
             break;
         case calculation_request_tag::ITEM:
             is_matching[calculation_id] = false;
-            recurse(as_item(request).array);
+            co_await recurse(as_item(request).array);
             break;
         case calculation_request_tag::OBJECT:
             is_matching[calculation_id] = false;
             for (auto const& property : as_object(request).properties)
-                recurse(property.second);
+                co_await recurse(property.second);
             break;
         case calculation_request_tag::PROPERTY:
             is_matching[calculation_id] = false;
-            recurse(as_property(request).object);
+            co_await recurse(as_property(request).object);
             break;
         case calculation_request_tag::LET:
             CRADLE_THROW(
@@ -594,11 +593,11 @@ search_calculation(
                     "resolved calculation request contains 'variable'"));
         case calculation_request_tag::META:
             is_matching[calculation_id] = false;
-            recurse(as_meta(request).generator);
+            co_await recurse(as_meta(request).generator);
             break;
         case calculation_request_tag::CAST:
             is_matching[calculation_id] = false;
-            recurse(as_cast(request).object);
+            co_await recurse(as_cast(request).object);
             break;
         default:
             CRADLE_THROW(
@@ -620,7 +619,7 @@ search_calculation(
     // calculation matches the search criteria
     std::map<string, bool> is_matching;
 
-    search_calculation(
+    co_await search_calculation(
         service,
         is_matching,
         session,
