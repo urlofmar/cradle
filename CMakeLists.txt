@@ -331,14 +331,25 @@ else()
 endif()
 string(REGEX REPLACE "\n" "" API_TOKEN "${API_TOKEN}")
 
+# Retrieve the Docker auth info if it exists
+if (DEFINED ENV{CRADLE_THINKNODE_DOCKER_AUTH})
+    set(DOCKER_AUTH $ENV{CRADLE_THINKNODE_DOCKER_AUTH})
+elseif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.docker-auth")
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/.docker-auth" DOCKER_AUTH)
+else()
+    message(WARNING "Couldn't find Docker auth string.")
+    set(DOCKER_AUTH "(missing)")
+endif()
+string(REGEX REPLACE "\n" "" DOCKER_AUTH "${DOCKER_AUTH}")
+
 # Add the unit testing target.
 add_custom_target(
     unit_tests
-    # Create a fresh 'testing' directory within the build dir and run the
-    # tests with that. (Some of them perform file I/O.)
-    COMMAND ${CMAKE_COMMAND} -E remove_directory testing
-    COMMAND ${CMAKE_COMMAND} -E make_directory testing
-    COMMAND ${CMAKE_COMMAND} -E chdir testing ${CMAKE_COMMAND} -E env CRADLE_DEPLOY_DIR=${CMAKE_CURRENT_BINARY_DIR}/deploy CRADLE_THINKNODE_API_TOKEN=${API_TOKEN} $<TARGET_FILE:unit_test_runner>
+    # Create a fresh 'unit-testing' directory within the build dir and run the
+    # tests within that. (Some of them perform file I/O.)
+    COMMAND ${CMAKE_COMMAND} -E remove_directory unit-testing
+    COMMAND ${CMAKE_COMMAND} -E make_directory unit-testing
+    COMMAND ${CMAKE_COMMAND} -E chdir unit-testing ${CMAKE_COMMAND} -E env CRADLE_DEPLOY_DIR=${CMAKE_CURRENT_BINARY_DIR}/deploy CRADLE_THINKNODE_API_TOKEN=${API_TOKEN} CRADLE_THINKNODE_DOCKER_AUTH=${DOCKER_AUTH} $<TARGET_FILE:unit_test_runner>
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     DEPENDS unit_test_runner)
 
@@ -349,7 +360,7 @@ if(IS_CLANG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_target(
         unit_test_coverage
         COMMAND ${CMAKE_COMMAND} --build . --target unit_tests
-        COMMAND ${LLVM_PROFDATA} merge -sparse testing/default.profraw
+        COMMAND ${LLVM_PROFDATA} merge -sparse unit-testing/default.profraw
                 -o default.profdata
         COMMAND ${LLVM_COV} show -instr-profile=default.profdata
                 $<TARGET_FILE:unit_test_runner>
@@ -370,7 +381,7 @@ endif()
 # Add the integration testing target.
 add_custom_target(
     integration_tests
-    COMMAND ${CMAKE_COMMAND} -E env CRADLE_DEPLOY_DIR=${CMAKE_CURRENT_BINARY_DIR}/deploy CRADLE_THINKNODE_API_TOKEN=${API_TOKEN} pytest
+    COMMAND ${CMAKE_COMMAND} -E env CRADLE_DEPLOY_DIR=${CMAKE_CURRENT_BINARY_DIR}/deploy CRADLE_THINKNODE_API_TOKEN=${API_TOKEN} CRADLE_THINKNODE_DOCKER_AUTH=${DOCKER_AUTH} pytest
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python
     DEPENDS server)
 add_test(

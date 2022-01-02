@@ -18,6 +18,7 @@
 #include <cradle/service/core.h>
 #include <cradle/thinknode/ipc.h>
 #include <cradle/thinknode/messages.h>
+#include <cradle/utilities/environment.h>
 #include <cradle/utilities/errors.h>
 
 namespace asio = boost::asio;
@@ -160,11 +161,7 @@ pull_image(
         "/v1.38/images/create?fromImage=registry-mgh.thinknode.com/" + account
             + "/" + app + "&tag=" + extract_tag(image),
         {{"X-Registry-Auth",
-          "***REMOVED******REMOVED***"
-          "***REMOVED***"
-          "***REMOVED******REMOVED******REMOVED***"
-          "***REMOVED***"
-          "***REMOVED***"}});
+          get_environment_variable("CRADLE_THINKNODE_DOCKER_AUTH")}});
     null_check_in check_in;
     null_progress_reporter reporter;
     connection.perform_request(check_in, reporter, query);
@@ -192,11 +189,7 @@ spawn_provider(
             "/v1.38/containers/create",
             {{"Content-Type", "application/json"},
              {"X-Registry-Auth",
-              "***REMOVED***"
-              "***REMOVED***"
-              "***REMOVED***"
-              "***REMOVED***"
-              "***REMOVED***"}},
+              get_environment_variable("CRADLE_THINKNODE_DOCKER_AUTH")}},
             value_to_json_blob(dynamic(
                 {{"Image",
                   "registry-mgh.thinknode.com/" + account + "/" + app + "@"
@@ -247,11 +240,7 @@ stop_provider(
             "/v1.38/containers/" + docker_container_id + "/stop",
             {{"Content-Type", "application/json"},
              {"X-Registry-Auth",
-              "***REMOVED***"
-              "***REMOVED***"
-              "***REMOVED***"
-              "***REMOVED***"
-              "***REMOVED***"}},
+              get_environment_variable("CRADLE_THINKNODE_DOCKER_AUTH")}},
             blob());
         connection.perform_request(check_in, reporter, request);
     }

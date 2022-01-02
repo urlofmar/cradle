@@ -5,3 +5,6 @@
 .venv
 *.pyc
 python/config.yml
+.token
+coverage.txt
+.docker-auth

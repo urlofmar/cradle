@@ -1,3 +1,4 @@
+/*build*
 .cache
 .vscode
 .gcovr.txt
@@ -5,6 +6,6 @@
 .venv
 *.pyc
 python/config.yml
-/*build*
 .token
 coverage.txt
+.docker-auth
