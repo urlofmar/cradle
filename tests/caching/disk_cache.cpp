@@ -227,7 +227,7 @@ TEST_CASE("entry removal error", "[disk_cache]")
     item1.close();
 
     // Ensure that item 1 can still be accessed.
-    REQUIRE(test_item_access(cache, 1));
+    test_item_access(cache, 1);
 }
 
 TEST_CASE("manual entry removal", "[disk_cache]")
