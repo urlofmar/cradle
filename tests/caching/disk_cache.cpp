@@ -199,6 +199,37 @@ TEST_CASE("LRU removal", "[disk_cache]")
     }
 }
 
+TEST_CASE("entry removal error", "[disk_cache]")
+{
+    disk_cache cache;
+    init_disk_cache(cache);
+
+    // Access item 1 and then open the file that holds it to create a lock on
+    // it.
+    test_item_access(cache, 1);
+    std::ifstream item1;
+    open_file(
+        item1,
+        cache.get_path_for_id(cache.find(generate_key_string(1))->id),
+        std::ios::in | std::ios::binary);
+
+    // Now access a bunch of other items to force item 1 to be evicted.
+    for (int i = 2; i != 30; ++i)
+    {
+        INFO(i)
+        REQUIRE(!test_item_access(cache, i));
+        // SQLite only maintains millisecond precision on its timestamps, so
+        // introduce a delay here to ensure that the timestamps in the cache
+        // are unique.
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    item1.close();
+
+    // Ensure that item 1 can still be accessed.
+    REQUIRE(test_item_access(cache, 1));
+}
+
 TEST_CASE("manual entry removal", "[disk_cache]")
 {
     disk_cache cache;

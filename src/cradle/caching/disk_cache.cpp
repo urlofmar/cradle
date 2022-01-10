@@ -478,11 +478,11 @@ enforce_cache_size_limit(disk_cache_impl& cache)
                 {
                     remove_entry(cache, i->id, !i->in_db);
                     size -= i->size;
-                    ++i;
                 }
                 catch (...)
                 {
                 }
+                ++i;
             }
         }
         cache.bytes_inserted_since_last_sweep = 0;
