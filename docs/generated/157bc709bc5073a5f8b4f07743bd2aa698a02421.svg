@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="434px" preserveAspectRatio="none" style="width:667px;height:434px;background:#FFFFFF;" version="1.1" viewBox="0 0 667 434" width="667px" zoomAndPan="magnify"><defs><filter height="300%" id="f174qc03y47fdo" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[57e3e5d7d897c28d57bff9f2845d8a5f]
+cluster CRADLE (local)--><polygon fill="#FFFFFF" filter="url(#f174qc03y47fdo)" points="16,132.5,136,132.5,143,154.7969,315,154.7969,315,427.5,16,427.5,16,132.5" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="16" x2="143" y1="154.7969" y2="154.7969"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="114" x="20" y="147.4951">CRADLE (local)</text><!--MD5=[428f148e0bedd6549a2c10d7e5122f5a]
+cluster Thinknode (remote)--><polygon fill="#FFFFFF" filter="url(#f174qc03y47fdo)" points="339,132.5,502,132.5,509,154.7969,638,154.7969,638,427.5,339,427.5,339,132.5" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="339" x2="509" y1="154.7969" y2="154.7969"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="157" x="343" y="147.4951">Thinknode (remote)</text><!--MD5=[8ab979d66f3c8dc42174d13ce2136535]
+entity local_server--><rect fill="#FEFECE" filter="url(#f174qc03y47fdo)" height="36.2969" style="stroke:#A80036;stroke-width:1.5;" width="63" x="32.5" y="167.5"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="43" x="42.5" y="190.4951">server</text><!--MD5=[8afdbdd73464318e7130f79b0e4cfadf]
+entity local_cache--><path d="M32,290.5 C32,280.5 63,280.5 63,280.5 C63,280.5 94,280.5 94,290.5 L94,315.7969 C94,325.7969 63,325.7969 63,325.7969 C63,325.7969 32,325.7969 32,315.7969 L32,290.5 " fill="#FEFECE" filter="url(#f174qc03y47fdo)" style="stroke:#000000;stroke-width:1.5;"/><path d="M32,290.5 C32,300.5 63,300.5 63,300.5 C63,300.5 94,300.5 94,290.5 " fill="none" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="42" x="42" y="317.4951">cache</text><!--MD5=[bcab58e3f95d35d8ac35ca4ef7fbdd4d]
+entity local_supervisor--><rect fill="#FEFECE" filter="url(#f174qc03y47fdo)" height="36.2969" style="stroke:#A80036;stroke-width:1.5;" width="169" x="130.5" y="167.5"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="149" x="140.5" y="190.4951">calculation supervisor</text><!--MD5=[01dbed1e0419813e5310134a8034b5d3]
+entity local_provider--><rect fill="#FEFECE" filter="url(#f174qc03y47fdo)" height="36.2969" style="stroke:#A80036;stroke-width:1.5;" width="153" x="129.5" y="285"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="133" x="139.5" y="307.9951">calculation provider</text><path d="M141,386.5 L141,411.6328 A0,0 0 0 0 141,411.6328 L271,411.6328 A0,0 0 0 0 271,411.6328 L271,396.5 L261,386.5 L210,386.5 L206,321.24 L202,386.5 L141,386.5 A0,0 0 0 0 141,386.5 " fill="#FBFB77" filter="url(#f174qc03y47fdo)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M261,386.5 L261,396.5 L271,396.5 L261,386.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="109" x="147" y="403.5669">Docker container</text><!--MD5=[2be3a0d2eaf0baea4a619f8582aa367f]
+entity remote_server--><rect fill="#FEFECE" filter="url(#f174qc03y47fdo)" height="36.2969" style="stroke:#A80036;stroke-width:1.5;" width="63" x="355.5" y="167.5"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="43" x="365.5" y="190.4951">server</text><!--MD5=[bbc8401734dd52faa4e25e41c17440bc]
+entity remote_cache--><path d="M355.5,290.5 C355.5,280.5 392,280.5 392,280.5 C392,280.5 428.5,280.5 428.5,290.5 L428.5,315.7969 C428.5,325.7969 392,325.7969 392,325.7969 C392,325.7969 355.5,325.7969 355.5,315.7969 L355.5,290.5 " fill="#FEFECE" filter="url(#f174qc03y47fdo)" style="stroke:#000000;stroke-width:1.5;"/><path d="M355.5,290.5 C355.5,300.5 392,300.5 392,300.5 C392,300.5 428.5,300.5 428.5,290.5 " fill="none" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="53" x="365.5" y="317.4951">storage</text><!--MD5=[7a48b288bfc4ce20e73909813935a3c2]
+entity remote_supervisor--><rect fill="#FEFECE" filter="url(#f174qc03y47fdo)" height="36.2969" style="stroke:#A80036;stroke-width:1.5;" width="169" x="453.5" y="167.5"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="149" x="463.5" y="190.4951">calculation supervisor</text><!--MD5=[b44fd34add334dfeffe23dc57daedf14]
+entity remote_provider--><rect fill="#FEFECE" filter="url(#f174qc03y47fdo)" height="36.2969" style="stroke:#A80036;stroke-width:1.5;" width="153" x="463.5" y="285"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="133" x="473.5" y="307.9951">calculation provider</text><path d="M475,386.5 L475,411.6328 A0,0 0 0 0 475,411.6328 L605,411.6328 A0,0 0 0 0 605,411.6328 L605,396.5 L595,386.5 L544,386.5 L540,321.24 L536,386.5 L475,386.5 A0,0 0 0 0 475,386.5 " fill="#FBFB77" filter="url(#f174qc03y47fdo)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M595,386.5 L595,396.5 L605,396.5 L595,386.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="109" x="481" y="403.5669">Docker container</text><!--MD5=[4a65e84059005d12693a083370a06717]
+entity client--><ellipse cx="64" cy="14" fill="#FEFECE" filter="url(#f174qc03y47fdo)" rx="8" ry="8" style="stroke:#A80036;stroke-width:1.5;"/><path d="M64,22 L64,49 M51,30 L77,30 M64,49 L51,64 M64,49 L77,64 " fill="none" filter="url(#f174qc03y47fdo)" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="37" x="45.5" y="82.4951">client</text><!--MD5=[f62da0350b9fab0146d11dca4f9a047f]
+link local_server to local_cache--><path d="M63.85,203.54 C63.69,222.36 63.42,252.93 63.23,275.01 " fill="none" id="local_server-to-local_cache" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="63.19,280.15,67.267,271.1846,63.2329,275.1502,59.2673,271.116,63.19,280.15" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[9b22af2fa5d057c740f74d2adf1b16f6]
+link local_server to local_supervisor--><path d="M95.56,185.5 C105.36,185.5 115.16,185.5 124.96,185.5 " fill="none" id="local_server-to-local_supervisor" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="130.08,185.5,121.08,181.5,125.08,185.5,121.08,189.5,130.08,185.5" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[5515ed8dc4889460b4aa5d1271f4db8b]
+link local_supervisor to local_provider--><path d="M213.67,203.54 C212.1,223.76 209.47,257.52 207.73,279.77 " fill="none" id="local_supervisor-to-local_provider" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="207.33,284.89,212.0123,276.2253,207.7157,279.9049,204.0361,275.6083,207.33,284.89" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="119" x="212" y="246.5669">IPC / MessagePack</text><!--MD5=[c7ddabec5050fb86c0f222648ce97f05]
+link remote_server to remote_cache--><path d="M387.74,203.54 C388.55,222.36 389.88,252.93 390.83,275.01 " fill="none" id="remote_server-to-remote_cache" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="391.05,280.15,394.661,270.987,390.8359,275.1546,386.6683,271.3295,391.05,280.15" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[f63abb8da01e4a200bd81be41e8f6c19]
+link remote_server to remote_supervisor--><path d="M418.56,185.5 C428.36,185.5 438.16,185.5 447.96,185.5 " fill="none" id="remote_server-to-remote_supervisor" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="453.08,185.5,444.08,181.5,448.08,185.5,444.08,189.5,453.08,185.5" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[445ebf06e987bc9060a901b1695f239a]
+link remote_supervisor to remote_provider--><path d="M538.3,203.54 C538.65,223.76 539.23,257.52 539.62,279.77 " fill="none" id="remote_supervisor-to-remote_provider" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="539.7,284.89,543.5451,275.8228,539.6143,279.8907,535.5463,275.9599,539.7,284.89" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="119" x="540" y="246.5669">IPC / MessagePack</text><!--MD5=[cfa9168be39f0b1cec48115dee5dc441]
+link client to local_server--><path d="M64,85.69 C64,110.49 64,141.52 64,162.12 " fill="none" id="client-to-local_server" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="64,167.38,68,158.38,64,162.38,60,158.38,64,167.38" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[3c26f6a195708defc7df0dd8860f018a]
+link local_server to remote_server--><path d="M72.69,167.19 C83.22,147.47 103.02,117.26 130.5,105 C164.39,89.88 262.85,91.71 297.5,105 C327.61,116.55 353.95,143.43 370.11,162.96 " fill="none" id="local_server-to-remote_server" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="373.6,167.25,371.0291,157.7426,370.447,163.3694,364.8202,162.7873,373.6,167.25" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[dab4644663086b308449db8db327c8c5]
+@startuml
+actor client
+
+package "CRADLE (local)" {
+    agent server as local_server
+    database cache as local_cache
+    agent "calculation supervisor" as local_supervisor
+    agent "calculation provider" as local_provider
+	note bottom of local_provider: Docker container
+
+	local_server -down-> local_cache
+	local_server -right-> local_supervisor
+	local_supervisor -down-> local_provider: IPC / MessagePack
+}
+
+package "Thinknode (remote)" {
+    agent server as remote_server
+    database storage as remote_cache
+    agent "calculation supervisor" as remote_supervisor
+    agent "calculation provider" as remote_provider
+	note bottom of remote_provider: Docker container
+
+	remote_server -down-> remote_cache
+	remote_server -right-> remote_supervisor
+	remote_supervisor -down-> remote_provider: IPC / MessagePack
+}
+
+client -down-> local_server
+local_server -> remote_server
+@enduml
+
+PlantUML version 1.2022.0(Tue Jan 11 17:16:42 CET 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: null
+--></g></svg>
