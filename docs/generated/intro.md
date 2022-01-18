@@ -13,9 +13,13 @@ CRADLE will calculate the response itself when it can; otherwise, it will get it
 Thinknode, and translate it into a response to the client.
 
 Requests between CRADLE and Thinknode tend to be functionally similar to the ones between clients and CRADLE.
-The protocols are different though: Thinknode is accessed via HTTP, and data is (mostly?) encoded in JSON.
+The protocols are different though: Thinknode is accessed via HTTP, and data is encoded in JSON or MessagePack.
 
-![](147e48d336aa44d9c2ca3fa989ecba6d53235c8f.svg)
+Thinknode forbids messages with JSON data size exceeding 5MB; MessagePack is required for those situations.
+Consequently, CRADLE uses MessagePack for storing and retrieving immutable objects (that could be too large), and
+JSON otherwise.
+
+![](ddfbc928d41611793f5b9ae6f21b8b7a49e45dfc.svg)
 
 ![](07f18826649fa90e9764154eb758b76dd700c38d.svg)
 
@@ -44,7 +48,8 @@ Large blobs are compressed via LZ4 and stored in a file.
 
 In all cases, structured data is first serialized into a form similar to the MessagePack
 serialization used between client and CRADLE.
-(Question: could MessagePack be an alternative to the native encoding?)
+(Preferred way forward: no serialization, CRADLE need not understand the data format,
+it can store raw data.)
 
 Several options exist for the request processing in CRADLE:
 

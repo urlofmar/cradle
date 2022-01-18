@@ -81,14 +81,19 @@ def convert_puml(filename: str, output_dir: str, puml_lines: List[str]) -> str:
     key = hashlib.sha1(puml_bytes).hexdigest()
     puml_filename = key + '.puml'
     puml_path = os.path.join(output_dir, puml_filename)
-    logging.debug(f'Writing {puml_path}')
-    write_outputfile(puml_filename, output_dir, puml_lines)
-    cmd = ['java', '-jar', 'plantuml.jar', '-tsvg', puml_path]
-    logging.debug(f'Calling {" ".join(cmd)}')
-    subprocess.run(cmd, check=True)
-    logging.debug(f'Removing {puml_path}')
-    os.remove(puml_path)
     img_filename = key + '.svg'
+    img_path = os.path.join(output_dir, img_filename)
+    if os.path.exists(img_path):
+        # There should be a one-to-one relation between image filename and contents
+        logging.debug(f'{img_path} already exists, will not regenerate')
+    else:
+        logging.debug(f'Writing {puml_path}')
+        write_outputfile(puml_filename, output_dir, puml_lines)
+        cmd = ['java', '-jar', 'plantuml.jar', '-tsvg', puml_path]
+        logging.debug(f'Calling {" ".join(cmd)}')
+        subprocess.run(cmd, check=True)
+        logging.debug(f'Removing {puml_path}')
+        os.remove(puml_path)
     return img_filename
 
 

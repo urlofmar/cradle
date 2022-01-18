@@ -2,11 +2,17 @@
 
 ## Contents
 * [Introduction](intro.md)
-* [Retrieve an immutable object](iss_object.md)
+* [Immutable data](data.md)
+* Messages
+  * [Overview](msg_overview.md)
+  * [`iss_object`: retrieve an immutable object](msg_iss_object.md)
+  * [`post_iss_object`: store an immutable object](msg_post_iss_object.md)
 
 
 ## Setup
 This documentation builds on Markdown and [PlantUML](https://plantuml.com/).
+
+### Visual Studio Code
 
 It is recommended to develop this documentation in Visual Studio Code (VS Code):
 the preview functionality from the built-in Markdown extension, plus a PlantUML one,
@@ -22,7 +28,7 @@ one is easy on Linux or WSL:
 sudo apt install openjdk-17-jre-headless graphviz
 ```
 
-Then start the server by
+* Then start the server by
 
 ```
 java -jar plantuml.jar -picoweb
@@ -34,7 +40,25 @@ The PlantUML extension is "PlantUML" by jebbs. On Windows, it should be installe
 The server should be configured in the extension's settings (again, in the WSL tab for Windows):
 
 * "Plantuml: Render" should be set to `PlantUMLServer`
-* "Plantuml: Render" should be set to `http://localhost:8080`
+* "Plantuml: Server" should be set to `http://localhost:8080`
 
 If all works well, a preview of a `.md` file should render both the Markdown and inlined
 PlantUML content.
+
+### Convert PlantUML content
+The Markdown files in the `docs` directory contain inline PlantUML content that
+usual Markdown viewers (like GitHub) cannot render. To support these viewers, the PlantUML
+fragments are converted to image files (`.svg`), and replaced with
+references to those image files.
+
+To achieve this:
+
+```shell
+$ cd /path/to/repo/docs
+$ rm generated/*  # Optional step, to remove stale files
+$ python3 replace-puml.py *.md
+```
+
+The modified Markdown files (without PlantUML content), and the image files, end up in the
+`generated` subdirectory. These files will be under change control,
+and the entrypoint to the generated documentation will be `/path/to/repo/docs/generated/index.md`.

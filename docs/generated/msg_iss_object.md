@@ -1,5 +1,4 @@
-## Retrieve an immutable object
-
+# `iss_object`: retrieve an immutable object
 An `iss_object` request asks to retrieve the data for an immutable object. Example message:
 
 ```
@@ -15,9 +14,9 @@ content:
 The fields are:
 
 * `request_id`: identifies this request; set by the client
-* `context_id`: identifies the client with CRADLE and Thinknode
+* `context_id`: see [here](data.md)
 * `encoding`: will usually be `msgpack`
-* `ignore_upgrades`: something for Thinknode
+* `ignore_upgrades`: will usually be false
 * `object_id`: identifies the object; this is a reference id, not an immutable id
 
 Example response:
@@ -29,24 +28,31 @@ content:
     object: (MessagePack data)
 ```
 
-The `request_id` is taken from the request message.
+The fields are:
+
+* `request_id`: copied from the request message
+* `object`: data for the immutable object, encoded as per the `encoding` in the request message
 
 
-### Cache hit
+## Cache keys
+The cache key for an immutable id is a hash depending on:
+
+* The key type (`resolve_iss_object_to_immutable`)
+* The API URL (e.g. `https://mgh.thinknode.io/api/v1.0`)
+* The context id (unless `ignore_upgrades` is true)
+* The object id
+
+The cache key for the object data itself is a hash depending on:
+
+* The key type (`retrieve_immutable`)
+* The API URL (e.g. `https://mgh.thinknode.io/api/v1.0`)
+* The immutable id
+
+
+## Cache hit
 If the data is already present in CRADLE's cache, the interaction looks like
 
-```plantuml
-@startuml
-client -> server: iss_object
-
-server -> cache: find(object_id)
-server <-- cache: immutable_id
-server -> cache: find(immutable_id)
-server <-- cache: object data
-
-client <-- server: iss_object_response
-@enduml
-```
+![](843e4ad36618829773a0c5c9a1f82f541bd55b49.svg)
 
 The steps are:
 
@@ -59,27 +65,8 @@ The steps are:
 * CRADLE uncompresses the data if needed, deserializes it, and puts it in an `iss_object_reponse` message
   that it sends to the client.
 
-### Cache miss
+## Cache miss
 If the immutable object is not yet present in CRADLE's cache, CRADLE will retrieve it from Thinknode,
 and store it in the cache:
 
-```plantuml
-@startuml
-client -> server: iss_object
-
-server -> cache: find(object_id)
-server <-- cache: miss
-server -> Thinknode: GET /iss/:id/immutable
-server <-- Thinknode: immutable_id
-server -> cache: store(immutable_id)
-
-server -> cache: find(immutable_id)
-server <-- cache: miss
-
-server -> Thinknode: GET /iss/immutable/:id
-server <-- Thinknode: object data
-server -> cache: store(object data)
-
-client <-- server: iss_object_response
-@enduml
-```
+![](76150df9b7c09e0157cd2897d572f5da5f1c697c.svg)
