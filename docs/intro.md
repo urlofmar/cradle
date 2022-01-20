@@ -73,11 +73,11 @@ package "CRADLE (local)" {
     database cache as local_cache
     agent "calculation supervisor" as local_supervisor
     agent "calculation provider" as local_provider
-	note bottom of local_provider: Docker container
+    note bottom of local_provider: Docker container
 
-	local_server -down-> local_cache
-	local_server -right-> local_supervisor
-	local_supervisor -down-> local_provider: IPC / MessagePack
+    local_server -down-> local_cache
+    local_server -right-> local_supervisor
+    local_supervisor -down-> local_provider: IPC / MessagePack
 }
 
 package "Thinknode (remote)" {
@@ -85,11 +85,11 @@ package "Thinknode (remote)" {
     database storage as remote_cache
     agent "calculation supervisor" as remote_supervisor
     agent "calculation provider" as remote_provider
-	note bottom of remote_provider: Docker container
+    note bottom of remote_provider: Docker container
 
-	remote_server -down-> remote_cache
-	remote_server -right-> remote_supervisor
-	remote_supervisor -down-> remote_provider: IPC / MessagePack
+    remote_server -down-> remote_cache
+    remote_server -right-> remote_supervisor
+    remote_supervisor -down-> remote_provider: IPC / MessagePack
 }
 
 client -down-> local_server
@@ -112,9 +112,14 @@ As the same Docker image is used for remote and local calculation, the interface
 supervisor and provider must be identical as well; it is based on IPC, using MessagePack
 for encoding structured data.
 
-CRADLE caches objects in its local cache whenever possible.
-The main cache is formed by an SQLite database, which also contains small blobs.
-Large blobs are compressed via LZ4 and stored in a file.
+CRADLE caches objects in its local caches whenever possible; there are two levels:
+
+* A memory-based one (default size: 1GB)
+* A disk-based one (default size: 4GB).
+  The main disk-based cache is formed by an SQLite database, which also contains small blobs.
+  Large blobs are compressed via LZ4 and stored in a file.
+
+  It looks like the LRU mechanism is not active for this cache.
 
 In all cases, structured data is first serialized into a form similar to the MessagePack
 serialization used between client and CRADLE.

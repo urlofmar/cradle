@@ -25,7 +25,7 @@ JSON otherwise.
 
 CRADLE and Thinknode have similar designs:
 
-![](157bc709bc5073a5f8b4f07743bd2aa698a02421.svg)
+![](f939607139c9ff262c2f6ad7e385d077d5079c4c.svg)
 
 The local CRADLE provides similar functionality as the remote Thinknode.
 The components are:
@@ -42,9 +42,14 @@ As the same Docker image is used for remote and local calculation, the interface
 supervisor and provider must be identical as well; it is based on IPC, using MessagePack
 for encoding structured data.
 
-CRADLE caches objects in its local cache whenever possible.
-The main cache is formed by an SQLite database, which also contains small blobs.
-Large blobs are compressed via LZ4 and stored in a file.
+CRADLE caches objects in its local caches whenever possible; there are two levels:
+
+* A memory-based one (default size: 1GB)
+* A disk-based one (default size: 4GB).
+  The main disk-based cache is formed by an SQLite database, which also contains small blobs.
+  Large blobs are compressed via LZ4 and stored in a file.
+
+  It looks like the LRU mechanism is not active for this cache.
 
 In all cases, structured data is first serialized into a form similar to the MessagePack
 serialization used between client and CRADLE.

@@ -19,10 +19,10 @@ Example message:
 request_id: 9f0eb0a45fcf438db785e30b1ebb57be
 content:
   post_iss_object:
-	context_id: 5dadeb4a004073e81b5e096255e83652
-	encoding: msgpack
+    context_id: 0123456789abcdef0123456789abcdef
+    encoding: msgpack
     object: (MessagePack data)
-	schema: string
+    schema: string
 ```
 
 The fields are:
@@ -70,4 +70,4 @@ the interaction looks like
 If the cache does not contain the object id for the immutable object,
 then CRADLE will post the object to Thinknode, and cache the object id that Thinknode returns:
 
-![](0af3c2ecfd92dee20f1df749c8e61b5b572278cb.svg)
+![](d875ae9fc9bdbd6bfdd2cee934c68737f99e6223.svg)

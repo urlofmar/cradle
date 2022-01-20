@@ -10,6 +10,9 @@ if two immutable ids are different, then so will the underlying immutable data d
 
 In contrast, an immutable object will also be identified by a number of _reference ids_.
 Immutable ids are invisible to CRADLE clients; they use reference ids only.
+(A client can retrieve an immutable id using a `resolve_iss_object` request,
+but there is no request to put that value in.)
+
 The term _reference id_ comes from the Thinknode documentation; the CRADLE interface
 calls them _object ids_. The two terms will be used interchangeably.
 

@@ -5,10 +5,10 @@ An `iss_object` request asks to retrieve the data for an immutable object. Examp
 request_id: e7ea249f40ff4ae38a304018abfbda8c
 content:
   iss_object:
-	context_id: 0123456789abcdef0123456789abcdef
-	encoding: msgpack
-	ignore_upgrades: false
-	object_id: 5ac4e6f900c0034d5469e872024b8705
+    context_id: 0123456789abcdef0123456789abcdef
+    encoding: msgpack
+    ignore_upgrades: false
+    object_id: 5ac4e6f900c0034d5469e872024b8705
 ```
 
 The fields are:
@@ -69,4 +69,7 @@ The steps are:
 If the immutable object is not yet present in CRADLE's cache, CRADLE will retrieve it from Thinknode,
 and store it in the cache:
 
-![](76150df9b7c09e0157cd2897d572f5da5f1c697c.svg)
+![](50b62215aec0d5e784b33595bd03f42ddb68cfd8.svg)
+
+If the object is a calculated one, Thinknode may not have the data available yet, and
+CRADLE enters a polling loop, as shown [here](msg_post_calculation.md).

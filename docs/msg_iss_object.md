@@ -5,10 +5,10 @@ An `iss_object` request asks to retrieve the data for an immutable object. Examp
 request_id: e7ea249f40ff4ae38a304018abfbda8c
 content:
   iss_object:
-	context_id: 0123456789abcdef0123456789abcdef
-	encoding: msgpack
-	ignore_upgrades: false
-	object_id: 5ac4e6f900c0034d5469e872024b8705
+    context_id: 0123456789abcdef0123456789abcdef
+    encoding: msgpack
+    ignore_upgrades: false
+    object_id: 5ac4e6f900c0034d5469e872024b8705
 ```
 
 The fields are:
@@ -95,8 +95,12 @@ server <-- cache: miss
 
 server -> Thinknode: GET /iss/immutable/:id
 server <-- Thinknode: object data
-server -> cache: store(object data)
 
 client <-- server: iss_object_response
+
+server -> cache: store(object data)
 @enduml
 ```
+
+If the object is a calculated one, Thinknode may not have the data available yet, and
+CRADLE enters a polling loop, as shown [here](msg_post_calculation.md).

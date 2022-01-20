@@ -19,10 +19,10 @@ Example message:
 request_id: 9f0eb0a45fcf438db785e30b1ebb57be
 content:
   post_iss_object:
-	context_id: 5dadeb4a004073e81b5e096255e83652
-	encoding: msgpack
+    context_id: 0123456789abcdef0123456789abcdef
+    encoding: msgpack
     object: (MessagePack data)
-	schema: string
+    schema: string
 ```
 
 The fields are:
@@ -87,8 +87,9 @@ server -> cache: find(object)
 server <-- cache: miss
 server -> Thinknode: POST /iss/{:type}
 server <-- Thinknode: object id
-server -> cache: store(object id)
 
 client <-- server: post_iss_object_response(object_id)
+
+server -> cache: store(object id)
 @enduml
 ```
