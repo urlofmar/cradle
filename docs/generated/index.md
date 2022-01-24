@@ -3,10 +3,8 @@
 ## Contents
 * [Introduction](intro.md)
 * [Immutable data](data.md)
-* Messages
-  * [Overview](msg_overview.md)
-  * [`iss_object`: retrieve an immutable object](msg_iss_object.md)
-  * [`post_iss_object`: store an immutable object](msg_post_iss_object.md)
+* [Cache](cache.md)
+* [Messages](msg_overview.md)
 
 
 ## Setup

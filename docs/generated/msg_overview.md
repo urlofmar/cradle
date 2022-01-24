@@ -1,20 +1,20 @@
 # Messages
 This section aims to give an overview of the messages exchanged between CRADLE and its clients.
 
-Request                    | Response                        | Status     | Synopsis
--------------------------- | ------------------------------- | ---------- | --------
-`registration`             | `registration_acknowledgement`  | CRADLE     | Register a client
-`iss_object`               | `iss_object_response`           | CRADLE     | Retrieve data for an immutable object; more [here](msg_iss_object.md)
-`resolve_iss_object`       | `resolve_iss_object_response`   | CRADLE     | Convert a reference id to an immutable id; Testing?
-`iss_object_metadata`      | `iss_object_metadata_response`  | CRADLE     | Retrieve metadata for an immutable object; more [here](msg_iss_object_metadata.md)
-`post_iss_object`          | `post_iss_object_response`      | CRADLE     | Store an immutable object; more [here](msg_post_iss_object.md)
-`post_calculation`         | `post_calculation_response`     | CRADLE     | Perform a calculation on Thinknode; more [here](msg_post_calculation.md)
-`calculation_request`      | `calculation_request_response`  | CRADLE     | Convert a calculation id to a calculation descriptor
-`calculation_diff`         | `calculation_diff_response`     | CRADLE     | Find the difference between two calculations
-`calculation_search`       | `calculation_search_response`   | CRADLE     | Find the subcalculations calling a specified function
-`iss_diff`                 | `iss_diff_response`             | CRADLE     | Find the difference between two immutable objects
-`perform_local_calc`       | `local_calc_result`             | CRADLE     | Perform a local calculation; returns the result (a value, not a calculation id)
-`kill`                     | —                               | ?          | Kill the CRADLE server
+Request                    | Response                        | Status     | Link                               | Synopsis
+-------------------------- | ------------------------------- | ---------- | ----                               | --------
+`registration`             | `registration_acknowledgement`  | CRADLE     |                                    | Register a client
+`iss_object`               | `iss_object_response`           | CRADLE     | [Link](msg_iss_object.md)          | Retrieve data for an immutable object
+`resolve_iss_object`       | `resolve_iss_object_response`   | CRADLE     |                                    | Convert a reference id to an immutable id; Testing?
+`iss_object_metadata`      | `iss_object_metadata_response`  | CRADLE     | [Link](msg_iss_object_metadata.md) | Retrieve metadata for an immutable object
+`post_iss_object`          | `post_iss_object_response`      | CRADLE     | [Link](msg_post_iss_object.md)     | Store an immutable object
+`post_calculation`         | `post_calculation_response`     | CRADLE     | [Link](msg_post_calculation.md)    | Perform a calculation on Thinknode
+`calculation_request`      | `calculation_request_response`  | CRADLE     | [Link](msg_calculation_request.md) | Convert a calculation id to a calculation descriptor
+`calculation_diff`         | `calculation_diff_response`     | CRADLE     |                                    | Find the difference between two calculations
+`calculation_search`       | `calculation_search_response`   | CRADLE     |                                    | Find the subcalculations calling a specified function
+`iss_diff`                 | `iss_diff_response`             | CRADLE     |                                    | Find the difference between two immutable objects
+`perform_local_calc`       | `local_calc_result`             | CRADLE     | [Link](msg_perform_local_calc.md)  | Perform a local calculation
+`kill`                     | —                               | ?          |                                    | Kill the CRADLE server
 `test`                     | `test`                          | Testing    |
 `cache_insert`             | `cache_insert_acknowledgement`  | Testing    |
 `cache_query`              | `cache_response`                | Testing    |

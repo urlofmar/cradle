@@ -33,8 +33,8 @@ There are two kinds of immutable object:
 * _Calculated objects_, resulting from completed calculations; whether successful or failed.
 
 
-## CRADLE cache
-The CRADLE cache follows the "Implementing a Caching Protocol" proposal in the Thinknode
+## Caching immutable data
+For caching immutable data, CRADLE follows the "Implementing a Caching Protocol" proposal in the Thinknode
 documentation. It stores
 
 * A context-dependent translation of reference ids to immutable ids;

@@ -36,25 +36,13 @@ The components are:
 * A calculation provider, which is a Docker container performing calculations.
 * A calculation supervisor, forming the interface between server and calculation provider.
 
-Docker images are identical between CRADLE and Thinknode; 
+Docker images are identical between CRADLE and Thinknode;
 CRADLE retrieves a Docker image from Thinknode when it is not yet available.
 As the same Docker image is used for remote and local calculation, the interface between
 supervisor and provider must be identical as well; it is based on IPC, using MessagePack
 for encoding structured data.
 
-CRADLE caches objects in its local caches whenever possible; there are two levels:
-
-* A memory-based one (default size: 1GB)
-* A disk-based one (default size: 4GB).
-  The main disk-based cache is formed by an SQLite database, which also contains small blobs.
-  Large blobs are compressed via LZ4 and stored in a file.
-
-  It looks like the LRU mechanism is not active for this cache.
-
-In all cases, structured data is first serialized into a form similar to the MessagePack
-serialization used between client and CRADLE.
-(Preferred way forward: no serialization, CRADLE need not understand the data format,
-it can store raw data.)
+CRADLE locally caches objects; more [here](cache.md).
 
 Several options exist for the request processing in CRADLE:
 
